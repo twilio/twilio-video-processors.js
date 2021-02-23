@@ -1,0 +1,34 @@
+{
+  "name": "@twilio/video-processors",
+  "title": "Twilio Video Processors",
+  "description": "Twilio Video Processors JavaScript Library",
+  "version": "0.0.0",
+  "homepage": "https://github.com/twilio/video-processors.js#readme",
+  "author": "Charlie Santos <csantos@twilio.com>",
+  "contributors": [
+    "Charlie Santos <csantos@twilio.com>",
+    "Manjesh Malavalli <mmalavalli@twilio.com>"
+  ],
+  "keywords": [
+    "twilio",
+    "webrtc",
+    "library",
+    "javascript",
+    "video",
+    "processors",
+    "virtual background"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twilio/video-processors.js.git"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "license": "BSD-3-Clause",
+  "main": "./es5/index.js",
+  "types": "./es5/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
