@@ -24,7 +24,7 @@ npm run build
 ### NPM
 You can install directly from npm.
 ```
-npm install @twilio/video-processors.js --save
+npm install @twilio/video-processors --save
 ```
 
 Or install from a local directory.
@@ -32,9 +32,9 @@ Or install from a local directory.
 npm install /local-path-to-repo/video-processors.js
 ```
 
-Using this method, you can import `video-processors.js` like so:
+Using this method, you can import `video-processors` like so:
 ```ts
-import * as VideoProcessors from '@twilio/video-processors.js';
+import * as VideoProcessors from '@twilio/video-processors';
 ```
 
 ### Script tag
