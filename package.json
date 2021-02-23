@@ -29,6 +29,43 @@
   "main": "./es5/index.js",
   "types": "./es5/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm-run-all clean docs build:es5 build:dist build:dist-min",
+    "build:dist": "rimraf ./dist && node ./scripts/build.js ./LICENSE.md ./dist/video-processors.js",
+    "build:dist-min": "uglifyjs ./dist/video-processors.js -o ./dist/video-processors.min.js --comments \"/^! video-processors.js/\" -b beautify=false,ascii_only=true",
+    "build:es5": "rimraf ./es5 && tsc",
+    "docs": "rimraf ./docs && typedoc --excludePrivate --excludeProtected",
+    "clean": "rimraf ./dist ./docs ./es5 ./coverage ./.nyc_output",
+    "lint": "tslint -c ./tslint.json --project ./tsconfig.json -t stylish",
+    "test": "npm-run-all lint build test:unit test:integration",
+    "test:unit": "rimraf ./coverage ./.nyc_output && nyc mocha -r ts-node/register ./tests/unit/index.ts",
+    "test:integration": "karma start"
+  },
+  "dependencies": {
+    "@types/node": "^14.14.31"
+  },
+  "devDependencies": {
+    "@types/mocha": "^8.2.1",
+    "@types/sinon": "^9.0.10",
+    "browserify": "^17.0.0",
+    "karma": "^6.1.1",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-env-preprocessor": "^0.1.1",
+    "karma-firefox-launcher": "^2.1.0",
+    "karma-mocha": "^2.0.1",
+    "karma-spec-reporter": "0.0.32",
+    "karma-typescript": "^5.4.0",
+    "mocha": "^8.3.0",
+    "npm-run-all": "^4.1.5",
+    "nyc": "^15.1.0",
+    "sinon": "^9.2.4",
+    "ts-node": "^9.1.1",
+    "tsify": "^5.0.2",
+    "tslint": "^6.1.3",
+    "twilio-release-tool": "^1.0.1",
+    "typedoc": "^0.20.28",
+    "typedoc-plugin-as-member-of": "^1.0.2",
+    "typescript": "^4.1.5",
+    "vinyl-fs": "^3.0.3",
+    "vinyl-source-stream": "^2.0.0"
   }
 }

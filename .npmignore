@@ -1,0 +1,15 @@
+.circleci
+.DS_STORE
+.github
+.idea
+.nyc_output
+.vscode
+*.sw*
+coverage
+dist
+docs
+logs
+npm-debug.log
+node_modules
+scripts
+tests

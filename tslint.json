@@ -1,0 +1,27 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended"],
+  "rules": {
+    "arrow-parens": false,
+    "ban-types": false,
+    "interface-name": false,
+    "max-line-length": [true, 200],
+    "member-access": [true, "no-public"],
+    "member-ordering": [true, {
+      "order": "statics-first",
+      "alphabetize": true
+    }],
+    "no-empty": {
+      "severity": "warning"
+    },
+    "no-namespace": false,
+    "no-string-literal": false,
+    "no-unused-variable": true,
+    "no-var-requires": false,
+    "quotemark": [true, "single", "avoid-escape", "avoid-template"],
+    "semicolon": true,
+    "variable-name": [true, "allow-leading-underscore", "allow-pascal-case"],
+    "unified-signatures": false
+  },
+  "rulesDirectory": []
+}
