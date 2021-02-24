@@ -112,7 +112,7 @@ workflows:
       - Lint
       - Build
       - UnitTests
-      - IntegrationTests
+      - IntegrationTests:
         name: Integration tests on <<matrix.browser>>(<<matrix.channel>>)
         matrix:
           parameters:
