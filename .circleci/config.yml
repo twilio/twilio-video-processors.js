@@ -75,14 +75,11 @@ commands:
           path: ./coverage
           prefix: coverage
   integration-tests:
-    parameters:
-      browser:
-        type: string
     steps:
       - get-code-and-dependencies
       - run:
-          name: Running Integration Tests
-          command: BROWSER=<<parameters.browser>> npm run test:integration
+          name: Running Integration Tests on <<pipeline.parameters.browser>>
+          command: BROWSER=<<pipeline.parameters.browser>> npm run test:integration
 jobs:
   Lint:
     executor: docker-with-browser
@@ -108,7 +105,6 @@ jobs:
       channel: <<parameters.channel>>
     steps:
       - integration-tests
-        browser: <<parameters.browser>>
 workflows:
   PullRequest:
     when: <<pipeline.parameters.pr_workflow>>
