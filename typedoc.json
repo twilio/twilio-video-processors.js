@@ -4,5 +4,5 @@
     "lib/index.ts",
     "tests/**/*"
   ],
-  "out": "docs"
+  "out": "dist/docs"
 }

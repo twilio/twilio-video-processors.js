@@ -7,7 +7,6 @@
 *.sw*
 coverage
 dist
-docs
 logs
 npm-debug.log
 node_modules
