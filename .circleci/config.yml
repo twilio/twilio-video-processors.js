@@ -110,6 +110,9 @@ workflows:
   PullRequest:
     when: <<pipeline.parameters.pr_workflow>>
     jobs:
+      - Lint
+      - Build
+      - UnitTests
       - IntegrationTests:
           name: Integration tests on <<matrix.browser>>(<<matrix.channel>>)
           matrix:
