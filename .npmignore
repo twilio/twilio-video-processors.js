@@ -1,6 +1,7 @@
 .circleci
 .DS_STORE
 .github
+.env
 .idea
 .nyc_output
 .vscode

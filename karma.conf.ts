@@ -10,12 +10,18 @@ export default function(config: any) {
     '--autoplay-policy=no-user-gesture-required',
   ];
 
-  const customLaunchers = {
-    ChromeWebRTC: {
+  const selectedBrowser = process.env.BROWSER || 'chrome';
+  const browsers = [];
+  const customLaunchers = {} as any;
+  if (selectedBrowser === 'chrome') {
+    browsers.push('ChromeWebRTC');
+    customLaunchers.ChromeWebRTC = {
       base: 'Chrome',
       flags: chromeFlags,
-    },
-    FirefoxWebRTC: {
+    };
+  } else if (selectedBrowser === 'firefox') {
+    browsers.push('FirefoxWebRTC');
+    customLaunchers.FirefoxWebRTC = {
       base: 'Firefox',
       flags: firefoxFlags,
       prefs: {
@@ -25,8 +31,8 @@ export default function(config: any) {
         'media.navigator.permission.disabled': true,
         'media.navigator.streams.fake': true,
       },
-    },
-  };
+    };
+  }
 
   config.set({
     // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -52,7 +58,7 @@ export default function(config: any) {
       './tests/integration/*.ts': 'karma-typescript',
     },
 
-    envPreprocessor: [],
+    envPreprocessor: ['BROWSER'],
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
@@ -74,11 +80,7 @@ export default function(config: any) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: [
-      'ChromeWebRTC',
-      // Uncomment once Firefox is supported
-      // 'FirefoxWebRTC',
-    ],
+    browsers,
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
