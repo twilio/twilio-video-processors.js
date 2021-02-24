@@ -64,7 +64,7 @@ commands:
           command: npm run build
       - store_artifacts:
           path: ./dist
-          prefix: dist
+          destination: dist
   unit-tests:
     steps:
       - get-code-and-dependencies
@@ -73,7 +73,7 @@ commands:
           command: npm run test:unit
       - store_artifacts:
           path: ./coverage
-          prefix: coverage
+          destination: coverage
   integration-tests:
     steps:
       - get-code-and-dependencies
@@ -94,6 +94,7 @@ jobs:
     steps:
       - unit-tests
   IntegrationTests:
+    parallelism: 3
     parameters:
       browser:
         type: string
@@ -109,9 +110,6 @@ workflows:
   PullRequest:
     when: <<pipeline.parameters.pr_workflow>>
     jobs:
-      - Lint
-      - Build
-      - UnitTests
       - IntegrationTests:
         name: Integration tests on <<matrix.browser>>(<<matrix.channel>>)
         matrix:
