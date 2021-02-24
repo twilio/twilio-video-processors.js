@@ -1,4 +1,7 @@
 # Twilio Video Processors
+
+[![NPM](https://img.shields.io/npm/v/@twilio/video-processors.svg)](https://www.npmjs.com/package/@twilio/video-processors)
+
 Twilio Video Processors is a collection of video processing tools which can be used with [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) to apply transformations and filters to a video track.
 
 ## Features
