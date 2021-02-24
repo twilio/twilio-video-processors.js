@@ -78,7 +78,7 @@ commands:
     steps:
       - get-code-and-dependencies
       - run:
-          name: Running Integration Tests on <<pipeline.parameters.browser>>
+          name: Running Integration Tests on <<pipeline.parameters.browser>>(<<pipeline.parameters.channel>>)
           command: BROWSER=<<pipeline.parameters.browser>> npm run test:integration
 jobs:
   Lint:
