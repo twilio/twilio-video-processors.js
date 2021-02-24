@@ -111,9 +111,9 @@ workflows:
     when: <<pipeline.parameters.pr_workflow>>
     jobs:
       - IntegrationTests:
-        name: Integration tests on <<matrix.browser>>(<<matrix.channel>>)
-        matrix:
-          parameters:
-            browser: ["chrome"]
-            channel: ["stable", "unstable", "beta"]
-        requires: [Lint, Build, UnitTests]
+          name: Integration tests on <<matrix.browser>>(<<matrix.channel>>)
+          matrix:
+            parameters:
+              browser: ["chrome"]
+              channel: ["stable", "unstable", "beta"]
+          requires: [Lint, Build, UnitTests]
