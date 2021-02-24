@@ -5,7 +5,7 @@
 Twilio Video Processors is a collection of video processing tools which can be used with [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) to apply transformations and filters to a video track.
 
 ## Features
-- Virtual background
+- Virtual background 
 - Background blur
 
 ## Installation
