@@ -113,7 +113,7 @@ workflows:
       - Build
       - UnitTests
       - IntegrationTests
-        name: IntegrationTests on <<matrix.browser>>(<<matrix.channel>>)
+        name: IntegrationTests
         matrix:
           parameters:
             browser: ["chrome"]
