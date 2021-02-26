@@ -1,0 +1,168 @@
+version: 2.1
+parameters:
+  browser:
+    type: enum
+    enum: ["chrome", "firefox"]
+    default: "chrome"
+  channel:
+    type: enum
+    enum: ["stable", "beta", "unstable"]
+    default: "stable"
+  tag:
+    type: string
+    default: ""
+  pr_workflow:
+    type: boolean
+    default: true
+  release_workflow:
+    type: boolean
+    default: false
+  release_command:
+    type: string
+    default: "echo no release command was specified" # release-tool specifies the real command.
+executors:
+  docker-with-browser:
+    parameters:
+      browser:
+        type: enum
+        enum: ["chrome", "firefox"]
+        default: "chrome"
+      channel:
+        type: enum
+        enum: ["stable", "beta", "unstable"]
+        default: "stable"
+    docker:
+      - image: twilio/twilio-video-browsers:<<parameters.browser>>-<<parameters.channel>>
+  generic-executor:
+    docker:
+      - image: alpine:3.7
+commands:
+  get-code:
+    steps:
+      - checkout
+      - when:
+          condition: <<pipeline.parameters.tag>>
+          steps:
+            - run: git checkout <<pipeline.parameters.tag>>
+  get-code-and-dependencies:
+    steps:
+      - get-code
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Installing dependencies
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+  lint:
+    steps:
+      - get-code-and-dependencies
+      - run:
+          name: Linting
+          command: npm run lint
+  build:
+    steps:
+      - get-code-and-dependencies
+      - run:
+          name: Building
+          command: npm run build
+      - store_artifacts:
+          path: ./dist
+          destination: dist
+  unit-tests:
+    steps:
+      - get-code-and-dependencies
+      - run:
+          name: Running Unit Tests
+          command: npm run test:unit
+      - store_artifacts:
+          path: ./coverage
+          destination: coverage
+  integration-tests:
+    steps:
+      - get-code-and-dependencies
+      - run:
+          name: Running Integration Tests on <<pipeline.parameters.browser>>
+          command: BROWSER=<<pipeline.parameters.browser>> npm run test:integration
+jobs:
+  Lint:
+    executor: docker-with-browser
+    steps:
+      - lint
+  Build:
+    executor: docker-with-browser
+    steps:
+      - build
+  UnitTests:
+    executor: docker-with-browser
+    steps:
+      - unit-tests
+  IntegrationTests:
+    parallelism: 3
+    parameters:
+      browser:
+        type: string
+      channel:
+        type: string
+    executor:
+      name: docker-with-browser
+      browser: <<parameters.browser>>
+      channel: <<parameters.channel>>
+    steps:
+      - integration-tests
+  ExecuteRelease:
+    executor: docker-with-browser
+    parameters:
+      dryRun:
+        type: boolean
+        default: true
+    steps:
+      - build
+      - when:
+          condition: <<parameters.dryRun>>
+          steps:
+            - run: echo Wait for other jobs in the workflow to finish
+            - run: echo Release will execute "<<pipeline.parameters.release_command>>"
+      - unless:
+          condition: <<parameters.dryRun>>
+          steps:
+            - run: <<pipeline.parameters.release_command>>
+workflows:
+  PullRequest:
+    when: <<pipeline.parameters.pr_workflow>>
+    jobs:
+      - Lint
+      - Build
+      - UnitTests
+      - IntegrationTests:
+          name: Integration tests on <<matrix.browser>>(<<matrix.channel>>)
+          matrix:
+            parameters:
+              browser: ["chrome"]
+              channel: ["stable", "unstable", "beta"]
+          requires: [Lint, Build, UnitTests]
+  Release:
+    when: <<pipeline.parameters.release_workflow>>
+    jobs:
+      - Lint
+      - Build
+      - UnitTests
+      - IntegrationTests:
+          name: Integration tests on <<matrix.browser>>(<<matrix.channel>>)
+          matrix:
+            parameters:
+              browser: ["chrome"]
+              channel: ["stable", "unstable", "beta"]
+          requires: [Lint, Build, UnitTests]
+      - ExecuteRelease:
+          dryRun: true
+          name: Release dry run
+          requires: [Lint, Build, UnitTests]
+      - hold:
+          type: approval
+          requires: [Release dry run]
+      - ExecuteRelease:
+          dryRun: false
+          requires: [hold]

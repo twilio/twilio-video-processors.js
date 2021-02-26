@@ -1,0 +1,16 @@
+{
+  "extension": [
+    ".ts"
+  ],
+  "include": [
+    "lib/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.d.ts"
+  ],
+  "reporter": [
+    "html",
+    "lcov",
+    "text"
+  ]
+}
