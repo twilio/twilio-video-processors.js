@@ -14,6 +14,8 @@
     "no-empty": {
       "severity": "warning"
     },
+    "no-bitwise": false,
+    "no-console": false,
     "no-namespace": false,
     "no-string-literal": false,
     "no-unused-variable": true,
