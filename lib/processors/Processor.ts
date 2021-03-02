@@ -1,10 +1,10 @@
 /**
- * The [[VideoProcessor]] is an abstract class for building your own custom video processors.
+ * The [[Processor]] is an abstract class for building your own custom processors.
  */
-export abstract class VideoProcessor {
+export abstract class Processor {
 
   /**
-   * Applies a transform to the input video frame and generate an output video frame.
+   * Applies a transform to the input frame and generate an output frame.
    * The frame will be dropped if this method returns null or raises and exception.
    * @param inputFrame - The input frame to process.
    */

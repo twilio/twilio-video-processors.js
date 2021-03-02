@@ -1,5 +1,5 @@
-import { GrayscaleVideoProcessor } from './videoprocessors/grayscale';
-import { VideoProcessor } from './videoprocessors/VideoProcessor';
+import { GrayscaleProcessor } from './processors/grayscale';
+import { Processor } from './processors/Processor';
 
 /**
  * @private
@@ -13,10 +13,10 @@ declare global {
 window.Twilio = window.Twilio || {};
 window.Twilio.VideoProcessors = {
   ...window.Twilio.VideoProcessors,
-  GrayscaleVideoProcessor,
+  GrayscaleProcessor,
 };
 
 export {
-  GrayscaleVideoProcessor,
-  VideoProcessor,
+  GrayscaleProcessor,
+  Processor,
 };

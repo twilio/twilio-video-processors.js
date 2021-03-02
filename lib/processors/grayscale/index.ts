@@ -1,10 +1,10 @@
-import { VideoProcessor } from '../VideoProcessor';
+import { Processor } from '../Processor';
 
 /**
- * The [[GrayscaleVideoProcessor]] is a [[VideoProcessor]] which applies
- * a grayscale transform to a video frame.
+ * The [[GrayscaleProcessor]] is a [[Processor]] which applies
+ * a grayscale transform to a frame.
  */
-export class GrayscaleVideoProcessor extends VideoProcessor {
+export class GrayscaleProcessor extends Processor {
 
   private _outputFrame: OffscreenCanvas;
 
@@ -14,7 +14,7 @@ export class GrayscaleVideoProcessor extends VideoProcessor {
   }
 
   /**
-   * Applies a grayscale transform to the input video frame and generate an output video frame.
+   * Applies a grayscale transform to the input frame and generate an output frame.
    * @param inputFrame - The input frame to process.
    * @returns The outputframe or null if the transform cannot be applied.
    */
