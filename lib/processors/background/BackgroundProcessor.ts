@@ -18,6 +18,7 @@ export abstract class BackgroundProcessor extends Processor {
     BackgroundProcessor._model = await loadModel(config);
   }
   private static _model: BodyPix | null = null;
+  protected _outputCanvas: OffscreenCanvas;
   protected _outputContext: OffscreenCanvasRenderingContext2D;
 
   private _benchmark: Benchmark;
@@ -28,7 +29,6 @@ export abstract class BackgroundProcessor extends Processor {
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas;
   private _maskContext: OffscreenCanvasRenderingContext2D;
-  private _outputCanvas: OffscreenCanvas;
 
   constructor(options?: BackgroundProcessorOptions) {
     super();

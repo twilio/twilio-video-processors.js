@@ -67,4 +67,50 @@ describe('VirtualBackgroundProcessor', () => {
       });
     });
   });
+
+  describe('_getFitPosition', () => {
+    const options = { backgroundImage: { complete: true, naturalHeight: 1 }} as any;
+    let processor: VirtualBackgroundProcessor;
+
+    beforeEach(() => {
+      processor = new VirtualBackgroundProcessor(options);
+    });
+
+    [{
+      input: [1280, 720, 1280, 720, 'Cover'],
+      expected: { x: 0, y: 0, w: 1280, h: 720 }
+    },{
+      input: [1280 * 1.5, 720 * 1.5, 1280, 720, 'Cover'],
+      expected: { x: 0, y: 0, w: 1280, h: 720 }
+    },{
+      input: [1280 * 0.5, 720 * 0.5, 1280, 720, 'Cover'],
+      expected: { x: 0, y: 0, w: 1280, h: 720 }
+    },{
+      input: [800, 200, 1280, 720, 'Cover'],
+      expected: { x: -800, y: 0, w: 2880, h: 720 }
+    },{
+      input: [200, 800, 1280, 720, 'Cover'],
+      expected: { x: 0, y: -2200, w: 1280, h: 5120 }
+    },{
+      input: [1280, 720, 1280, 720, 'Contain'],
+      expected: { x: 0, y: 0, w: 1280, h: 720 }
+    },{
+      input: [1280 * 1.5, 720 * 1.5, 1280, 720, 'Contain'],
+      expected: { x: 0, y: 0, w: 1280, h: 720 }
+    },{
+      input: [1280 * 0.5, 720 * 0.5, 1280, 720, 'Contain'],
+      expected: { x: 0, y: 0, w: 1280, h: 720 }
+    },{
+      input: [800, 200, 1280, 720, 'Contain'],
+      expected: { x: 0, y: 200, w: 1280, h: 320 }
+    },{
+      input: [200, 800, 1280, 720, 'Contain'],
+      expected: { x: 550, y: 0, w: 180, h: 720 }
+    }].forEach(({ input, expected }) => {
+      it(`should return correct position when parameters are ${JSON.stringify(input)}`, () => {
+        const output = (processor['_getFitPosition'] as any)(...input);
+        assert.deepStrictEqual(output, expected);
+      });
+    });
+  });
 });

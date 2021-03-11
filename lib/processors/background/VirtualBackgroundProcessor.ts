@@ -41,7 +41,52 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     this._fitType = fitType;
   }
 
-  protected _setBackground(inputFrame: OffscreenCanvas): void {
-    this._outputContext.drawImage(this._backgroundImage, 0, 0, inputFrame.width, inputFrame.height);
+  protected _setBackground(): void {
+    const img = this._backgroundImage;
+    const imageWidth = img.naturalWidth;
+    const imageHeight = img.naturalHeight;
+    const canvasWidth = this._outputCanvas.width;
+    const canvasHeight = this._outputCanvas.height;
+
+    if (this._fitType === ImageFit.Fill) {
+      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight, 0, 0, canvasWidth, canvasHeight);
+    } else if (this._fitType === ImageFit.None) {
+      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight);
+    } else if (this._fitType === ImageFit.Contain) {
+      const { x, y, w, h } = this._getFitPosition(imageWidth, imageHeight, canvasWidth, canvasHeight, ImageFit.Contain);
+      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
+    } else if (this._fitType === ImageFit.Cover) {
+      const { x, y, w, h } = this._getFitPosition(imageWidth, imageHeight, canvasWidth, canvasHeight, ImageFit.Cover);
+      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
+    }
+  }
+
+  private _getFitPosition (contentWidth: number, contentHeight: number,
+    viewportWidth: number, viewportHeight: number, type: ImageFit)
+      : { h: number, w: number, x: number, y: number } {
+
+    // Calculate new content width to fit viewport width
+    let factor = viewportWidth / contentWidth;
+    let newContentWidth = viewportWidth;
+    let newContentHeight = factor * contentHeight;
+
+    // Scale down the resulting height and width more
+    // to fit viewport height if the content still exceeds it
+    if ((type === ImageFit.Contain && newContentHeight > viewportHeight)
+      || (type === ImageFit.Cover && viewportHeight > newContentHeight)) {
+      factor = viewportHeight / newContentHeight;
+      newContentWidth = factor * newContentWidth;
+      newContentHeight = viewportHeight;
+    }
+
+    // Calculate the destination top left corner to center the content
+    const x = (viewportWidth - newContentWidth) / 2;
+    const y = (viewportHeight - newContentHeight) / 2;
+
+    return {
+      x, y,
+      w: newContentWidth,
+      h: newContentHeight,
+    };
   }
 }
