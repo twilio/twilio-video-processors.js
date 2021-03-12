@@ -13,7 +13,7 @@ export const MODEL_CONFIG: ModelConfig = {
 export const INFERENCE_CONFIG: PersonInferenceConfig = {
   internalResolution: 1,
   maxDetections: 1,
-  segmentationThreshold: 0.65,
+  segmentationThreshold: 0.75,
 };
 
 export const MASK_BLUR_RADIUS = 3;

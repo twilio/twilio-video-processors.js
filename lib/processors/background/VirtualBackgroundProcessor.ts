@@ -23,7 +23,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
 
   set backgroundImage(image: HTMLImageElement) {
     if (!image || !image.complete || !image.naturalHeight) {
-      throw new Error('Invalid image. Image must be a HTMLImageElement and that the browser has finished loading it');
+      throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
     }
     this._backgroundImage = image;
   }

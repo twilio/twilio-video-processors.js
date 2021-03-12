@@ -1,4 +1,5 @@
 import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-cpu';
 import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 import { BodyPix, load as loadModel, SemanticPersonSegmentation } from '@tensorflow-models/body-pix';
 import { INFERENCE_CONFIG, MASK_BLUR_RADIUS, MODEL_CONFIG, INFERENCE_RESOLUTION } from '../../constants';
@@ -13,7 +14,6 @@ export interface BackgroundProcessorOptions {
 }
 
 export abstract class BackgroundProcessor extends Processor {
-
   static async loadModel(config: ModelConfig = MODEL_CONFIG): Promise<void> {
     BackgroundProcessor._model = await loadModel(config);
   }
@@ -24,8 +24,8 @@ export abstract class BackgroundProcessor extends Processor {
   private _benchmark: Benchmark;
   private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
   private _inferenceResolution: Resolution = INFERENCE_RESOLUTION;
-  private _inputCanvas: OffscreenCanvas;
-  private _inputContext: OffscreenCanvasRenderingContext2D;
+  private _inputCanvas: HTMLCanvasElement;
+  private _inputContext: CanvasRenderingContext2D;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas;
   private _maskContext: OffscreenCanvasRenderingContext2D;
@@ -37,8 +37,8 @@ export abstract class BackgroundProcessor extends Processor {
     this.maskBlurRadius = options?.maskBlurRadius!;
 
     this._benchmark = new Benchmark();
-    this._inputCanvas = new OffscreenCanvas(1, 1);
-    this._inputContext = this._inputCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    this._inputCanvas = document.createElement('canvas');
+    this._inputContext = this._inputCanvas.getContext('2d') as CanvasRenderingContext2D;
     this._maskCanvas = new OffscreenCanvas(1, 1);
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
     this._outputCanvas = new OffscreenCanvas(1, 1);
@@ -119,7 +119,7 @@ export abstract class BackgroundProcessor extends Processor {
     this._outputContext.globalCompositeOperation = 'source-in';
     this._outputContext.drawImage(inputFrame, 0, 0, captureWidth, captureHeight);
     this._outputContext.globalCompositeOperation = 'destination-over';
-    await this._setBackground(inputFrame);
+    this._setBackground(inputFrame);
     this._outputContext.restore();
 
     this._benchmark.end('imageCompositing');
@@ -134,7 +134,7 @@ export abstract class BackgroundProcessor extends Processor {
     return this._outputCanvas;
   }
 
-  protected abstract _setBackground(inputFrame: OffscreenCanvas): Promise<void> | void;
+  protected abstract _setBackground(inputFrame: OffscreenCanvas): void;
 
   private _createPersonMask(segment: SemanticPersonSegmentation) {
     const { data, width, height } = segment;
@@ -142,7 +142,7 @@ export abstract class BackgroundProcessor extends Processor {
     for (let i = 0; i < data.length; i++) {
       const m = i << 2;
       segmentMaskData[m] = segmentMaskData[m + 1] = segmentMaskData[m + 2] = segmentMaskData[m + 3] =
-        (data[i] << 8) - 1;
+        data[i] * 255;
     }
     return new ImageData(segmentMaskData, width, height);
   }

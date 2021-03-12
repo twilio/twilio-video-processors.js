@@ -1,7 +1,14 @@
-import { OffscreenCanvas } from './mocks/OffscreenCanvas';
+import { Canvas } from './mocks/Canvas';
 
 const root = global as any;
-root.OffscreenCanvas = root.OffscreenCanvas || OffscreenCanvas;
+root.OffscreenCanvas = root.OffscreenCanvas || Canvas;
+root.document = root.document || {
+  createElement(name: string) {
+    if (name === 'canvas') {
+      return new Canvas(1, 1);
+    }
+  }
+};
 
 import './utils/Benchmark';
 import './processors/grayscale';
