@@ -61,7 +61,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     }
   }
 
-  private _getFitPosition (contentWidth: number, contentHeight: number,
+  private _getFitPosition(contentWidth: number, contentHeight: number,
     viewportWidth: number, viewportHeight: number, type: ImageFit)
       : { h: number, w: number, x: number, y: number } {
 

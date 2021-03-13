@@ -14,12 +14,21 @@ class MyBackgroundProcessor extends BackgroundProcessor {
 
 describe('BackgroundProcessor', () => {
   let consoleWarnStub: any;
+  let loadModel: any;
   before(() => {
+    loadModel = sinon.stub();
+    (BackgroundProcessor as any)._loadModel = loadModel;
     consoleWarnStub = sinon.stub(console, 'warn');
   });
 
   after(() => {
     consoleWarnStub.restore();
+  });
+
+  it('should call loadModel once after instantiation', () => {
+    sinon.assert.notCalled(loadModel);
+    const processor = new MyBackgroundProcessor();
+    sinon.assert.calledOnce(loadModel);
   });
 
   describe('maskBlurRadius', () => {

@@ -14,10 +14,11 @@ export interface BackgroundProcessorOptions {
 }
 
 export abstract class BackgroundProcessor extends Processor {
-  static async loadModel(config: ModelConfig = MODEL_CONFIG): Promise<void> {
-    BackgroundProcessor._model = await loadModel(config);
-  }
   private static _model: BodyPix | null = null;
+  private static async _loadModel(config: ModelConfig = MODEL_CONFIG): Promise<void> {
+    BackgroundProcessor._model = await loadModel(config)
+      .catch((error: any) => console.error('Unable to load model.', error)) || null;
+  }
   protected _outputCanvas: OffscreenCanvas;
   protected _outputContext: OffscreenCanvasRenderingContext2D;
 
@@ -43,6 +44,8 @@ export abstract class BackgroundProcessor extends Processor {
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
     this._outputCanvas = new OffscreenCanvas(1, 1);
     this._outputContext = this._outputCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+
+    BackgroundProcessor._loadModel();
   }
 
   get benchmark(): Benchmark {
@@ -86,6 +89,10 @@ export abstract class BackgroundProcessor extends Processor {
   }
 
   async processFrame(inputFrame: OffscreenCanvas): Promise<OffscreenCanvas | null> {
+    if (!BackgroundProcessor._model) {
+      return inputFrame;
+    }
+
     this._benchmark.end('processFrame(jsdk)');
     this._benchmark.start('processFrame(processor)');
 
@@ -103,9 +110,6 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.end('resizeInputImage');
 
     this._benchmark.start('segmentPerson');
-    if (!BackgroundProcessor._model) {
-      throw new Error('Model has not been loaded. Call BackgroundProcessor.loadModel to load the model.');
-    }
     const segment = await BackgroundProcessor._model.segmentPerson(imageData, this._inferenceConfig);
     this._benchmark.end('segmentPerson');
 
