@@ -1,4 +1,4 @@
-export class OffscreenCanvas {
+export class Canvas {
   width: number;
   height: number;
   drawing: any;
@@ -10,7 +10,7 @@ export class OffscreenCanvas {
 
   getContext(): any {
     return {
-      drawImage: (inputFrame: OffscreenCanvas, x: number, y: number, width: number, height: number) => {
+      drawImage: (inputFrame: OffscreenCanvas | HTMLCanvasElement, x: number, y: number, width: number, height: number) => {
         this.drawing = { inputFrame, x, y, width, height };
       }
     };

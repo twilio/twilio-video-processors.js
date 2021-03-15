@@ -1,9 +1,9 @@
 import * as assert from 'assert';
-import { GrayscaleVideoProcessor } from '../../../../lib/videoprocessors/grayscale';
+import { GrayscaleProcessor } from '../../lib/processors/grayscale';
 
-describe('GrayscaleVideoProcessor', () => {
+describe('GrayscaleProcessor', () => {
   it('should return an outputFrame', () => {
-    const processor = new GrayscaleVideoProcessor();
+    const processor = new GrayscaleProcessor();
     const testFrame = new OffscreenCanvas(1, 1);
     const frame = processor.processFrame(testFrame);
     assert(!!frame);

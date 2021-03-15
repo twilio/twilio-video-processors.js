@@ -32,16 +32,22 @@
     "build": "npm-run-all clean build:es5 build:js build:js-min docs",
     "build:js": "rimraf ./dist && node ./scripts/build.js ./LICENSE.md ./dist/video-processors.js",
     "build:js-min": "uglifyjs ./dist/video-processors.js -o ./dist/video-processors.min.js --comments \"/^! video-processors.js/\" -b beautify=false,ascii_only=true",
-    "build:es5": "rimraf ./es5 && tsc",
+    "build:es5": "tsc",
     "docs": "rimraf ./dist/docs && typedoc --excludePrivate --excludeProtected",
     "clean": "rimraf ./dist ./es5 ./coverage ./.nyc_output",
     "lint": "tslint -c ./tslint.json --project ./tsconfig.json -t stylish",
     "test": "npm-run-all lint build test:unit test:integration",
     "test:unit": "rimraf ./coverage ./.nyc_output && nyc mocha -r ts-node/register ./tests/unit/index.ts",
     "test:integration": "karma start",
-    "release": "release"
+    "release": "release",
+    "watch": "nodemon"
   },
   "dependencies": {
+    "@tensorflow-models/body-pix": "^2.1.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.2.0",
+    "@tensorflow/tfjs-converter": "^3.2.0",
+    "@tensorflow/tfjs-core": "^3.2.0",
     "@types/node": "^14.14.31"
   },
   "devDependencies": {
@@ -56,6 +62,7 @@
     "karma-spec-reporter": "0.0.32",
     "karma-typescript": "^5.4.0",
     "mocha": "^8.3.0",
+    "nodemon": "^2.0.7",
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
     "sinon": "^9.2.4",
