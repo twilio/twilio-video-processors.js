@@ -1,6 +1,7 @@
 import { Processor } from '../Processor';
 
 /**
+ * @private
  * The [[GrayscaleProcessor]] is a [[Processor]] which applies
  * a grayscale transform to a frame.
  */

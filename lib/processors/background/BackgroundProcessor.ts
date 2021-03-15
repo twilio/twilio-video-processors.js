@@ -7,12 +7,37 @@ import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { Resolution } from '../../types';
 
+/**
+ * @private
+ */
 export interface BackgroundProcessorOptions {
+  /**
+   * @private
+   */
   inferenceConfig?: PersonInferenceConfig;
+
+  /**
+   * The input frame will be downscaled to this resolution before sending it for inference.
+   * @default
+   * ```html
+   * 224x224
+   * ```
+   */
   inferenceResolution?: Resolution;
+
+  /**
+   * The blur radius to use when smoothing out the edges of the person's mask.
+   * @default
+   * ```html
+   * 3
+   * ```
+   */
   maskBlurRadius?: number;
 }
 
+/**
+ * @private
+ */
 export abstract class BackgroundProcessor extends Processor {
   private static _model: BodyPix | null = null;
   private static async _loadModel(config: ModelConfig = MODEL_CONFIG): Promise<void> {
@@ -48,10 +73,16 @@ export abstract class BackgroundProcessor extends Processor {
     BackgroundProcessor._loadModel();
   }
 
+  /**
+   * @private
+   */
   get benchmark(): Benchmark {
     return this._benchmark;
   }
 
+  /**
+   * @private
+   */
   get inferenceConfig(): PersonInferenceConfig {
     return this._inferenceConfig;
   }
@@ -64,6 +95,9 @@ export abstract class BackgroundProcessor extends Processor {
     this._inferenceConfig = config;
   }
 
+  /**
+   * The input frame will be downscaled to this resolution before sending it for inference.
+   */
   get inferenceResolution(): Resolution {
     return this._inferenceResolution;
   }
@@ -76,6 +110,9 @@ export abstract class BackgroundProcessor extends Processor {
     this._inferenceResolution = resolution;
   }
 
+  /**
+   * The current blur radius when smoothing out the edges of the person's mask.
+   */
   get maskBlurRadius(): number {
     return this._maskBlurRadius;
   }
@@ -88,6 +125,11 @@ export abstract class BackgroundProcessor extends Processor {
     this._maskBlurRadius = radius;
   }
 
+  /**
+   * Apply a transform to the background of an input video frame
+   * and leaving the foreground (person(s)) untouched. Any exception detected will return a null value
+   * and will result in the frame being dropped.
+   */
   async processFrame(inputFrame: OffscreenCanvas): Promise<OffscreenCanvas | null> {
     if (!BackgroundProcessor._model) {
       return inputFrame;

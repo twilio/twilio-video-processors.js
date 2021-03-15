@@ -1,22 +1,70 @@
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { ImageFit } from '../../types';
 
+/**
+ * Options passed to [[VirtualBackgroundProcessor]] constructor.
+ */
 export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOptions {
+  /**
+   * The HTMLImageElement to use for background replacement.
+   */
   backgroundImage: HTMLImageElement;
+
+  /**
+   * The [[ImageFit]] to use for positioning of the backgorund image in the viewport.
+   * @default
+   * ```html
+   * 'Fill'
+   * ```
+   */
   fitType?: ImageFit;
 }
 
+/**
+ * The VirtualBackgroundProcessor, when added to a VideoTrack,
+ * replaces the background in each video frame with a given image,
+ * leaving the foreground (person(s)) untouched.
+ *
+ * @example
+ *
+ * ```ts
+ * import { createLocalVideoTrack } from 'twilio-video';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
+ *
+ * let virtualBackground;
+ * const img = new Image();
+ *
+ * img.onload = () => {
+ *   virtualBackground = new VirtualBackgroundProcessor({ backgroundImage: img });
+ *
+ *   createLocalVideoTrack({
+ *     width: 640,
+ *     height: 480
+ *   }).then(track => {
+ *     track.addProcessor(virtualBackground);
+ *   });
+ * };
+ * img.src = 'https://image-path.jpg';
+ * ```
+ */
 export class VirtualBackgroundProcessor extends BackgroundProcessor {
 
   private _backgroundImage!: HTMLImageElement;
   private _fitType!: ImageFit;
 
+  /**
+   * Construct a VirtualBackgroundProcessor. Default values will be used for
+   * any invalid or missing optional [[VirtualBackgroundProcessorOptions]].
+   */
   constructor(options: VirtualBackgroundProcessorOptions) {
     super(options);
     this.backgroundImage = options.backgroundImage;
     this.fitType = options.fitType!;
   }
 
+  /**
+   * The HTMLImageElement representing the current background image.
+   */
   get backgroundImage(): HTMLImageElement {
     return this._backgroundImage;
   }
@@ -28,6 +76,9 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     this._backgroundImage = image;
   }
 
+  /**
+   * The current [[ImageFit]] for positioning of the backgorund image in the viewport.
+   */
   get fitType(): ImageFit {
     return this._fitType;
   }

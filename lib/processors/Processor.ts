@@ -1,4 +1,5 @@
 /**
+ * @private
  * The [[Processor]] is an abstract class for building your own custom processors.
  */
 export abstract class Processor {
