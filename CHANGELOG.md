@@ -8,12 +8,10 @@ You can now use `GaussianBlurBackgroundProcessor` to apply a Gaussian blur filte
   ```ts
   import { createLocalVideoTrack } from 'twilio-video';
   import {
-    BackgroundProcessor,
     GaussianBlurBackgroundProcessor,
     VirtualBackgroundProcessor,
   } from '@twilio/video-processors';
 
-  await BackgroundProcessor.loadModel();
   const blurBackground = new GaussianBlurBackgroundProcessor();
   const img = new Image();
 
