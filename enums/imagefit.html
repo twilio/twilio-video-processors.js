@@ -65,6 +65,13 @@
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>ImageFit specifies the positioning of an image inside a viewport.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
@@ -89,9 +96,16 @@
 					<div class="tsd-signature tsd-kind-icon">Contain<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;Contain&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/f61bd89/lib/types.ts#L13">types.ts:13</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/types.ts#L24">types.ts:24</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Scale the image up or down to fill the viewport while preserving the aspect ratio.
+								The image will be fully visible but will add empty space in the viewport if
+							aspect ratios do not match.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
 					<a name="cover" class="tsd-anchor"></a>
@@ -99,9 +113,15 @@
 					<div class="tsd-signature tsd-kind-icon">Cover<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;Cover&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/f61bd89/lib/types.ts#L14">types.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/types.ts#L30">types.ts:30</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Scale the image to fill both height and width of the viewport while preserving
+							the aspect ratio, but will crop the image if aspect ratios do not match.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
 					<a name="fill" class="tsd-anchor"></a>
@@ -109,9 +129,14 @@
 					<div class="tsd-signature tsd-kind-icon">Fill<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;Fill&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/f61bd89/lib/types.ts#L15">types.ts:15</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/types.ts#L35">types.ts:35</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Stretches the image to fill the viewport regardless of aspect ratio.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
 					<a name="none" class="tsd-anchor"></a>
@@ -119,9 +144,14 @@
 					<div class="tsd-signature tsd-kind-icon">None<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;None&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/f61bd89/lib/types.ts#L16">types.ts:16</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/types.ts#L40">types.ts:40</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Ignore height and width and use the original size.</p>
+						</div>
+					</div>
 				</section>
 			</section>
 		</div>
@@ -157,22 +187,10 @@
 				</ul>
 				<ul class="after-current">
 					<li class=" tsd-kind-class">
-						<a href="../classes/backgroundprocessor.html" class="tsd-kind-icon">Background<wbr>Processor</a>
-					</li>
-					<li class=" tsd-kind-class">
 						<a href="../classes/gaussianblurbackgroundprocessor.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor</a>
 					</li>
 					<li class=" tsd-kind-class">
-						<a href="../classes/grayscaleprocessor.html" class="tsd-kind-icon">Grayscale<wbr>Processor</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="../classes/processor.html" class="tsd-kind-icon">Processor</a>
-					</li>
-					<li class=" tsd-kind-class">
 						<a href="../classes/virtualbackgroundprocessor.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="../interfaces/backgroundprocessoroptions.html" class="tsd-kind-icon">Background<wbr>Processor<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-interface">
 						<a href="../interfaces/gaussianblurbackgroundprocessoroptions.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor<wbr>Options</a>
@@ -194,15 +212,13 @@
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
 			</ul>
 		</div>
 	</div>
