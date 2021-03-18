@@ -7,7 +7,9 @@ import { ImageFit } from '../../types';
 export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOptions {
   /**
    * The HTMLImageElement to use for background replacement.
-   * An error will be raised if the image hasn't been fully loaded yet.
+   * An error will be raised if the image hasn't been fully loaded yet. Additionally, the image must follow
+   * [security guidelines](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image)
+   * when loading the image from a different origin. Failing to do so will result to an empty output frame.
    */
   backgroundImage: HTMLImageElement;
 
@@ -45,7 +47,7 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *     track.addProcessor(virtualBackground);
  *   });
  * };
- * img.src = 'https://image-path.jpg';
+ * img.src = '/background.jpg';
  * ```
  */
 export class VirtualBackgroundProcessor extends BackgroundProcessor {
@@ -73,7 +75,9 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
 
   /**
    * Set an HTMLImageElement as the new background image.
-   * An error will be raised if the image hasn't been fully loaded yet.
+   * An error will be raised if the image hasn't been fully loaded yet. Additionally, the image must follow
+   * [security guidelines](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image)
+   * when loading the image from a different origin. Failing to do so will result to an empty output frame.
    */
   set backgroundImage(image: HTMLImageElement) {
     if (!image || !image.complete || !image.naturalHeight) {

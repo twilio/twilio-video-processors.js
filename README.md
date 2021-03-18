@@ -71,7 +71,7 @@ You can also include `video-processors.js` directly in your web app using a `<sc
   img.onload = () => {
     virtualBackground = new VirtualBackgroundProcessor({ backgroundImage: img });
   };
-  img.src = 'https://image-path.jpg';
+  img.src = '/background.jpg';
 
   const setProcessor = (track, processor) => {
     if (track.processor) {
