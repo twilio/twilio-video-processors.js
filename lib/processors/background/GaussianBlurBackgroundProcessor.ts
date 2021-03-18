@@ -18,7 +18,7 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
 /**
  * The GaussianBlurBackgroundProcessor, when added to a VideoTrack,
  * applies a gaussian blur filter on the background in each video frame
- * and leaving the foreground (person(s)) untouched.
+ * and leaves the foreground (person(s)) untouched.
  *
  * @example
  *
@@ -42,7 +42,8 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
 
   /**
    * Construct a GaussianBlurBackgroundProcessor. Default values will be used for
-   * any invalid or missing [[GaussianBlurBackgroundProcessorOptions]]
+   * any missing properties in [[GaussianBlurBackgroundProcessorOptions]], and
+   * invalid properties will be ignored.
    */
   constructor(options?: GaussianBlurBackgroundProcessorOptions) {
     super(options);
@@ -56,6 +57,9 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
     return this._blurFilterRadius;
   }
 
+  /**
+   * Set a new background blur filter radius in pixels.
+   */
   set blurFilterRadius(radius: number) {
     if (!radius) {
       console.warn(`Valid blur filter radius not found. Using ${DEFAULT_BLUR_FILTER_RADIUS} as default.`);

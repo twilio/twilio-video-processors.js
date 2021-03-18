@@ -87,6 +87,9 @@ export abstract class BackgroundProcessor extends Processor {
     return this._inferenceConfig;
   }
 
+  /**
+   * @private
+   */
   set inferenceConfig(config: PersonInferenceConfig) {
     if (!config || !Object.keys(config).length) {
       console.warn('Inference config not found. Using defaults.');
@@ -96,12 +99,17 @@ export abstract class BackgroundProcessor extends Processor {
   }
 
   /**
-   * The input frame will be downscaled to this resolution before sending it for inference.
+   * The current inference resolution. The input frame will be
+   * downscaled to this resolution before sending it for inference.
    */
   get inferenceResolution(): Resolution {
     return this._inferenceResolution;
   }
 
+  /**
+   * Set a new inference resolution. The input frame will be
+   * downscaled to this resolution before sending it for inference.
+   */
   set inferenceResolution(resolution: Resolution) {
     if (!resolution || !resolution.height || !resolution.width) {
       console.warn('Valid inference resolution not found. Using defaults');
@@ -117,6 +125,9 @@ export abstract class BackgroundProcessor extends Processor {
     return this._maskBlurRadius;
   }
 
+  /**
+   * Set a new blur radius to be used when smoothing out the edges of the person's mask.
+   */
   set maskBlurRadius(radius: number) {
     if (!radius) {
       console.warn(`Valid mask blur radius not found. Using ${MASK_BLUR_RADIUS} as default.`);
@@ -126,9 +137,9 @@ export abstract class BackgroundProcessor extends Processor {
   }
 
   /**
-   * Apply a transform to the background of an input video frame
-   * and leaving the foreground (person(s)) untouched. Any exception detected will return a null value
-   * and will result in the frame being dropped.
+   * Apply a transform to the background of an input video frame and leaving
+   * the foreground (person(s)) untouched. Any exception detected will
+   * return a null value and will result in the frame being dropped.
    */
   async processFrame(inputFrame: OffscreenCanvas): Promise<OffscreenCanvas | null> {
     if (!BackgroundProcessor._model) {

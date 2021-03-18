@@ -7,11 +7,12 @@ import { ImageFit } from '../../types';
 export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOptions {
   /**
    * The HTMLImageElement to use for background replacement.
+   * An error will be raised if the image hasn't been fully loaded yet.
    */
   backgroundImage: HTMLImageElement;
 
   /**
-   * The [[ImageFit]] to use for positioning of the backgorund image in the viewport.
+   * The [[ImageFit]] to use for positioning of the background image in the viewport.
    * @default
    * ```html
    * 'Fill'
@@ -23,7 +24,7 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
 /**
  * The VirtualBackgroundProcessor, when added to a VideoTrack,
  * replaces the background in each video frame with a given image,
- * leaving the foreground (person(s)) untouched.
+ * and leaves the foreground (person(s)) untouched.
  *
  * @example
  *
@@ -54,7 +55,8 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
 
   /**
    * Construct a VirtualBackgroundProcessor. Default values will be used for
-   * any invalid or missing optional [[VirtualBackgroundProcessorOptions]].
+   * any missing optional properties in [[VirtualBackgroundProcessorOptions]],
+   * and invalid properties will be ignored.
    */
   constructor(options: VirtualBackgroundProcessorOptions) {
     super(options);
@@ -69,6 +71,10 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     return this._backgroundImage;
   }
 
+  /**
+   * Set an HTMLImageElement as the new background image.
+   * An error will be raised if the image hasn't been fully loaded yet.
+   */
   set backgroundImage(image: HTMLImageElement) {
     if (!image || !image.complete || !image.naturalHeight) {
       throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
@@ -77,12 +83,15 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
   }
 
   /**
-   * The current [[ImageFit]] for positioning of the backgorund image in the viewport.
+   * The current [[ImageFit]] for positioning of the background image in the viewport.
    */
   get fitType(): ImageFit {
     return this._fitType;
   }
 
+  /**
+   * Set a new [[ImageFit]] to be used for positioning the background image in the viewport.
+   */
   set fitType(fitType: ImageFit) {
     const validTypes = Object.keys(ImageFit);
     if (!validTypes.includes(fitType as any)) {
