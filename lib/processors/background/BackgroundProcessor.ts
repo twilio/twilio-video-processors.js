@@ -2,10 +2,10 @@ import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 import { BodyPix, load as loadModel, SemanticPersonSegmentation } from '@tensorflow-models/body-pix';
-import { INFERENCE_CONFIG, MASK_BLUR_RADIUS, MODEL_CONFIG, INFERENCE_RESOLUTION } from '../../constants';
+import { INFERENCE_CONFIG, MASK_BLUR_RADIUS, MODEL_CONFIG, INFERENCE_DIMENSIONS } from '../../constants';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
-import { Resolution } from '../../types';
+import { Dimensions } from '../../types';
 
 /**
  * @private
@@ -17,13 +17,13 @@ export interface BackgroundProcessorOptions {
   inferenceConfig?: PersonInferenceConfig;
 
   /**
-   * The input frame will be downscaled to this resolution before sending it for inference.
+   * The input frame will be downscaled to these dimensions before sending it for inference.
    * @default
    * ```html
    * 224x224
    * ```
    */
-  inferenceResolution?: Resolution;
+  inferenceDimensions?: Dimensions;
 
   /**
    * The blur radius to use when smoothing out the edges of the person's mask.
@@ -49,7 +49,7 @@ export abstract class BackgroundProcessor extends Processor {
 
   private _benchmark: Benchmark;
   private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
-  private _inferenceResolution: Resolution = INFERENCE_RESOLUTION;
+  private _inferenceDimensions: Dimensions = INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
@@ -59,7 +59,7 @@ export abstract class BackgroundProcessor extends Processor {
   constructor(options?: BackgroundProcessorOptions) {
     super();
     this.inferenceConfig = options?.inferenceConfig!;
-    this.inferenceResolution = options?.inferenceResolution!;
+    this.inferenceDimensions = options?.inferenceDimensions!;
     this.maskBlurRadius = options?.maskBlurRadius!;
 
     this._benchmark = new Benchmark();
@@ -99,23 +99,23 @@ export abstract class BackgroundProcessor extends Processor {
   }
 
   /**
-   * The current inference resolution. The input frame will be
-   * downscaled to this resolution before sending it for inference.
+   * The current inference dimensions. The input frame will be
+   * downscaled to these dimensions before sending it for inference.
    */
-  get inferenceResolution(): Resolution {
-    return this._inferenceResolution;
+  get inferenceDimensions(): Dimensions {
+    return this._inferenceDimensions;
   }
 
   /**
-   * Set a new inference resolution. The input frame will be
-   * downscaled to this resolution before sending it for inference.
+   * Set a new inference dimensions. The input frame will be
+   * downscaled to these dimensions before sending it for inference.
    */
-  set inferenceResolution(resolution: Resolution) {
-    if (!resolution || !resolution.height || !resolution.width) {
-      console.warn('Valid inference resolution not found. Using defaults');
-      resolution = INFERENCE_RESOLUTION;
+  set inferenceDimensions(dimensions: Dimensions) {
+    if (!dimensions || !dimensions.height || !dimensions.width) {
+      console.warn('Valid inference dimensions not found. Using defaults');
+      dimensions = INFERENCE_DIMENSIONS;
     }
-    this._inferenceResolution = resolution;
+    this._inferenceDimensions = dimensions;
   }
 
   /**
@@ -151,7 +151,7 @@ export abstract class BackgroundProcessor extends Processor {
 
     this._benchmark.start('resizeInputImage');
     const { width: captureWidth, height: captureHeight } = inputFrame;
-    const { width: inferenceWidth, height: inferenceHeight } = this._inferenceResolution;
+    const { width: inferenceWidth, height: inferenceHeight } = this._inferenceDimensions;
     this._inputCanvas.width = inferenceWidth;
     this._inputCanvas.height = inferenceHeight;
     this._maskCanvas.width = inferenceWidth;

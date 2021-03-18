@@ -7,7 +7,7 @@
   start?: number;
 }
 
-export interface Resolution {
+export interface Dimensions {
   height: number;
   width: number;
 }
