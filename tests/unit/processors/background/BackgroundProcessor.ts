@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
 import { BackgroundProcessor } from '../../../../lib/processors/background/BackgroundProcessor';
-import { INFERENCE_CONFIG, INFERENCE_RESOLUTION } from '../../../../lib/constants';
+import { INFERENCE_CONFIG, INFERENCE_DIMENSIONS } from '../../../../lib/constants';
 
 class MyBackgroundProcessor extends BackgroundProcessor {
   constructor(options?: any) {
@@ -90,33 +90,33 @@ describe('BackgroundProcessor', () => {
     });
   });
 
-  describe('inferenceResolution', () => {
+  describe('inferenceDimensions', () => {
     [
       null, 
       undefined, 
       { }, 
-      { inferenceResolution: null },
-      { inferenceResolution: undefined },
-      { inferenceResolution: {} },
-      { inferenceResolution: { foo: 'foo' } },
-      { inferenceResolution: { height: 0, width: 1 } },
-      { inferenceResolution: { height: 1, width: 0 } },
-      { inferenceResolution: { height: 1, width: 1 } }
+      { inferenceDimensions: null },
+      { inferenceDimensions: undefined },
+      { inferenceDimensions: {} },
+      { inferenceDimensions: { foo: 'foo' } },
+      { inferenceDimensions: { height: 0, width: 1 } },
+      { inferenceDimensions: { height: 1, width: 0 } },
+      { inferenceDimensions: { height: 1, width: 1 } }
     ].forEach((option: any) => {
-      const useDefault = !option || !option.inferenceResolution || !option.inferenceResolution.height || !option.inferenceResolution.width;
-      const param = option && option.inferenceResolution ? JSON.stringify(option) : option;
-      it(`should set inferenceResolution to ${useDefault ? 'default' : option.inferenceResolution} if option is ${param}`, () => {
+      const useDefault = !option || !option.inferenceDimensions || !option.inferenceDimensions.height || !option.inferenceDimensions.width;
+      const param = option && option.inferenceDimensions ? JSON.stringify(option) : option;
+      it(`should set inferenceDimensions to ${useDefault ? 'default' : option.inferenceDimensions} if option is ${param}`, () => {
         const processor = new MyBackgroundProcessor(option);
-        const expected = useDefault ? INFERENCE_RESOLUTION : option.inferenceResolution;
-        assert.deepStrictEqual(processor.inferenceResolution, expected);
+        const expected = useDefault ? INFERENCE_DIMENSIONS : option.inferenceDimensions;
+        assert.deepStrictEqual(processor.inferenceDimensions, expected);
       });
   
       if (option) {
-        it(`should set inferenceResolution to ${useDefault ? 'default' : option.inferenceResolution} if inferenceResolution being set is ${JSON.stringify(option.inferenceResolution)}`, () => {
+        it(`should set inferenceDimensions to ${useDefault ? 'default' : option.inferenceDimensions} if inferenceDimensions being set is ${JSON.stringify(option.inferenceDimensions)}`, () => {
           const processor = new MyBackgroundProcessor();
-          processor.inferenceResolution = option.inferenceResolution;
-          const expected = useDefault ? INFERENCE_RESOLUTION : option.inferenceResolution;
-          assert.strictEqual(processor.inferenceResolution, expected);
+          processor.inferenceDimensions = option.inferenceDimensions;
+          const expected = useDefault ? INFERENCE_DIMENSIONS : option.inferenceDimensions;
+          assert.strictEqual(processor.inferenceDimensions, expected);
         });
       }
     });

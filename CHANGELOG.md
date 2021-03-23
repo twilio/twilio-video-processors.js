@@ -19,7 +19,7 @@ You can now use `GaussianBlurBackgroundProcessor` to apply a Gaussian blur filte
   img.onload = () => {
     virtualBackground = new VirtualBackgroundProcessor({ backgroundImage: img });
   };
-  img.src = 'https://image-path.jpg';
+  img.src = '/background.jpg';
 
   const setProcessor = (track, processor) => {
     if (track.processor) {
