@@ -63,6 +63,11 @@
 				</a>
 				<p><a href="https://www.npmjs.com/package/@twilio/video-processors"><img src="https://img.shields.io/npm/v/@twilio/video-processors.svg" alt="NPM"></a></p>
 				<p>Twilio Video Processors is a collection of video processing tools which can be used with <a href="https://github.com/twilio/twilio-video.js">Twilio Video JavaScript SDK</a> to apply transformations and filters to a video track.</p>
+				<ul>
+					<li><a href="https://twilio.github.io/video-processors.js/modules.html">API Docs</a></li>
+					<li><a href="example/">Example</a></li>
+					<li><a href="https://twilio.github.io/video-processors.js/example/">Demo</a></li>
+				</ul>
 				<a href="#features" id="features" style="color: inherit; text-decoration: none;">
 					<h2>Features</h2>
 				</a>
@@ -110,7 +115,37 @@
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
 					<h2>Usage</h2>
 				</a>
-				<p>TODO: Add examples and API Docs link</p>
+				<pre><code class="language-ts"><span style="color: #000000">  </span><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">createLocalVideoTrack</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;twilio-video&#039;</span><span style="color: #000000">;</span>
+<span style="color: #000000">  </span><span style="color: #AF00DB">import</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #001080">GaussianBlurBackgroundProcessor</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">VirtualBackgroundProcessor</span><span style="color: #000000">,</span>
+<span style="color: #000000">  } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">blurBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">GaussianBlurBackgroundProcessor</span><span style="color: #000000">();</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">img</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">Image</span><span style="color: #000000">();</span>
+
+<span style="color: #000000">  </span><span style="color: #0000FF">let</span><span style="color: #000000"> </span><span style="color: #001080">virtualBackground</span><span style="color: #000000">;</span>
+<span style="color: #000000">  </span><span style="color: #001080">img</span><span style="color: #000000">.</span><span style="color: #795E26">onload</span><span style="color: #000000"> = () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #001080">virtualBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">VirtualBackgroundProcessor</span><span style="color: #000000">({ </span><span style="color: #001080">backgroundImage:</span><span style="color: #000000"> </span><span style="color: #001080">img</span><span style="color: #000000"> });</span>
+<span style="color: #000000">  };</span>
+<span style="color: #000000">  </span><span style="color: #001080">img</span><span style="color: #000000">.</span><span style="color: #001080">src</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;/background.jpg&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #795E26">setProcessor</span><span style="color: #000000"> = (</span><span style="color: #001080">track</span><span style="color: #000000">, </span><span style="color: #001080">processor</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #001080">processor</span><span style="color: #000000">) {</span>
+<span style="color: #000000">      </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">removeProcessor</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #001080">processor</span><span style="color: #000000">);</span>
+<span style="color: #000000">    }</span>
+<span style="color: #000000">    </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">processor</span><span style="color: #000000">);</span>
+<span style="color: #000000">  };</span>
+
+<span style="color: #000000">  </span><span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span>
+<span style="color: #000000">  }).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #001080">document</span><span style="color: #000000">.</span><span style="color: #795E26">getElementById</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;preview&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">appendChild</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">attach</span><span style="color: #000000">());</span>
+<span style="color: #000000">    </span><span style="color: #001080">document</span><span style="color: #000000">.</span><span style="color: #795E26">getElementById</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;blur-bg&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">onclick</span><span style="color: #000000"> = () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #795E26">setProcessor</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">, </span><span style="color: #001080">blurBackground</span><span style="color: #000000">);</span>
+<span style="color: #000000">    </span><span style="color: #001080">document</span><span style="color: #000000">.</span><span style="color: #795E26">getElementById</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;virtual-bg&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">onclick</span><span style="color: #000000"> = () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #795E26">setProcessor</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">, </span><span style="color: #001080">virtualBackground</span><span style="color: #000000">);</span>
+<span style="color: #000000">  });</span>
+</code></pre>
 				<a href="#related" id="related" style="color: inherit; text-decoration: none;">
 					<h2>Related</h2>
 				</a>
@@ -139,28 +174,16 @@
 						<a href="enums/imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a>
 					</li>
 					<li class=" tsd-kind-class">
-						<a href="classes/backgroundprocessor.html" class="tsd-kind-icon">Background<wbr>Processor</a>
-					</li>
-					<li class=" tsd-kind-class">
 						<a href="classes/gaussianblurbackgroundprocessor.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/grayscaleprocessor.html" class="tsd-kind-icon">Grayscale<wbr>Processor</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/processor.html" class="tsd-kind-icon">Processor</a>
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/virtualbackgroundprocessor.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor</a>
 					</li>
 					<li class=" tsd-kind-interface">
-						<a href="interfaces/backgroundprocessoroptions.html" class="tsd-kind-icon">Background<wbr>Processor<wbr>Options</a>
+						<a href="interfaces/dimensions.html" class="tsd-kind-icon">Dimensions</a>
 					</li>
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/gaussianblurbackgroundprocessoroptions.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/resolution.html" class="tsd-kind-icon">Resolution</a>
 					</li>
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/virtualbackgroundprocessoroptions.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor<wbr>Options</a>
@@ -176,15 +199,13 @@
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
 			</ul>
 		</div>
 	</div>

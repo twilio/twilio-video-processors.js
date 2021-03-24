@@ -18,8 +18,34 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GaussianBlurBackgroundProcessor = void 0;
 var BackgroundProcessor_1 = require("./BackgroundProcessor");
 var constants_1 = require("../../constants");
+/**
+ * The GaussianBlurBackgroundProcessor, when added to a VideoTrack,
+ * applies a gaussian blur filter on the background in each video frame
+ * and leaves the foreground (person(s)) untouched.
+ *
+ * @example
+ *
+ * ```ts
+ * import { createLocalVideoTrack } from 'twilio-video';
+ * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+ *
+ * const blurBackground = new GaussianBlurBackgroundProcessor();
+ *
+ * createLocalVideoTrack({
+ *   width: 640,
+ *   height: 480
+ * }).then(track => {
+ *   track.addProcessor(blurBackground);
+ * });
+ * ```
+ */
 var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
     __extends(GaussianBlurBackgroundProcessor, _super);
+    /**
+     * Construct a GaussianBlurBackgroundProcessor. Default values will be used for
+     * any missing properties in [[GaussianBlurBackgroundProcessorOptions]], and
+     * invalid properties will be ignored.
+     */
     function GaussianBlurBackgroundProcessor(options) {
         var _this = _super.call(this, options) || this;
         _this._blurFilterRadius = constants_1.DEFAULT_BLUR_FILTER_RADIUS;
@@ -27,9 +53,15 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
         return _this;
     }
     Object.defineProperty(GaussianBlurBackgroundProcessor.prototype, "blurFilterRadius", {
+        /**
+         * The current background blur filter radius in pixels.
+         */
         get: function () {
             return this._blurFilterRadius;
         },
+        /**
+         * Set a new background blur filter radius in pixels.
+         */
         set: function (radius) {
             if (!radius) {
                 console.warn("Valid blur filter radius not found. Using " + constants_1.DEFAULT_BLUR_FILTER_RADIUS + " as default.");

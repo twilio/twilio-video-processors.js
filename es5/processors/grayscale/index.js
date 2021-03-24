@@ -18,6 +18,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GrayscaleProcessor = void 0;
 var Processor_1 = require("../Processor");
 /**
+ * @private
  * The [[GrayscaleProcessor]] is a [[Processor]] which applies
  * a grayscale transform to a frame.
  */

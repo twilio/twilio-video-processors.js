@@ -58,15 +58,18 @@ var body_pix_1 = require("@tensorflow-models/body-pix");
 var constants_1 = require("../../constants");
 var Processor_1 = require("../Processor");
 var Benchmark_1 = require("../../utils/Benchmark");
+/**
+ * @private
+ */
 var BackgroundProcessor = /** @class */ (function (_super) {
     __extends(BackgroundProcessor, _super);
     function BackgroundProcessor(options) {
         var _this = _super.call(this) || this;
         _this._inferenceConfig = constants_1.INFERENCE_CONFIG;
-        _this._inferenceResolution = constants_1.INFERENCE_RESOLUTION;
+        _this._inferenceDimensions = constants_1.INFERENCE_DIMENSIONS;
         _this._maskBlurRadius = constants_1.MASK_BLUR_RADIUS;
         _this.inferenceConfig = options === null || options === void 0 ? void 0 : options.inferenceConfig;
-        _this.inferenceResolution = options === null || options === void 0 ? void 0 : options.inferenceResolution;
+        _this.inferenceDimensions = options === null || options === void 0 ? void 0 : options.inferenceDimensions;
         _this.maskBlurRadius = options === null || options === void 0 ? void 0 : options.maskBlurRadius;
         _this._benchmark = new Benchmark_1.Benchmark();
         _this._inputCanvas = document.createElement('canvas');
@@ -96,6 +99,9 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         });
     };
     Object.defineProperty(BackgroundProcessor.prototype, "benchmark", {
+        /**
+         * @private
+         */
         get: function () {
             return this._benchmark;
         },
@@ -103,9 +109,15 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         configurable: true
     });
     Object.defineProperty(BackgroundProcessor.prototype, "inferenceConfig", {
+        /**
+         * @private
+         */
         get: function () {
             return this._inferenceConfig;
         },
+        /**
+         * @private
+         */
         set: function (config) {
             if (!config || !Object.keys(config).length) {
                 console.warn('Inference config not found. Using defaults.');
@@ -116,24 +128,38 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(BackgroundProcessor.prototype, "inferenceResolution", {
+    Object.defineProperty(BackgroundProcessor.prototype, "inferenceDimensions", {
+        /**
+         * The current inference dimensions. The input frame will be
+         * downscaled to these dimensions before sending it for inference.
+         */
         get: function () {
-            return this._inferenceResolution;
+            return this._inferenceDimensions;
         },
-        set: function (resolution) {
-            if (!resolution || !resolution.height || !resolution.width) {
-                console.warn('Valid inference resolution not found. Using defaults');
-                resolution = constants_1.INFERENCE_RESOLUTION;
+        /**
+         * Set a new inference dimensions. The input frame will be
+         * downscaled to these dimensions before sending it for inference.
+         */
+        set: function (dimensions) {
+            if (!dimensions || !dimensions.height || !dimensions.width) {
+                console.warn('Valid inference dimensions not found. Using defaults');
+                dimensions = constants_1.INFERENCE_DIMENSIONS;
             }
-            this._inferenceResolution = resolution;
+            this._inferenceDimensions = dimensions;
         },
         enumerable: false,
         configurable: true
     });
     Object.defineProperty(BackgroundProcessor.prototype, "maskBlurRadius", {
+        /**
+         * The current blur radius when smoothing out the edges of the person's mask.
+         */
         get: function () {
             return this._maskBlurRadius;
         },
+        /**
+         * Set a new blur radius to be used when smoothing out the edges of the person's mask.
+         */
         set: function (radius) {
             if (!radius) {
                 console.warn("Valid mask blur radius not found. Using " + constants_1.MASK_BLUR_RADIUS + " as default.");
@@ -144,6 +170,11 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
+    /**
+     * Apply a transform to the background of an input video frame and leaving
+     * the foreground (person(s)) untouched. Any exception detected will
+     * return a null value and will result in the frame being dropped.
+     */
     BackgroundProcessor.prototype.processFrame = function (inputFrame) {
         return __awaiter(this, void 0, void 0, function () {
             var captureWidth, captureHeight, _a, inferenceWidth, inferenceHeight, imageData, segment;
@@ -157,7 +188,7 @@ var BackgroundProcessor = /** @class */ (function (_super) {
                         this._benchmark.start('processFrame(processor)');
                         this._benchmark.start('resizeInputImage');
                         captureWidth = inputFrame.width, captureHeight = inputFrame.height;
-                        _a = this._inferenceResolution, inferenceWidth = _a.width, inferenceHeight = _a.height;
+                        _a = this._inferenceDimensions, inferenceWidth = _a.width, inferenceHeight = _a.height;
                         this._inputCanvas.width = inferenceWidth;
                         this._inputCanvas.height = inferenceHeight;
                         this._maskCanvas.width = inferenceWidth;

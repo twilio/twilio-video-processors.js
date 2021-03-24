@@ -2,17 +2,42 @@ import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 import { BodyPix, load as loadModel, SemanticPersonSegmentation } from '@tensorflow-models/body-pix';
-import { INFERENCE_CONFIG, MASK_BLUR_RADIUS, MODEL_CONFIG, INFERENCE_RESOLUTION } from '../../constants';
+import { INFERENCE_CONFIG, MASK_BLUR_RADIUS, MODEL_CONFIG, INFERENCE_DIMENSIONS } from '../../constants';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
-import { Resolution } from '../../types';
+import { Dimensions } from '../../types';
 
+/**
+ * @private
+ */
 export interface BackgroundProcessorOptions {
+  /**
+   * @private
+   */
   inferenceConfig?: PersonInferenceConfig;
-  inferenceResolution?: Resolution;
+
+  /**
+   * The input frame will be downscaled to these dimensions before sending it for inference.
+   * @default
+   * ```html
+   * 224x224
+   * ```
+   */
+  inferenceDimensions?: Dimensions;
+
+  /**
+   * The blur radius to use when smoothing out the edges of the person's mask.
+   * @default
+   * ```html
+   * 3
+   * ```
+   */
   maskBlurRadius?: number;
 }
 
+/**
+ * @private
+ */
 export abstract class BackgroundProcessor extends Processor {
   private static _model: BodyPix | null = null;
   private static async _loadModel(config: ModelConfig = MODEL_CONFIG): Promise<void> {
@@ -24,7 +49,7 @@ export abstract class BackgroundProcessor extends Processor {
 
   private _benchmark: Benchmark;
   private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
-  private _inferenceResolution: Resolution = INFERENCE_RESOLUTION;
+  private _inferenceDimensions: Dimensions = INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
@@ -34,7 +59,7 @@ export abstract class BackgroundProcessor extends Processor {
   constructor(options?: BackgroundProcessorOptions) {
     super();
     this.inferenceConfig = options?.inferenceConfig!;
-    this.inferenceResolution = options?.inferenceResolution!;
+    this.inferenceDimensions = options?.inferenceDimensions!;
     this.maskBlurRadius = options?.maskBlurRadius!;
 
     this._benchmark = new Benchmark();
@@ -48,14 +73,23 @@ export abstract class BackgroundProcessor extends Processor {
     BackgroundProcessor._loadModel();
   }
 
+  /**
+   * @private
+   */
   get benchmark(): Benchmark {
     return this._benchmark;
   }
 
+  /**
+   * @private
+   */
   get inferenceConfig(): PersonInferenceConfig {
     return this._inferenceConfig;
   }
 
+  /**
+   * @private
+   */
   set inferenceConfig(config: PersonInferenceConfig) {
     if (!config || !Object.keys(config).length) {
       console.warn('Inference config not found. Using defaults.');
@@ -64,22 +98,36 @@ export abstract class BackgroundProcessor extends Processor {
     this._inferenceConfig = config;
   }
 
-  get inferenceResolution(): Resolution {
-    return this._inferenceResolution;
+  /**
+   * The current inference dimensions. The input frame will be
+   * downscaled to these dimensions before sending it for inference.
+   */
+  get inferenceDimensions(): Dimensions {
+    return this._inferenceDimensions;
   }
 
-  set inferenceResolution(resolution: Resolution) {
-    if (!resolution || !resolution.height || !resolution.width) {
-      console.warn('Valid inference resolution not found. Using defaults');
-      resolution = INFERENCE_RESOLUTION;
+  /**
+   * Set a new inference dimensions. The input frame will be
+   * downscaled to these dimensions before sending it for inference.
+   */
+  set inferenceDimensions(dimensions: Dimensions) {
+    if (!dimensions || !dimensions.height || !dimensions.width) {
+      console.warn('Valid inference dimensions not found. Using defaults');
+      dimensions = INFERENCE_DIMENSIONS;
     }
-    this._inferenceResolution = resolution;
+    this._inferenceDimensions = dimensions;
   }
 
+  /**
+   * The current blur radius when smoothing out the edges of the person's mask.
+   */
   get maskBlurRadius(): number {
     return this._maskBlurRadius;
   }
 
+  /**
+   * Set a new blur radius to be used when smoothing out the edges of the person's mask.
+   */
   set maskBlurRadius(radius: number) {
     if (!radius) {
       console.warn(`Valid mask blur radius not found. Using ${MASK_BLUR_RADIUS} as default.`);
@@ -88,6 +136,11 @@ export abstract class BackgroundProcessor extends Processor {
     this._maskBlurRadius = radius;
   }
 
+  /**
+   * Apply a transform to the background of an input video frame and leaving
+   * the foreground (person(s)) untouched. Any exception detected will
+   * return a null value and will result in the frame being dropped.
+   */
   async processFrame(inputFrame: OffscreenCanvas): Promise<OffscreenCanvas | null> {
     if (!BackgroundProcessor._model) {
       return inputFrame;
@@ -98,7 +151,7 @@ export abstract class BackgroundProcessor extends Processor {
 
     this._benchmark.start('resizeInputImage');
     const { width: captureWidth, height: captureHeight } = inputFrame;
-    const { width: inferenceWidth, height: inferenceHeight } = this._inferenceResolution;
+    const { width: inferenceWidth, height: inferenceHeight } = this._inferenceDimensions;
     this._inputCanvas.width = inferenceWidth;
     this._inputCanvas.height = inferenceHeight;
     this._maskCanvas.width = inferenceWidth;

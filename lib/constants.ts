@@ -1,5 +1,5 @@
 import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
-import { Resolution } from './types';
+import { Dimensions } from './types';
 
 export const DEFAULT_BLUR_FILTER_RADIUS = 5;
 
@@ -18,7 +18,7 @@ export const INFERENCE_CONFIG: PersonInferenceConfig = {
 
 export const MASK_BLUR_RADIUS = 3;
 
-export const INFERENCE_RESOLUTION: Resolution = {
+export const INFERENCE_DIMENSIONS: Dimensions = {
   width: 224,
   height: 224,
 };

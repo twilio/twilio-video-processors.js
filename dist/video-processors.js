@@ -1,4 +1,4 @@
-/*! video-processors.js 1.0.0-rc1
+/*! video-processors.js 1.0.0-rc2
 
 The following license applies to all parts of this software except as
 documented below.
@@ -38,7 +38,7 @@ documented below.
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.INFERENCE_RESOLUTION = exports.MASK_BLUR_RADIUS = exports.INFERENCE_CONFIG = exports.MODEL_CONFIG = exports.DEFAULT_BLUR_FILTER_RADIUS = void 0;
+exports.INFERENCE_DIMENSIONS = exports.MASK_BLUR_RADIUS = exports.INFERENCE_CONFIG = exports.MODEL_CONFIG = exports.DEFAULT_BLUR_FILTER_RADIUS = void 0;
 exports.DEFAULT_BLUR_FILTER_RADIUS = 5;
 exports.MODEL_CONFIG = {
     architecture: 'MobileNetV1',
@@ -52,7 +52,7 @@ exports.INFERENCE_CONFIG = {
     segmentationThreshold: 0.75,
 };
 exports.MASK_BLUR_RADIUS = 3;
-exports.INFERENCE_RESOLUTION = {
+exports.INFERENCE_DIMENSIONS = {
     width: 224,
     height: 224,
 };
@@ -95,6 +95,7 @@ window.Twilio.VideoProcessors = __assign(__assign({}, window.Twilio.VideoProcess
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Processor = void 0;
 /**
+ * @private
  * The [[Processor]] is an abstract class for building your own custom processors.
  */
 var Processor = /** @class */ (function () {
@@ -165,15 +166,18 @@ var body_pix_1 = require("@tensorflow-models/body-pix");
 var constants_1 = require("../../constants");
 var Processor_1 = require("../Processor");
 var Benchmark_1 = require("../../utils/Benchmark");
+/**
+ * @private
+ */
 var BackgroundProcessor = /** @class */ (function (_super) {
     __extends(BackgroundProcessor, _super);
     function BackgroundProcessor(options) {
         var _this = _super.call(this) || this;
         _this._inferenceConfig = constants_1.INFERENCE_CONFIG;
-        _this._inferenceResolution = constants_1.INFERENCE_RESOLUTION;
+        _this._inferenceDimensions = constants_1.INFERENCE_DIMENSIONS;
         _this._maskBlurRadius = constants_1.MASK_BLUR_RADIUS;
         _this.inferenceConfig = options === null || options === void 0 ? void 0 : options.inferenceConfig;
-        _this.inferenceResolution = options === null || options === void 0 ? void 0 : options.inferenceResolution;
+        _this.inferenceDimensions = options === null || options === void 0 ? void 0 : options.inferenceDimensions;
         _this.maskBlurRadius = options === null || options === void 0 ? void 0 : options.maskBlurRadius;
         _this._benchmark = new Benchmark_1.Benchmark();
         _this._inputCanvas = document.createElement('canvas');
@@ -203,6 +207,9 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         });
     };
     Object.defineProperty(BackgroundProcessor.prototype, "benchmark", {
+        /**
+         * @private
+         */
         get: function () {
             return this._benchmark;
         },
@@ -210,9 +217,15 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         configurable: true
     });
     Object.defineProperty(BackgroundProcessor.prototype, "inferenceConfig", {
+        /**
+         * @private
+         */
         get: function () {
             return this._inferenceConfig;
         },
+        /**
+         * @private
+         */
         set: function (config) {
             if (!config || !Object.keys(config).length) {
                 console.warn('Inference config not found. Using defaults.');
@@ -223,24 +236,38 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(BackgroundProcessor.prototype, "inferenceResolution", {
+    Object.defineProperty(BackgroundProcessor.prototype, "inferenceDimensions", {
+        /**
+         * The current inference dimensions. The input frame will be
+         * downscaled to these dimensions before sending it for inference.
+         */
         get: function () {
-            return this._inferenceResolution;
+            return this._inferenceDimensions;
         },
-        set: function (resolution) {
-            if (!resolution || !resolution.height || !resolution.width) {
-                console.warn('Valid inference resolution not found. Using defaults');
-                resolution = constants_1.INFERENCE_RESOLUTION;
+        /**
+         * Set a new inference dimensions. The input frame will be
+         * downscaled to these dimensions before sending it for inference.
+         */
+        set: function (dimensions) {
+            if (!dimensions || !dimensions.height || !dimensions.width) {
+                console.warn('Valid inference dimensions not found. Using defaults');
+                dimensions = constants_1.INFERENCE_DIMENSIONS;
             }
-            this._inferenceResolution = resolution;
+            this._inferenceDimensions = dimensions;
         },
         enumerable: false,
         configurable: true
     });
     Object.defineProperty(BackgroundProcessor.prototype, "maskBlurRadius", {
+        /**
+         * The current blur radius when smoothing out the edges of the person's mask.
+         */
         get: function () {
             return this._maskBlurRadius;
         },
+        /**
+         * Set a new blur radius to be used when smoothing out the edges of the person's mask.
+         */
         set: function (radius) {
             if (!radius) {
                 console.warn("Valid mask blur radius not found. Using " + constants_1.MASK_BLUR_RADIUS + " as default.");
@@ -251,6 +278,11 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
+    /**
+     * Apply a transform to the background of an input video frame and leaving
+     * the foreground (person(s)) untouched. Any exception detected will
+     * return a null value and will result in the frame being dropped.
+     */
     BackgroundProcessor.prototype.processFrame = function (inputFrame) {
         return __awaiter(this, void 0, void 0, function () {
             var captureWidth, captureHeight, _a, inferenceWidth, inferenceHeight, imageData, segment;
@@ -264,7 +296,7 @@ var BackgroundProcessor = /** @class */ (function (_super) {
                         this._benchmark.start('processFrame(processor)');
                         this._benchmark.start('resizeInputImage');
                         captureWidth = inputFrame.width, captureHeight = inputFrame.height;
-                        _a = this._inferenceResolution, inferenceWidth = _a.width, inferenceHeight = _a.height;
+                        _a = this._inferenceDimensions, inferenceWidth = _a.width, inferenceHeight = _a.height;
                         this._inputCanvas.width = inferenceWidth;
                         this._inputCanvas.height = inferenceHeight;
                         this._maskCanvas.width = inferenceWidth;
@@ -339,8 +371,34 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GaussianBlurBackgroundProcessor = void 0;
 var BackgroundProcessor_1 = require("./BackgroundProcessor");
 var constants_1 = require("../../constants");
+/**
+ * The GaussianBlurBackgroundProcessor, when added to a VideoTrack,
+ * applies a gaussian blur filter on the background in each video frame
+ * and leaves the foreground (person(s)) untouched.
+ *
+ * @example
+ *
+ * ```ts
+ * import { createLocalVideoTrack } from 'twilio-video';
+ * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+ *
+ * const blurBackground = new GaussianBlurBackgroundProcessor();
+ *
+ * createLocalVideoTrack({
+ *   width: 640,
+ *   height: 480
+ * }).then(track => {
+ *   track.addProcessor(blurBackground);
+ * });
+ * ```
+ */
 var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
     __extends(GaussianBlurBackgroundProcessor, _super);
+    /**
+     * Construct a GaussianBlurBackgroundProcessor. Default values will be used for
+     * any missing properties in [[GaussianBlurBackgroundProcessorOptions]], and
+     * invalid properties will be ignored.
+     */
     function GaussianBlurBackgroundProcessor(options) {
         var _this = _super.call(this, options) || this;
         _this._blurFilterRadius = constants_1.DEFAULT_BLUR_FILTER_RADIUS;
@@ -348,9 +406,15 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
         return _this;
     }
     Object.defineProperty(GaussianBlurBackgroundProcessor.prototype, "blurFilterRadius", {
+        /**
+         * The current background blur filter radius in pixels.
+         */
         get: function () {
             return this._blurFilterRadius;
         },
+        /**
+         * Set a new background blur filter radius in pixels.
+         */
         set: function (radius) {
             if (!radius) {
                 console.warn("Valid blur filter radius not found. Using " + constants_1.DEFAULT_BLUR_FILTER_RADIUS + " as default.");
@@ -390,8 +454,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VirtualBackgroundProcessor = void 0;
 var BackgroundProcessor_1 = require("./BackgroundProcessor");
 var types_1 = require("../../types");
+/**
+ * The VirtualBackgroundProcessor, when added to a VideoTrack,
+ * replaces the background in each video frame with a given image,
+ * and leaves the foreground (person(s)) untouched.
+ *
+ * @example
+ *
+ * ```ts
+ * import { createLocalVideoTrack } from 'twilio-video';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
+ *
+ * let virtualBackground;
+ * const img = new Image();
+ *
+ * img.onload = () => {
+ *   virtualBackground = new VirtualBackgroundProcessor({ backgroundImage: img });
+ *
+ *   createLocalVideoTrack({
+ *     width: 640,
+ *     height: 480
+ *   }).then(track => {
+ *     track.addProcessor(virtualBackground);
+ *   });
+ * };
+ * img.src = '/background.jpg';
+ * ```
+ */
 var VirtualBackgroundProcessor = /** @class */ (function (_super) {
     __extends(VirtualBackgroundProcessor, _super);
+    /**
+     * Construct a VirtualBackgroundProcessor. Default values will be used for
+     * any missing optional properties in [[VirtualBackgroundProcessorOptions]],
+     * and invalid properties will be ignored.
+     */
     function VirtualBackgroundProcessor(options) {
         var _this = _super.call(this, options) || this;
         _this.backgroundImage = options.backgroundImage;
@@ -399,9 +495,18 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
         return _this;
     }
     Object.defineProperty(VirtualBackgroundProcessor.prototype, "backgroundImage", {
+        /**
+         * The HTMLImageElement representing the current background image.
+         */
         get: function () {
             return this._backgroundImage;
         },
+        /**
+         * Set an HTMLImageElement as the new background image.
+         * An error will be raised if the image hasn't been fully loaded yet. Additionally, the image must follow
+         * [security guidelines](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image)
+         * when loading the image from a different origin. Failing to do so will result to an empty output frame.
+         */
         set: function (image) {
             if (!image || !image.complete || !image.naturalHeight) {
                 throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
@@ -412,9 +517,15 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
         configurable: true
     });
     Object.defineProperty(VirtualBackgroundProcessor.prototype, "fitType", {
+        /**
+         * The current [[ImageFit]] for positioning of the background image in the viewport.
+         */
         get: function () {
             return this._fitType;
         },
+        /**
+         * Set a new [[ImageFit]] to be used for positioning the background image in the viewport.
+         */
         set: function (fitType) {
             var validTypes = Object.keys(types_1.ImageFit);
             if (!validTypes.includes(fitType)) {
@@ -494,6 +605,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GrayscaleProcessor = void 0;
 var Processor_1 = require("../Processor");
 /**
+ * @private
  * The [[GrayscaleProcessor]] is a [[Processor]] which applies
  * a grayscale transform to a frame.
  */
@@ -528,11 +640,29 @@ exports.GrayscaleProcessor = GrayscaleProcessor;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageFit = void 0;
+/**
+ * ImageFit specifies the positioning of an image inside a viewport.
+ */
 var ImageFit;
 (function (ImageFit) {
+    /**
+     * Scale the image up or down to fill the viewport while preserving the aspect ratio.
+     * The image will be fully visible but will add empty space in the viewport if
+     * aspect ratios do not match.
+     */
     ImageFit["Contain"] = "Contain";
+    /**
+     * Scale the image to fill both height and width of the viewport while preserving
+     * the aspect ratio, but will crop the image if aspect ratios do not match.
+     */
     ImageFit["Cover"] = "Cover";
+    /**
+     * Stretches the image to fill the viewport regardless of aspect ratio.
+     */
     ImageFit["Fill"] = "Fill";
+    /**
+     * Ignore height and width and use the original size.
+     */
     ImageFit["None"] = "None";
 })(ImageFit = exports.ImageFit || (exports.ImageFit = {}));
 

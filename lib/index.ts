@@ -3,7 +3,7 @@ import { GaussianBlurBackgroundProcessor, GaussianBlurBackgroundProcessorOptions
 import { VirtualBackgroundProcessor, VirtualBackgroundProcessorOptions } from './processors/background/VirtualBackgroundProcessor';
 import { GrayscaleProcessor } from './processors/grayscale';
 import { Processor } from './processors/Processor';
-import { ImageFit, Resolution } from './types';
+import { ImageFit, Dimensions } from './types';
 
 /**
  * @private
@@ -31,7 +31,7 @@ export {
   GrayscaleProcessor,
   ImageFit,
   Processor,
-  Resolution,
+  Dimensions,
   VirtualBackgroundProcessor,
   VirtualBackgroundProcessorOptions,
 };

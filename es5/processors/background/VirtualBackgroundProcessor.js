@@ -18,8 +18,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VirtualBackgroundProcessor = void 0;
 var BackgroundProcessor_1 = require("./BackgroundProcessor");
 var types_1 = require("../../types");
+/**
+ * The VirtualBackgroundProcessor, when added to a VideoTrack,
+ * replaces the background in each video frame with a given image,
+ * and leaves the foreground (person(s)) untouched.
+ *
+ * @example
+ *
+ * ```ts
+ * import { createLocalVideoTrack } from 'twilio-video';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
+ *
+ * let virtualBackground;
+ * const img = new Image();
+ *
+ * img.onload = () => {
+ *   virtualBackground = new VirtualBackgroundProcessor({ backgroundImage: img });
+ *
+ *   createLocalVideoTrack({
+ *     width: 640,
+ *     height: 480
+ *   }).then(track => {
+ *     track.addProcessor(virtualBackground);
+ *   });
+ * };
+ * img.src = '/background.jpg';
+ * ```
+ */
 var VirtualBackgroundProcessor = /** @class */ (function (_super) {
     __extends(VirtualBackgroundProcessor, _super);
+    /**
+     * Construct a VirtualBackgroundProcessor. Default values will be used for
+     * any missing optional properties in [[VirtualBackgroundProcessorOptions]],
+     * and invalid properties will be ignored.
+     */
     function VirtualBackgroundProcessor(options) {
         var _this = _super.call(this, options) || this;
         _this.backgroundImage = options.backgroundImage;
@@ -27,9 +59,18 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
         return _this;
     }
     Object.defineProperty(VirtualBackgroundProcessor.prototype, "backgroundImage", {
+        /**
+         * The HTMLImageElement representing the current background image.
+         */
         get: function () {
             return this._backgroundImage;
         },
+        /**
+         * Set an HTMLImageElement as the new background image.
+         * An error will be raised if the image hasn't been fully loaded yet. Additionally, the image must follow
+         * [security guidelines](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image)
+         * when loading the image from a different origin. Failing to do so will result to an empty output frame.
+         */
         set: function (image) {
             if (!image || !image.complete || !image.naturalHeight) {
                 throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
@@ -40,9 +81,15 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
         configurable: true
     });
     Object.defineProperty(VirtualBackgroundProcessor.prototype, "fitType", {
+        /**
+         * The current [[ImageFit]] for positioning of the background image in the viewport.
+         */
         get: function () {
             return this._fitType;
         },
+        /**
+         * Set a new [[ImageFit]] to be used for positioning the background image in the viewport.
+         */
         set: function (fitType) {
             var validTypes = Object.keys(types_1.ImageFit);
             if (!validTypes.includes(fitType)) {
