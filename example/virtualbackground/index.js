@@ -43,9 +43,9 @@ const gaussianBlurProcessor = (options) => {
   return processor;
 }
 
-const virtualBackgroundProcessor = ({inferenceResolution, maskBlurRadius, backgroundImageStr, fitType}) => {
+const virtualBackgroundProcessor = ({inferenceDimensions, maskBlurRadius, backgroundImageStr, fitType}) => {
   let backgroundImage = images[backgroundImageStr];
-  const processor = new VirtualBackgroundProcessor({inferenceResolution, maskBlurRadius, backgroundImage, fitType});
+  const processor = new VirtualBackgroundProcessor({inferenceDimensions, maskBlurRadius, backgroundImage, fitType});
   return processor;
 }
 
@@ -61,11 +61,16 @@ const setProcessor = (processor, track) => {
 gaussianBlurButton.onclick = event => {
   event.preventDefault();
   const options = {};
+  let inferenceDimensions = {};
   const inputs = gaussianBlurForm.getElementsByTagName('input');
   for(let item of inputs) {
-    options[item.id] = item.valueAsNumber;
+    if(item.id === 'height' || item.id === 'width') {
+      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 244;
+    } else {
+      options[item.id] = item.valueAsNumber;
+    }
   }
-
+  options.inferenceDimensions = inferenceDimensions;
   const processor = gaussianBlurProcessor(options);
   setProcessor(processor, videoTrack);
 }
@@ -73,11 +78,16 @@ gaussianBlurButton.onclick = event => {
 virtualBackgroundButton.onclick = event => {
   event.preventDefault();
   const options = {};
-  const inputs = virtualBackgroundForm.elements
+  let inferenceDimensions = {};
+  const inputs = virtualBackgroundForm.elements;
   for(let item of inputs) {
-    item.valueAsNumber ? options[item.id] = item.valueAsNumber : options[item.id] = item.value;
+    if(item.id === 'height' || item.id === 'width') {
+      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 244;
+    } else {
+      item.valueAsNumber ? options[item.id] = item.valueAsNumber : options[item.id] = item.value;
+    }
   }
-
+  options.inferenceDimensions = inferenceDimensions;
   const processor = virtualBackgroundProcessor(options);
   setProcessor(processor, videoTrack);
 }
