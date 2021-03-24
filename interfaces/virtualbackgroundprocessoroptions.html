@@ -94,7 +94,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#backgroundimage" class="tsd-kind-icon">background<wbr>Image</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#fittype" class="tsd-kind-icon">fit<wbr>Type</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="virtualbackgroundprocessoroptions.html#inferenceresolution" class="tsd-kind-icon">inference<wbr>Resolution</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="virtualbackgroundprocessoroptions.html#inferencedimensions" class="tsd-kind-icon">inference<wbr>Dimensions</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="virtualbackgroundprocessoroptions.html#maskblurradius" class="tsd-kind-icon">mask<wbr>Blur<wbr>Radius</a></li>
 							</ul>
 						</section>
@@ -109,12 +109,15 @@
 					<div class="tsd-signature tsd-kind-icon">background<wbr>Image<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLImageElement</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/processors/background/VirtualBackgroundProcessor.ts#L11">processors/background/VirtualBackgroundProcessor.ts:11</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/0169625/lib/processors/background/VirtualBackgroundProcessor.ts#L14">processors/background/VirtualBackgroundProcessor.ts:14</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The HTMLImageElement to use for background replacement.</p>
+							<p>The HTMLImageElement to use for background replacement.
+								An error will be raised if the image hasn&#39;t been fully loaded yet. Additionally, the image must follow
+								<a href="https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image">security guidelines</a>
+							when loading the image from a different origin. Failing to do so will result to an empty output frame.</p>
 						</div>
 					</div>
 				</section>
@@ -124,12 +127,12 @@
 					<div class="tsd-signature tsd-kind-icon">fit<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../enums/imagefit.html" class="tsd-signature-type" data-tsd-kind="Enumeration">ImageFit</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/processors/background/VirtualBackgroundProcessor.ts#L20">processors/background/VirtualBackgroundProcessor.ts:20</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/0169625/lib/processors/background/VirtualBackgroundProcessor.ts#L23">processors/background/VirtualBackgroundProcessor.ts:23</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The <a href="../enums/imagefit.html">ImageFit</a> to use for positioning of the backgorund image in the viewport.</p>
+							<p>The <a href="../enums/imagefit.html">ImageFit</a> to use for positioning of the background image in the viewport.</p>
 						</div>
 						<dl class="tsd-comment-tags">
 							<dt>default</dt>
@@ -140,18 +143,18 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
-					<a name="inferenceresolution" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> inference<wbr>Resolution</h3>
-					<div class="tsd-signature tsd-kind-icon">inference<wbr>Resolution<span class="tsd-signature-symbol">:</span> <a href="resolution.html" class="tsd-signature-type" data-tsd-kind="Interface">Resolution</a></div>
+					<a name="inferencedimensions" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> inference<wbr>Dimensions</h3>
+					<div class="tsd-signature tsd-kind-icon">inference<wbr>Dimensions<span class="tsd-signature-symbol">:</span> <a href="dimensions.html" class="tsd-signature-type" data-tsd-kind="Interface">Dimensions</a></div>
 					<aside class="tsd-sources">
-						<p>Inherited from BackgroundProcessorOptions.inferenceResolution</p>
+						<p>Inherited from BackgroundProcessorOptions.inferenceDimensions</p>
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/processors/background/BackgroundProcessor.ts#L26">processors/background/BackgroundProcessor.ts:26</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/0169625/lib/processors/background/BackgroundProcessor.ts#L26">processors/background/BackgroundProcessor.ts:26</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The input frame will be downscaled to this resolution before sending it for inference.</p>
+							<p>The input frame will be downscaled to these dimensions before sending it for inference.</p>
 						</div>
 						<dl class="tsd-comment-tags">
 							<dt>default</dt>
@@ -168,7 +171,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from BackgroundProcessorOptions.maskBlurRadius</p>
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/9344e07/lib/processors/background/BackgroundProcessor.ts#L35">processors/background/BackgroundProcessor.ts:35</a></li>
+							<li>Defined in <a href="https://github.com/twilio/video-processors.js/blob/0169625/lib/processors/background/BackgroundProcessor.ts#L35">processors/background/BackgroundProcessor.ts:35</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -205,10 +208,10 @@
 						<a href="../classes/virtualbackgroundprocessor.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor</a>
 					</li>
 					<li class=" tsd-kind-interface">
-						<a href="gaussianblurbackgroundprocessoroptions.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor<wbr>Options</a>
+						<a href="dimensions.html" class="tsd-kind-icon">Dimensions</a>
 					</li>
 					<li class=" tsd-kind-interface">
-						<a href="resolution.html" class="tsd-kind-icon">Resolution</a>
+						<a href="gaussianblurbackgroundprocessoroptions.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor<wbr>Options</a>
 					</li>
 				</ul>
 				<ul class="current">
@@ -222,7 +225,7 @@
 								<a href="virtualbackgroundprocessoroptions.html#fittype" class="tsd-kind-icon">fit<wbr>Type</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
-								<a href="virtualbackgroundprocessoroptions.html#inferenceresolution" class="tsd-kind-icon">inference<wbr>Resolution</a>
+								<a href="virtualbackgroundprocessoroptions.html#inferencedimensions" class="tsd-kind-icon">inference<wbr>Dimensions</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 								<a href="virtualbackgroundprocessoroptions.html#maskblurradius" class="tsd-kind-icon">mask<wbr>Blur<wbr>Radius</a>
