@@ -4,9 +4,30 @@ const Video = Twilio.Video;
 const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor } = Twilio.VideoProcessors;
 
 const gaussianBlurForm = document.querySelector('form#gaussianBlur-Form');
-const gaussianBlurApply = document.querySelector('button#gaussianBlur-Apply');
+const gaussianBlurButton = document.querySelector('button#gaussianBlur-Apply');
+const virtualBackgroundForm = document.querySelector('form#virtualBackground-Form');
+const virtualBackgroundButton = document.querySelector('button#virtualBackground-Apply');
 const videoInput = document.querySelector('video#video-input');
 let videoTrack;
+
+// Load images here
+const loadImage = name => new Promise(resolve => {
+  const image = new Image();
+  image.src = `./backgrounds/${name}.jpg`;
+  image.onload = () => resolve(image);
+});
+
+let images = {};
+Promise.all([
+  loadImage('breaking-news'),
+  loadImage('red-carpet'),
+  loadImage('windows-field'),
+]).then(([breakingNews, redCarpet, windowsField]) => {
+  images.breakingNews = breakingNews;
+  images.redCarpet = redCarpet;
+  images.windowsField = windowsField;
+  return images;
+});
 
 Video.createLocalVideoTrack({
   width: 640,
@@ -17,16 +38,17 @@ Video.createLocalVideoTrack({
 });
 
 // Helper function to grab options for processors
-const gaussianBlurProcessor = ({inferenceResolution, maskBlurRadius, blurFilterRadius}) => {
-  const processor = new GaussianBlurBackgroundProcessor({inferenceResolution, maskBlurRadius, blurFilterRadius});
+const gaussianBlurProcessor = (options) => {
+  const processor = new GaussianBlurBackgroundProcessor(options);
   return processor;
 }
 
-const virtualBackgroundProcessor = ({inferenceResolution, maskBlurRadius, backgroundImage, fitType}) => {
-
+const virtualBackgroundProcessor = ({inferenceResolution, maskBlurRadius, backgroundImageStr, fitType}) => {
+  let backgroundImage = images[backgroundImageStr];
+  const processor = new VirtualBackgroundProcessor({inferenceResolution, maskBlurRadius, backgroundImage, fitType});
+  return processor;
 }
 
-// Helper function to set processors
 const setProcessor = (processor, track) => {
   if (track.processor) {
     track.removeProcessor(track.processor);
@@ -36,7 +58,7 @@ const setProcessor = (processor, track) => {
   }
 }
 
-gaussianBlurApply.onclick = (event) => {
+gaussianBlurButton.onclick = event => {
   event.preventDefault();
   const options = {};
   const inputs = gaussianBlurForm.getElementsByTagName('input');
@@ -48,15 +70,14 @@ gaussianBlurApply.onclick = (event) => {
   setProcessor(processor, videoTrack);
 }
 
-// Load images here
-const loadImage = name => new Promise(resolve => {
-  const image = new Image();
-  image.src = `./backgrounds/${name}.jpg`;
-  image.onload = () => resolve(image);
-});
+virtualBackgroundButton.onclick = event => {
+  event.preventDefault();
+  const options = {};
+  const inputs = virtualBackgroundForm.elements
+  for(let item of inputs) {
+    item.valueAsNumber ? options[item.id] = item.valueAsNumber : options[item.id] = item.value;
+  }
 
-Promise.all([
-  loadImage('breaking-news'),
-  loadImage('red-carpet'),
-  loadImage('windows-field'),
-]);
+  const processor = virtualBackgroundProcessor(options);
+  setProcessor(processor, videoTrack);
+}
