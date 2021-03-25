@@ -14,8 +14,7 @@ let videoTrack;
 // Load images here
 const loadImage = name => new Promise(resolve => {
   const image = new Image();
-  // image.src = `backgrounds/${name}.jpg`;
-  image.src = `http://localhost:3000/${name}.jpg`;
+  image.src = `backgrounds/${name}.jpg`;
   image.onload = () => resolve(image);
 });
 
@@ -47,7 +46,6 @@ const gaussianBlurProcessor = (options) => {
 
 const virtualBackgroundProcessor = ({inferenceDimensions, maskBlurRadius, backgroundImageStr, fitType}) => {
   let backgroundImage = images[backgroundImageStr];
-  console.log(backgroundImage)
   const processor = new VirtualBackgroundProcessor({inferenceDimensions, maskBlurRadius, backgroundImage, fitType});
   return processor;
 }
