@@ -30,10 +30,7 @@ Promise.all([
   return images;
 });
 
-Video.createLocalVideoTrack({
-  width: 640,
-  height: 480
-}).then(track => {
+Video.createLocalVideoTrack().then(track => {
   track.attach(videoInput);
   return videoTrack = track;
 });
@@ -50,6 +47,7 @@ const virtualBackgroundProcessor = ({inferenceDimensions, maskBlurRadius, backgr
   return processor;
 }
 
+// Adding processor to Video Track
 const setProcessor = (processor, track) => {
   if (track.processor) {
     track.removeProcessor(track.processor);
@@ -92,7 +90,6 @@ virtualBackgroundButton.onclick = event => {
   const processor = virtualBackgroundProcessor(options);
   setProcessor(processor, videoTrack);
 }
-
 
 removeProcessorButton.onclick = event => {
   event.preventDefault();
