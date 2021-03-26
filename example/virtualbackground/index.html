@@ -18,8 +18,8 @@
             <form id="gaussianBlur-Form">
               <div class="form-group">
                 <label for="inferenceDimension">Inference Dimensions</label>
-                <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height"></input>
                 <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width"></input>
+                <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height"></input>
               </div>
               <div class="form-group">
                 <label for="maskBlurRadius">Mask Blur Radius</label>
@@ -39,8 +39,8 @@
             <form id="virtualBackground-Form">
               <div class="form-group">
                 <label for="inferenceDimension">Inference Dimensions</label>
-                <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height"></input>
                 <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width"></input>
+                <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height"></input>
               </div>
               <div class="form-group">
                 <label for="maskBlurRadius">Mask Blur Radius</label>
@@ -49,7 +49,7 @@
               <div class="form-group">
                 <label for="backgroundImage">Background Image</label>
                 <select class="form-control selectpicker" id="backgroundImageStr">
-                  <option value="redCarpet">Red Carpet</option>
+                  <option value="redCarpet" data-content="<img src='/backgrounds/red-carpet.jpg'></img> Red Carpet">Red Carpet</option>
                   <option value="breakingNews">Breaking News</option>
                   <option value="windowsField">Windows Field</option>
                 </select>
@@ -60,7 +60,7 @@
                   <option>Fill</option>
                   <option>Contain</option>
                   <option>Cover</option>
-                  <option>Non</option>
+                  <option>None</option>
                 </select>
               </div>
             </form>

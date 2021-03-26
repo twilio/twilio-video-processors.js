@@ -64,7 +64,7 @@ gaussianBlurButton.onclick = event => {
   const inputs = gaussianBlurForm.getElementsByTagName('input');
   for(let item of inputs) {
     if(item.id === 'height' || item.id === 'width') {
-      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 244;
+      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 224;
     } else {
       options[item.id] = item.valueAsNumber;
     }
@@ -81,7 +81,7 @@ virtualBackgroundButton.onclick = event => {
   const inputs = virtualBackgroundForm.elements;
   for(let item of inputs) {
     if(item.id === 'height' || item.id === 'width') {
-      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 244;
+      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 224;
     } else {
       item.valueAsNumber ? options[item.id] = item.valueAsNumber : options[item.id] = item.value;
     }
