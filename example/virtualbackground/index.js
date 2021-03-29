@@ -103,6 +103,7 @@ virtualBackgroundButton.onclick = event => {
       backgroundImage,
       fitType,
     });
+  } else {
     virtualBackgroundProcessor.backgroundImage = backgroundImage;
     virtualBackgroundProcessor.inferenceDimensions = inferenceDimensions;
     virtualBackgroundProcessor.fitType = fitType;
