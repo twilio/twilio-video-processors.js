@@ -1,7 +1,7 @@
 'use strict';
 
 const Video = Twilio.Video;
-const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor } = Twilio.VideoProcessors;
+const {GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor} = Twilio.VideoProcessors;
 
 const gaussianBlurForm = document.querySelector('form#gaussianBlur-Form');
 const gaussianBlurButton = document.querySelector('button#gaussianBlur-Apply');
@@ -10,13 +10,15 @@ const virtualBackgroundButton = document.querySelector('button#virtualBackground
 const videoInput = document.querySelector('video#video-input');
 const removeProcessorButton = document.querySelector('button#no-processor-apply');
 let videoTrack;
+let gaussianBlurProcessor;
+let virtualBackgroundProcessor;
 
-// Load images here
-const loadImage = name => new Promise(resolve => {
-  const image = new Image();
-  image.src = `backgrounds/${name}.jpg`;
-  image.onload = () => resolve(image);
-});
+const loadImage = (name) =>
+  new Promise((resolve) => {
+    const image = new Image();
+    image.src = `backgrounds/${name}.jpg`;
+    image.onload = () => resolve(image);
+  });
 
 let images = {};
 Promise.all([
@@ -30,22 +32,10 @@ Promise.all([
   return images;
 });
 
-Video.createLocalVideoTrack().then(track => {
+Video.createLocalVideoTrack().then((track) => {
   track.attach(videoInput);
   return videoTrack = track;
 });
-
-// Helper function to grab options for processors
-const gaussianBlurProcessor = (options) => {
-  const processor = new GaussianBlurBackgroundProcessor(options);
-  return processor;
-}
-
-const virtualBackgroundProcessor = ({inferenceDimensions, maskBlurRadius, backgroundImageStr, fitType}) => {
-  let backgroundImage = images[backgroundImageStr];
-  const processor = new VirtualBackgroundProcessor({inferenceDimensions, maskBlurRadius, backgroundImage, fitType});
-  return processor;
-}
 
 // Adding processor to Video Track
 const setProcessor = (processor, track) => {
@@ -57,45 +47,72 @@ const setProcessor = (processor, track) => {
     removeProcessorButton.disabled = false;
     track.addProcessor(processor);
   }
-}
+};
 
 gaussianBlurButton.onclick = event => {
   event.preventDefault();
   const options = {};
   let inferenceDimensions = {};
   const inputs = gaussianBlurForm.getElementsByTagName('input');
-  for(let item of inputs) {
-    if(item.id === 'height' || item.id === 'width') {
-      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 224;
+  for (let item of inputs) {
+    if (item.id === 'height' || item.id === 'width') {
+      item.valueAsNumber
+        ? (inferenceDimensions[item.id] = item.valueAsNumber)
+        : (inferenceDimensions[item.id] = 224);
     } else {
       options[item.id] = item.valueAsNumber;
     }
   }
-  options.inferenceDimensions = inferenceDimensions;
-  const processor = gaussianBlurProcessor(options);
-  setProcessor(processor, videoTrack);
-}
+  const { maskBlurRadius, blurFilterRadius } = options;
+  if (!gaussianBlurProcessor) {
+    gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
+      inferenceDimensions,
+      maskBlurRadius,
+      blurFilterRadius,
+    });
+  } else {
+    gaussianBlurProcessor.inferenceDimensions = inferenceDimensions;
+    gaussianBlurProcessor.maskBlurRadius = maskBlurRadius;
+    gaussianBlurProcessor.blurFilterRadius = blurFilterRadius;
+  }
+  setProcessor(gaussianBlurProcessor, videoTrack);
+};
 
 virtualBackgroundButton.onclick = event => {
   event.preventDefault();
   const options = {};
   let inferenceDimensions = {};
   const inputs = virtualBackgroundForm.elements;
-  for(let item of inputs) {
-    if(item.id === 'height' || item.id === 'width') {
-      item.valueAsNumber ? inferenceDimensions[item.id] = item.valueAsNumber : inferenceDimensions[item.id] = 224;
+  for (let item of inputs) {
+    if (item.id === 'height' || item.id === 'width') {
+      item.valueAsNumber
+        ? (inferenceDimensions[item.id] = item.valueAsNumber)
+        : (inferenceDimensions[item.id] = 224);
     } else {
-      item.valueAsNumber ? options[item.id] = item.valueAsNumber : options[item.id] = item.value;
+      item.valueAsNumber
+        ? (options[item.id] = item.valueAsNumber)
+        : (options[item.id] = item.value);
     }
   }
-  options.inferenceDimensions = inferenceDimensions;
-  const processor = virtualBackgroundProcessor(options);
-  setProcessor(processor, videoTrack);
-}
+  let backgroundImage = images[options.backgroundImage];
+  let { maskBlurRadius, fitType } = options;
+  if (!virtualBackgroundProcessor) {
+    virtualBackgroundProcessor = new VirtualBackgroundProcessor({
+      inferenceDimensions,
+      maskBlurRadius,
+      backgroundImage,
+      fitType,
+    });
+    virtualBackgroundProcessor.backgroundImage = backgroundImage;
+    virtualBackgroundProcessor.inferenceDimensions = inferenceDimensions;
+    virtualBackgroundProcessor.fitType = fitType;
+    virtualBackgroundProcessor.maskBlurRadius = maskBlurRadius;
+  }
+  setProcessor(virtualBackgroundProcessor, videoTrack);
+};
 
-// No Processors available on load
 removeProcessorButton.disabled = true;
 removeProcessorButton.onclick = event => {
   event.preventDefault();
-  setProcessor(null, videoTrack)
-}
+  setProcessor(null, videoTrack);
+};

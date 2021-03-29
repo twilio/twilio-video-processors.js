@@ -27,8 +27,8 @@
                 <form id="gaussianBlur-Form">
                   <div class="form-group">
                     <label for="inferenceDimension">Inference Dimensions</label>
-                    <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width"></input>
-                    <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height"></input>
+                    <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width" value="224"></input>
+                    <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height" value="224"></input>
                   </div>
                   <div class="form-group">
                     <label for="maskBlurRadius">Mask Blur Radius</label>
@@ -48,8 +48,8 @@
                 <form id="virtualBackground-Form">
                   <div class="form-group">
                     <label for="inferenceDimension">Inference Dimensions</label>
-                    <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width"></input>
-                    <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height"></input>
+                    <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width" value="224"></input>
+                    <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height" value="224"></input>
                   </div>
                   <div class="form-group">
                     <label for="maskBlurRadius">Mask Blur Radius</label>
@@ -57,7 +57,7 @@
                   </div>
                   <div class="form-group">
                     <label for="backgroundImage">Background Image</label>
-                    <select class="form-control selectpicker" id="backgroundImageStr">
+                    <select class="form-control selectpicker" id="backgroundImage">
                       <option value="redCarpet">Red Carpet</option>
                       <option value="breakingNews">Breaking News</option>
                       <option value="windowsField">Windows Field</option>
@@ -79,8 +79,8 @@
           </div>
         </div>
       </div>
-  <script src="/lib/video-processors.js"></script>
-  <script src="/lib/twilio-video.js"></script>
+  <script src="lib/video-processors.js"></script>
+  <script src="lib/twilio-video.js"></script>
   <script src="index.js"></script>
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
