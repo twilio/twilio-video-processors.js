@@ -50,9 +50,11 @@ const virtualBackgroundProcessor = ({inferenceDimensions, maskBlurRadius, backgr
 // Adding processor to Video Track
 const setProcessor = (processor, track) => {
   if (track.processor) {
+    removeProcessorButton.disabled = true;
     track.removeProcessor(track.processor);
   }
   if (processor) {
+    removeProcessorButton.disabled = false;
     track.addProcessor(processor);
   }
 }
@@ -91,6 +93,8 @@ virtualBackgroundButton.onclick = event => {
   setProcessor(processor, videoTrack);
 }
 
+// No Processors available on load
+removeProcessorButton.disabled = true;
 removeProcessorButton.onclick = event => {
   event.preventDefault();
   setProcessor(null, videoTrack)
