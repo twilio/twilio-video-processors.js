@@ -30,6 +30,7 @@ import * as VideoProcessors from '@twilio/video-processors';
 ### Script tag
 
 You can also copy `video-processors.js` from the `dist` folder and include it directly in your web app using a `<script>` tag.
+
  ```html
  <script src="https://my-server-path/video-processors.js"></script>
  ```
