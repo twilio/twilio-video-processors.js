@@ -57,114 +57,40 @@
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<div class="tsd-panel tsd-typography">
-				<a href="#twilio-video-processors" id="twilio-video-processors" style="color: inherit; text-decoration: none;">
-					<h1>Twilio Video Processors</h1>
-				</a>
-				<p><a href="https://www.npmjs.com/package/@twilio/video-processors"><img src="https://img.shields.io/npm/v/@twilio/video-processors.svg" alt="NPM"></a></p>
-				<p>Twilio Video Processors is a collection of video processing tools which can be used with <a href="https://github.com/twilio/twilio-video.js">Twilio Video JavaScript SDK</a> to apply transformations and filters to a video track.</p>
-				<ul>
-					<li><a href="https://twilio.github.io/video-processors.js/modules.html">API Docs</a></li>
-					<li><a href="example/">Example</a></li>
-					<li><a href="https://twilio.github.io/video-processors.js/example/">Demo</a></li>
-				</ul>
-				<a href="#features" id="features" style="color: inherit; text-decoration: none;">
-					<h2>Features</h2>
-				</a>
-				<ul>
-					<li>Virtual background</li>
-					<li>Background blur</li>
-				</ul>
-				<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
-					<h2>Installation</h2>
-				</a>
-				<a href="#building-the-project-locally" id="building-the-project-locally" style="color: inherit; text-decoration: none;">
-					<h3>Building the project locally</h3>
-				</a>
-				<pre><code class="language-bash"><span style="color: #008000"># Clone repository</span>
-<span style="color: #000000">git clone git@github.com:twilio/video-processors.js.git</span>
-<span style="color: #795E26">cd</span><span style="color: #000000"> video-processors.js</span>
-
-<span style="color: #008000"># Install dependencies</span>
-<span style="color: #000000">npm install</span>
-
-<span style="color: #008000"># Build the artifacts</span>
-<span style="color: #000000">npm run build</span>
-</code></pre>
-				<a href="#npm" id="npm" style="color: inherit; text-decoration: none;">
-					<h3>NPM</h3>
-				</a>
-				<p>You can install directly from npm.</p>
-				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">install</span><span style="color: #000000"> @</span><span style="color: #001080">twilio</span><span style="color: #000000">/</span><span style="color: #001080">video</span><span style="color: #000000">-</span><span style="color: #001080">processors</span><span style="color: #000000"> --</span><span style="color: #001080">save</span>
-</code></pre>
-				<p>Or install from a local directory.</p>
-				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">install</span><span style="color: #000000"> /</span><span style="color: #001080">local</span><span style="color: #000000">-</span><span style="color: #001080">path</span><span style="color: #000000">-</span><span style="color: #001080">to</span><span style="color: #000000">-</span><span style="color: #001080">repo</span><span style="color: #000000">/</span><span style="color: #001080">video</span><span style="color: #000000">-</span><span style="color: #001080">processors</span><span style="color: #000000">.</span><span style="color: #001080">js</span>
-</code></pre>
-				<p>Using this method, you can import <code>video-processors</code> like so:</p>
-				<pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #0000FF">*</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #001080">VideoProcessors</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors&#039;</span><span style="color: #000000">;</span>
-</code></pre>
-				<a href="#script-tag" id="script-tag" style="color: inherit; text-decoration: none;">
-					<h3>Script tag</h3>
-				</a>
-				<p>You can also include <code>video-processors.js</code> directly in your web app using a <code>&lt;script&gt;</code> tag.</p>
-				<pre><code class="language-html"><span style="color: #800000">&lt;script</span><span style="color: #000000FF"> </span><span style="color: #FF0000">src</span><span style="color: #000000FF">=</span><span style="color: #0000FF">&quot;https://my-server-path/video-processors.js&quot;</span><span style="color: #800000">&gt;&lt;/script&gt;</span>
-</code></pre>
-				<p> Using this method, <code>video-processors.js</code> will set a browser global:</p>
-				<pre><code class="language-ts"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">VideoProcessors</span><span style="color: #000000"> = </span><span style="color: #001080">Twilio</span><span style="color: #000000">.</span><span style="color: #001080">VideoProcessors</span><span style="color: #000000">;</span>
-</code></pre>
-				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
-					<h2>Usage</h2>
-				</a>
-				<pre><code class="language-ts"><span style="color: #000000">  </span><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">createLocalVideoTrack</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;twilio-video&#039;</span><span style="color: #000000">;</span>
-<span style="color: #000000">  </span><span style="color: #AF00DB">import</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">GaussianBlurBackgroundProcessor</span><span style="color: #000000">,</span>
-<span style="color: #000000">    </span><span style="color: #001080">VirtualBackgroundProcessor</span><span style="color: #000000">,</span>
-<span style="color: #000000">  } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors&#039;</span><span style="color: #000000">;</span>
-
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">blurBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">GaussianBlurBackgroundProcessor</span><span style="color: #000000">();</span>
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">img</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">Image</span><span style="color: #000000">();</span>
-
-<span style="color: #000000">  </span><span style="color: #0000FF">let</span><span style="color: #000000"> </span><span style="color: #001080">virtualBackground</span><span style="color: #000000">;</span>
-<span style="color: #000000">  </span><span style="color: #001080">img</span><span style="color: #000000">.</span><span style="color: #795E26">onload</span><span style="color: #000000"> = () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">virtualBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">VirtualBackgroundProcessor</span><span style="color: #000000">({ </span><span style="color: #001080">backgroundImage:</span><span style="color: #000000"> </span><span style="color: #001080">img</span><span style="color: #000000"> });</span>
-<span style="color: #000000">  };</span>
-<span style="color: #000000">  </span><span style="color: #001080">img</span><span style="color: #000000">.</span><span style="color: #001080">src</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;/background.jpg&#039;</span><span style="color: #000000">;</span>
-
-<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #795E26">setProcessor</span><span style="color: #000000"> = (</span><span style="color: #001080">track</span><span style="color: #000000">, </span><span style="color: #001080">processor</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #001080">processor</span><span style="color: #000000">) {</span>
-<span style="color: #000000">      </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">removeProcessor</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #001080">processor</span><span style="color: #000000">);</span>
-<span style="color: #000000">    }</span>
-<span style="color: #000000">    </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">processor</span><span style="color: #000000">);</span>
-<span style="color: #000000">  };</span>
-
-<span style="color: #000000">  </span><span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
-<span style="color: #000000">    </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
-<span style="color: #000000">    </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span>
-<span style="color: #000000">  }).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">document</span><span style="color: #000000">.</span><span style="color: #795E26">getElementById</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;preview&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">appendChild</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">attach</span><span style="color: #000000">());</span>
-<span style="color: #000000">    </span><span style="color: #001080">document</span><span style="color: #000000">.</span><span style="color: #795E26">getElementById</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;blur-bg&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">onclick</span><span style="color: #000000"> = () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #795E26">setProcessor</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">, </span><span style="color: #001080">blurBackground</span><span style="color: #000000">);</span>
-<span style="color: #000000">    </span><span style="color: #001080">document</span><span style="color: #000000">.</span><span style="color: #795E26">getElementById</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;virtual-bg&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">onclick</span><span style="color: #000000"> = () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #795E26">setProcessor</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000">, </span><span style="color: #001080">virtualBackground</span><span style="color: #000000">);</span>
-<span style="color: #000000">  });</span>
-</code></pre>
-				<a href="#related" id="related" style="color: inherit; text-decoration: none;">
-					<h2>Related</h2>
-				</a>
-				<ul>
-					<li><a href="https://github.com/twilio/twilio-video.js">Twilio Video JS SDK</a></li>
-					<li><a href="https://github.com/twilio/video-quickstart-js">Twilio Video JS Quickstart</a></li>
-					<li><a href="https://github.com/twilio/twilio-video-app-react">Twilio Video JS React App</a></li>
-				</ul>
-				<a href="#license" id="license" style="color: inherit; text-decoration: none;">
-					<h2>License</h2>
-				</a>
-				<p>See <a href="LICENSE.md">LICENSE.md</a></p>
-			</div>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Enumerations</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-enum"><a href="enums/imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Classes</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-class"><a href="classes/gaussianblurbackgroundprocessor.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor</a></li>
+								<li class="tsd-kind-class"><a href="classes/virtualbackgroundprocessor.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Interfaces</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface"><a href="interfaces/dimensions.html" class="tsd-kind-icon">Dimensions</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/gaussianblurbackgroundprocessoroptions.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor<wbr>Options</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/virtualbackgroundprocessoroptions.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor<wbr>Options</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation primary">
 				<ul>
-					<li class=" ">
-						<a href="modules.html">Exports</a>
+					<li class="current ">
+						<a href="index.html">Exports</a>
 					</li>
 				</ul>
 			</nav>

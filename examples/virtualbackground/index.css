@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:300');
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+}
+
+.align {
+  align-content: flex-start;
+}
+
+div.container-fluid {
+  height: 100%;
+}
+
+div.row {
+  height: 100%;
+}
+
+div.row.thin-gutters {
+  margin: 0 2px 0 2px;
+}
+
+div.row.thin-gutters > .col,
+div.row.thin-gutters > [class*="col-"] {
+  padding: 8px 8px;
+}
+
+div.card {
+  border: none;
+  justify-content: center;
+  overflow: auto;
+}
+
+div.card-block {
+  align-content: center;
+  max-width: 100%;
+}
+
+div.left-form > div.card > div.card-block {
+  margin: 10px;
+}
+
+.form-control {
+  margin: 5px;
+}
+
+div.col-sm-6, div.col-sm-6 {
+  max-height: fit-content;
+  overflow: auto;
+}
+
+div.video-container {
+  max-width: 100%;
+}
+
+video {
+  width: 100%    !important;
+  height: auto   !important;
+}
+
+@media (max-width: 900px) {
+  div.col-sm-8, div.col-sm-4 {
+    max-width: 100%;
+    flex: 100%;
+  }
+
+  div.col-sm-8 {
+    height: 40%;
+  }
+
+  div.col-sm-4 {
+    height: 60%;
+  }
+}
