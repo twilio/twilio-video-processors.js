@@ -36,6 +36,7 @@ You can also copy `video-processors.js` from the `dist` folder and include it di
  ```
 
  Using this method, `video-processors.js` will set a browser global:
+ 
  ```ts
  const VideoProcessors = Twilio.VideoProcessors;
  ```
