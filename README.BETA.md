@@ -16,6 +16,7 @@ Install from a local directory.
 ```
 # package-folder contains the package.json
 npm install /local-path-to-package/package-folder
+
 ```
 
 Using this method, you can import `video-processors` like so:
