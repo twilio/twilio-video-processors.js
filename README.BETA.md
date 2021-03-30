@@ -5,8 +5,9 @@ Twilio Video Processors is a collection of video processing tools which can be u
 * [API Docs](dist/docs/modules.html)
 
 ## Features
-- Virtual background
-- Background blur
+
+- Virtual Background
+- Background Blur
 
 ## Installation
 
