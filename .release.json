@@ -30,7 +30,7 @@
         "git commit -nm \"Preparing gh-pages\"",
         "git subtree add --prefix dist/docs origin gh-pages",
         "npm run docs",
-        "cp -r example dist/docs/example",
+        "cp -r examples dist/docs/examples",
         "git stage dist/docs -f",
         "git commit -nm \"${RELEASE_VERSION}\"",
         "git subtree push --prefix dist/docs origin gh-pages",
