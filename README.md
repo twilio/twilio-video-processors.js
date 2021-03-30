@@ -3,7 +3,7 @@
 Twilio Video Processors is a collection of video processing tools which can be used with [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) to apply transformations and filters to a VideoTrack.
 
 * [API Docs](https://twilio.github.io/video-processors.js/)
-* [Demo](https://twilio.github.io/video-processors.js/examples/virtualbackground/)
+* [Virtual Background Demo](https://twilio.github.io/video-processors.js/examples/virtualbackground/)
 
 ## Features
 
