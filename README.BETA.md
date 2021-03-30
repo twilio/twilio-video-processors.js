@@ -35,7 +35,7 @@ You can also copy `video-processors.js` from the `dist` folder and include it di
 
 ## Usage
 
-Please check out the following pages for example usage. These processors support **Chrome** at the moment and will not work on other browsers. For best performance and accuracy, a `24fps` with `640x480` resolution `MediaStream` is recommended when calling [Video.createLocalVideoTrack](https://media.twiliocdn.com/sdk/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor). Higher resolutions can still be used but the frame rate will be degraded.
+Please check out the following pages for example usage. These processors are only supported on the Chrome browser at this moment and will not work on other browsers. For best performance and accuracy, a `24fps` with `640x480` resolution `MediaStream` is recommended when calling [Video.createLocalVideoTrack](https://media.twiliocdn.com/sdk/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor). Higher resolutions can still be used but the frame rate will be degraded.
 
 * [VirtualBackgroundProcessor](dist/docs/classes/virtualbackgroundprocessor.html)
 * [GaussianBlurBackgroundProcessor](dist/docs/classes/gaussianblurbackgroundprocessor.html)
