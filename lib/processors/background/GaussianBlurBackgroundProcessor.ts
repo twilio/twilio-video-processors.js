@@ -18,7 +18,9 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
 /**
  * The GaussianBlurBackgroundProcessor, when added to a VideoTrack,
  * applies a gaussian blur filter on the background in each video frame
- * and leaves the foreground (person(s)) untouched.
+ * and leaves the foreground (person(s)) untouched. Each instance of
+ * GaussianBlurBackgroundProcessor should be added to only one VideoTrack
+ * at a time to prevent overlapping of image data from multiple VideoTracks.
  *
  * @example
  *

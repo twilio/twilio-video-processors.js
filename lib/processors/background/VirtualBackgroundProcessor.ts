@@ -26,7 +26,9 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
 /**
  * The VirtualBackgroundProcessor, when added to a VideoTrack,
  * replaces the background in each video frame with a given image,
- * and leaves the foreground (person(s)) untouched.
+ * and leaves the foreground (person(s)) untouched. Each instance of
+ * VirtualBackgroundProcessor should be added to only one VideoTrack
+ * at a time to prevent overlapping of image data from multiple VideoTracks.
  *
  * @example
  *

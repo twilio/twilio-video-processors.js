@@ -54,3 +54,8 @@ Please check out the following pages for example usage. These processors are onl
 
 * [VirtualBackgroundProcessor](https://twilio.github.io/video-processors.js/classes/virtualbackgroundprocessor.html)
 * [GaussianBlurBackgroundProcessor](https://twilio.github.io/video-processors.js/classes/gaussianblurbackgroundprocessor.html)
+
+## Known Issues
+
+* Video Processor execution will result in a significant increase in CPU usage.
+* Precision on segmentation mask can be poor on certain conditions such as uneven lighting and increased body movements.
