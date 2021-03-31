@@ -10,6 +10,12 @@ Twilio Video Processors is a collection of video processing tools which can be u
 - Virtual Background
 - Background Blur
 
+## Prerequisites
+
+* [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.13+)
+* [Node.js](https://nodejs.org) (v14+)
+* NPM (v6+, comes installed with newer Node versions)
+
 ## Installation
 
 ### NPM
