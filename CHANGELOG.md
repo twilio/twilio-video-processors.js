@@ -1,7 +1,7 @@
-1.0.0 (In Progress)
+1.0.0-beta1 (March 31, 2021)
 ===================
 
-**Background Processors Pilot (Desktop Chrome only)**
+**Background Processors (Desktop Chrome only)**
 
 You can now use `GaussianBlurBackgroundProcessor` to apply a Gaussian blur filter on the background of a video frame, or use `VirtualBackgroundProcessor` to replace the background with a given image.
 
