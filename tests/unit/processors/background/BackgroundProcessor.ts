@@ -61,6 +61,36 @@ describe('BackgroundProcessor', () => {
     });
   });
 
+  describe('historyCount', () => {
+    [
+      null,
+      undefined,
+      { },
+      { historyCount: null },
+      { historyCount: undefined },
+      { historyCount: 0 },
+      { historyCount: 1 },
+      { historyCount: 2 }
+    ].forEach((option: any) => {
+      const useDefault = !option || !option.historyCount || option.historyCount < 1;
+      const param = option ? JSON.stringify(option) : option;
+      it(`should set historyCount to ${useDefault ? 'default' : option.historyCount} if option is ${param}`, () => {
+        const processor = new MyBackgroundProcessor(option);
+        const expected = useDefault ? 5 : option.historyCount;
+        assert.strictEqual(processor.historyCount, expected);
+      });
+
+      if (option) {
+        it(`should set historyCount to ${useDefault ? 'default' : option.historyCount} if historyCount being set is ${option.historyCount}`, () => {
+          const processor = new MyBackgroundProcessor();
+          processor.historyCount = option.historyCount;
+          const expected = useDefault ? 5 : option.historyCount;
+          assert.strictEqual(processor.historyCount, expected);
+        });
+      }
+    });
+  });
+
   describe('inferenceConfig', () => {
     [
       null, 

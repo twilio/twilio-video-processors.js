@@ -18,6 +18,8 @@ export const INFERENCE_CONFIG: PersonInferenceConfig = {
 
 export const MASK_BLUR_RADIUS = 3;
 
+export const HISTORY_COUNT = 5;
+
 export const INFERENCE_DIMENSIONS: Dimensions = {
   width: 224,
   height: 224,
