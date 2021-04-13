@@ -2,6 +2,10 @@ import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 import { BodyPix, load as loadModel, SemanticPersonSegmentation } from '@tensorflow-models/body-pix';
+import { Processor } from '../Processor';
+import { Benchmark } from '../../utils/Benchmark';
+import { Dimensions } from '../../types';
+
 import {
   HISTORY_COUNT,
   INFERENCE_CONFIG,
@@ -9,9 +13,6 @@ import {
   MODEL_CONFIG,
   INFERENCE_DIMENSIONS
 } from '../../constants';
-import { Processor } from '../Processor';
-import { Benchmark } from '../../utils/Benchmark';
-import { Dimensions } from '../../types';
 
 /**
  * @private
@@ -243,7 +244,7 @@ export abstract class BackgroundProcessor extends Processor {
       const w = this._masks.reduce((sum, mask, j) => sum + mask.data[i] * (j + 1) * (j + 1), 0) / weightedSum;
 
       segmentMaskData[m] = segmentMaskData[m + 1] = segmentMaskData[m + 2] = hasPixel ? 255 : 0;
-      segmentMaskData[m + 3] = w * 255;
+      segmentMaskData[m + 3] = Math.floor(w * 255);
 
     }
     return new ImageData(segmentMaskData, width, height);
