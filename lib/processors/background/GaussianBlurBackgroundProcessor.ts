@@ -1,5 +1,5 @@
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
-import { DEFAULT_BLUR_FILTER_RADIUS } from '../../constants';
+import { BLUR_FILTER_RADIUS } from '../../constants';
 
 /**
  * Options passed to [[GaussianBlurBackgroundProcessor]] constructor.
@@ -40,7 +40,7 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  */
 export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
 
-  private _blurFilterRadius: number = DEFAULT_BLUR_FILTER_RADIUS;
+  private _blurFilterRadius: number = BLUR_FILTER_RADIUS;
 
   /**
    * Construct a GaussianBlurBackgroundProcessor. Default values will be used for
@@ -64,8 +64,8 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
    */
   set blurFilterRadius(radius: number) {
     if (!radius) {
-      console.warn(`Valid blur filter radius not found. Using ${DEFAULT_BLUR_FILTER_RADIUS} as default.`);
-      radius = DEFAULT_BLUR_FILTER_RADIUS;
+      console.warn(`Valid blur filter radius not found. Using ${BLUR_FILTER_RADIUS} as default.`);
+      radius = BLUR_FILTER_RADIUS;
     }
     this._blurFilterRadius = radius;
   }

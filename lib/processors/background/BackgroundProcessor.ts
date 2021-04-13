@@ -2,15 +2,27 @@ import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 import { BodyPix, load as loadModel, SemanticPersonSegmentation } from '@tensorflow-models/body-pix';
-import { INFERENCE_CONFIG, MASK_BLUR_RADIUS, MODEL_CONFIG, INFERENCE_DIMENSIONS } from '../../constants';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { Dimensions } from '../../types';
+
+import {
+  HISTORY_COUNT,
+  INFERENCE_CONFIG,
+  MASK_BLUR_RADIUS,
+  MODEL_CONFIG,
+  INFERENCE_DIMENSIONS
+} from '../../constants';
 
 /**
  * @private
  */
 export interface BackgroundProcessorOptions {
+  /**
+   * @private
+   */
+  historyCount?: number;
+
   /**
    * @private
    */
@@ -48,6 +60,7 @@ export abstract class BackgroundProcessor extends Processor {
   protected _outputContext: OffscreenCanvasRenderingContext2D;
 
   private _benchmark: Benchmark;
+  private _historyCount: number = HISTORY_COUNT;
   private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
   private _inferenceDimensions: Dimensions = INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
@@ -55,9 +68,11 @@ export abstract class BackgroundProcessor extends Processor {
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas;
   private _maskContext: OffscreenCanvasRenderingContext2D;
+  private _masks: SemanticPersonSegmentation[];
 
   constructor(options?: BackgroundProcessorOptions) {
     super();
+    this.historyCount = options?.historyCount!;
     this.inferenceConfig = options?.inferenceConfig!;
     this.inferenceDimensions = options?.inferenceDimensions!;
     this.maskBlurRadius = options?.maskBlurRadius!;
@@ -69,6 +84,7 @@ export abstract class BackgroundProcessor extends Processor {
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
     this._outputCanvas = new OffscreenCanvas(1, 1);
     this._outputContext = this._outputCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    this._masks = [];
 
     BackgroundProcessor._loadModel();
   }
@@ -78,6 +94,24 @@ export abstract class BackgroundProcessor extends Processor {
    */
   get benchmark(): Benchmark {
     return this._benchmark;
+  }
+
+  /**
+   * @private
+   */
+  get historyCount(): number {
+    return this._historyCount;
+  }
+
+  /**
+   * @private
+   */
+  set historyCount(count: number) {
+    if (!count) {
+      console.warn(`Valid history count not found. Using ${HISTORY_COUNT} as default.`);
+      count = HISTORY_COUNT;
+    }
+    this._historyCount = count;
   }
 
   /**
@@ -195,11 +229,23 @@ export abstract class BackgroundProcessor extends Processor {
 
   private _createPersonMask(segment: SemanticPersonSegmentation) {
     const { data, width, height } = segment;
+
+    if (this._masks.length >= this._historyCount) {
+      this._masks.splice(0, this._masks.length - this._historyCount + 1);
+    }
+    this._masks.push(segment);
+
     const segmentMaskData = new Uint8ClampedArray(width * height * 4);
+    const weightedSum = this._masks.reduce((sum, mask, j) => sum + (j + 1) * (j + 1), 0);
+
     for (let i = 0; i < data.length; i++) {
-      const m = i << 2;
-      segmentMaskData[m] = segmentMaskData[m + 1] = segmentMaskData[m + 2] = segmentMaskData[m + 3] =
-        data[i] * 255;
+      const m = i * 4;
+      const hasPixel = this._masks.some(mask => mask.data[i] === 1);
+      const w = this._masks.reduce((sum, mask, j) => sum + mask.data[i] * (j + 1) * (j + 1), 0) / weightedSum;
+
+      segmentMaskData[m] = segmentMaskData[m + 1] = segmentMaskData[m + 2] = hasPixel ? 255 : 0;
+      segmentMaskData[m + 3] = Math.floor(w * 255);
+
     }
     return new ImageData(segmentMaskData, width, height);
   }
