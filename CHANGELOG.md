@@ -1,3 +1,12 @@
+1.0.0-beta.2 (April 16, 2021)
+===================
+
+Improvements
+------------
+
+* Improved calculation for a more stable mask. With this release, the edges of the person's mask are more refined and stable, reducing the 'shakiness' effect when applying a background processor.
+
+
 1.0.0-beta1 (March 31, 2021)
 ===================
 
