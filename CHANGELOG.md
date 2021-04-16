@@ -1,3 +1,12 @@
+1.0.0-beta.2 (April 16, 2021)
+===================
+
+Improvements
+------------
+
+* The background processors now stabilize the boundary of the foreground (person), thereby reducing the 'shakiness' effect.
+
+
 1.0.0-beta1 (March 31, 2021)
 ===================
 
