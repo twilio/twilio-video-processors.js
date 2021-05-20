@@ -9,7 +9,7 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
    * The background blur filter radius to use in pixels.
    * @default
    * ```html
-   * 5
+   * 15
    * ```
    */
   blurFilterRadius?: number;
@@ -28,7 +28,11 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  * import { createLocalVideoTrack } from 'twilio-video';
  * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
  *
- * const blurBackground = new GaussianBlurBackgroundProcessor();
+ * const blurBackground = new GaussianBlurBackgroundProcessor({
+ *  modelUrl: 'https://my-server-path/model-xxx.tflite'
+ * });
+ *
+ * await blurBackground.loadModel();
  *
  * createLocalVideoTrack({
  *   width: 640,
@@ -47,9 +51,9 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
    * any missing properties in [[GaussianBlurBackgroundProcessorOptions]], and
    * invalid properties will be ignored.
    */
-  constructor(options?: GaussianBlurBackgroundProcessorOptions) {
+  constructor(options: GaussianBlurBackgroundProcessorOptions) {
     super(options);
-    this.blurFilterRadius = options?.blurFilterRadius!;
+    this.blurFilterRadius = options.blurFilterRadius!;
   }
 
   /**

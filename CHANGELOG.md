@@ -1,3 +1,11 @@
+1.0.0-beta.3 (In Progress)
+===================
+
+Improvements
+------------
+
+* The Video Processors now uses WebAssembly to run TensorFlow Lite for a faster and more accurate inference. You need to serve the tflite model and binaries so you can reference them from your application. See [assets](README.md#assets) section for details.
+
 1.0.0-beta.2 (April 16, 2021)
 ===================
 

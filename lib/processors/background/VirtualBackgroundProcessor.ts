@@ -40,7 +40,12 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  * const img = new Image();
  *
  * img.onload = () => {
- *   virtualBackground = new VirtualBackgroundProcessor({ backgroundImage: img });
+ *   virtualBackground = new VirtualBackgroundProcessor({
+ *     backgroundImage: img,
+ *     modelUrl: 'https://my-server-path/model-xxx.tflite',
+ *   });
+ *
+ *   await virtualBackground.loadModel();
  *
  *   createLocalVideoTrack({
  *     width: 640,

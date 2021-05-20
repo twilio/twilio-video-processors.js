@@ -7,17 +7,25 @@ import { Benchmark } from '../../utils/Benchmark';
 import { Dimensions } from '../../types';
 
 import {
+  BODYPIX_INFERENCE_DIMENSIONS,
+  DEBOUNCE,
   HISTORY_COUNT,
   INFERENCE_CONFIG,
   MASK_BLUR_RADIUS,
   MODEL_CONFIG,
-  INFERENCE_DIMENSIONS
+  PERSON_PROBABILITY_THRESHOLD,
+  WASM_INFERENCE_DIMENSIONS,
 } from '../../constants';
 
 /**
  * @private
  */
 export interface BackgroundProcessorOptions {
+  /**
+   * @private
+   */
+  debounce?: number;
+
   /**
    * @private
    */
@@ -29,11 +37,7 @@ export interface BackgroundProcessorOptions {
   inferenceConfig?: PersonInferenceConfig;
 
   /**
-   * The input frame will be downscaled to these dimensions before sending it for inference.
-   * @default
-   * ```html
-   * 224x224
-   * ```
+   * @private
    */
   inferenceDimensions?: Dimensions;
 
@@ -45,6 +49,29 @@ export interface BackgroundProcessorOptions {
    * ```
    */
   maskBlurRadius?: number;
+
+  /**
+   * The URL of the model to use.
+   * @example
+   * ```ts
+   * const virtualBackground = new VirtualBackgroundProcessor({
+   *   backgroundImage: img,
+   *   modelUrl: 'https://my-server-path/model-xxx.tflite'
+   * });
+   * await virtualBackground.loadModel();
+   * ```
+   */
+   modelUrl: string;
+
+  /**
+   * @private
+   */
+  personProbabilityThreshold?: number;
+
+  /**
+   * @private
+   */
+   useWasm?: boolean;
 }
 
 /**
@@ -60,22 +87,41 @@ export abstract class BackgroundProcessor extends Processor {
   protected _outputContext: OffscreenCanvasRenderingContext2D;
 
   private _benchmark: Benchmark;
+  private _currentMask: Uint8ClampedArray = new Uint8ClampedArray();
+  private _debounce: number = DEBOUNCE;
   private _historyCount: number = HISTORY_COUNT;
   private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
-  private _inferenceDimensions: Dimensions = INFERENCE_DIMENSIONS;
+  private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
+  private _inputMemoryOffset: number = 0;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas;
   private _maskContext: OffscreenCanvasRenderingContext2D;
   private _masks: SemanticPersonSegmentation[];
+  private _maskUsageCounter: number = 0;
+  private _modelUrl: string;
+  private _outputMemoryOffset: number = 0;
+  private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
+  private _tflite: any;
+  private _useWasm: boolean;
 
-  constructor(options?: BackgroundProcessorOptions) {
+  constructor(options: BackgroundProcessorOptions) {
     super();
-    this.historyCount = options?.historyCount!;
-    this.inferenceConfig = options?.inferenceConfig!;
-    this.inferenceDimensions = options?.inferenceDimensions!;
-    this.maskBlurRadius = options?.maskBlurRadius!;
+
+    if (!options.modelUrl) {
+      throw new Error('modelUrl parameter is missing');
+    }
+
+    this.maskBlurRadius = options.maskBlurRadius!;
+    this._modelUrl = options.modelUrl;
+    this._debounce = options.debounce! || DEBOUNCE;
+    this._historyCount = options.historyCount! || HISTORY_COUNT;
+    this._inferenceConfig = options.inferenceConfig! || INFERENCE_CONFIG;
+    this._personProbabilityThreshold = options.personProbabilityThreshold! || PERSON_PROBABILITY_THRESHOLD;
+    this._useWasm = typeof options.useWasm === 'boolean' ? options.useWasm : true;
+    this._inferenceDimensions = options.inferenceDimensions! ||
+      (this._useWasm ? WASM_INFERENCE_DIMENSIONS : BODYPIX_INFERENCE_DIMENSIONS);
 
     this._benchmark = new Benchmark();
     this._inputCanvas = document.createElement('canvas');
@@ -85,71 +131,6 @@ export abstract class BackgroundProcessor extends Processor {
     this._outputCanvas = new OffscreenCanvas(1, 1);
     this._outputContext = this._outputCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
     this._masks = [];
-
-    BackgroundProcessor._loadModel();
-  }
-
-  /**
-   * @private
-   */
-  get benchmark(): Benchmark {
-    return this._benchmark;
-  }
-
-  /**
-   * @private
-   */
-  get historyCount(): number {
-    return this._historyCount;
-  }
-
-  /**
-   * @private
-   */
-  set historyCount(count: number) {
-    if (!count) {
-      console.warn(`Valid history count not found. Using ${HISTORY_COUNT} as default.`);
-      count = HISTORY_COUNT;
-    }
-    this._historyCount = count;
-  }
-
-  /**
-   * @private
-   */
-  get inferenceConfig(): PersonInferenceConfig {
-    return this._inferenceConfig;
-  }
-
-  /**
-   * @private
-   */
-  set inferenceConfig(config: PersonInferenceConfig) {
-    if (!config || !Object.keys(config).length) {
-      console.warn('Inference config not found. Using defaults.');
-      config = INFERENCE_CONFIG;
-    }
-    this._inferenceConfig = config;
-  }
-
-  /**
-   * The current inference dimensions. The input frame will be
-   * downscaled to these dimensions before sending it for inference.
-   */
-  get inferenceDimensions(): Dimensions {
-    return this._inferenceDimensions;
-  }
-
-  /**
-   * Set a new inference dimensions. The input frame will be
-   * downscaled to these dimensions before sending it for inference.
-   */
-  set inferenceDimensions(dimensions: Dimensions) {
-    if (!dimensions || !dimensions.height || !dimensions.width) {
-      console.warn('Valid inference dimensions not found. Using defaults');
-      dimensions = INFERENCE_DIMENSIONS;
-    }
-    this._inferenceDimensions = dimensions;
   }
 
   /**
@@ -163,11 +144,40 @@ export abstract class BackgroundProcessor extends Processor {
    * Set a new blur radius to be used when smoothing out the edges of the person's mask.
    */
   set maskBlurRadius(radius: number) {
-    if (!radius) {
+    if (typeof radius !== 'number' || radius < 0) {
       console.warn(`Valid mask blur radius not found. Using ${MASK_BLUR_RADIUS} as default.`);
       radius = MASK_BLUR_RADIUS;
     }
     this._maskBlurRadius = radius;
+  }
+
+  /**
+   * Load the segmentation model and the required tflite assets.
+   * Call this method before attaching the processor to ensure
+   * video frames are processed correctly.
+   */
+   async loadModel() {
+    let tflite: any;
+    try {
+      tflite = await window.createTFLiteSIMDModule();
+    } catch {
+      console.warn('SIMD not supported. You may experience poor quality of background replacement.');
+      tflite = await window.createTFLiteModule();
+    }
+    const [, modelResponse ] = await Promise.all([
+      BackgroundProcessor._loadModel(),
+      fetch(this._modelUrl),
+    ]);
+
+    const model = await modelResponse.arrayBuffer();
+    const modelBufferOffset = tflite._getModelBufferMemoryOffset();
+    tflite.HEAPU8.set(new Uint8Array(model), modelBufferOffset);
+    tflite._loadModel(model.byteLength);
+
+    this._inputMemoryOffset = tflite._getInputMemoryOffset() / 4;
+    this._outputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
+
+    this._tflite = tflite;
   }
 
   /**
@@ -176,7 +186,7 @@ export abstract class BackgroundProcessor extends Processor {
    * return a null value and will result in the frame being dropped.
    */
   async processFrame(inputFrame: OffscreenCanvas): Promise<OffscreenCanvas | null> {
-    if (!BackgroundProcessor._model) {
+    if (!BackgroundProcessor._model || !this._tflite) {
       return inputFrame;
     }
 
@@ -197,11 +207,18 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.end('resizeInputImage');
 
     this._benchmark.start('segmentPerson');
-    const segment = await BackgroundProcessor._model.segmentPerson(imageData, this._inferenceConfig);
+    let personMask: ImageData;
+
+    if (this._useWasm) {
+      personMask = this._createWasmPersonMask(imageData);
+    } else {
+      const segment = await BackgroundProcessor._model.segmentPerson(imageData, this._inferenceConfig);
+      personMask = this._createBodyPixPersonMask(segment);
+    }
     this._benchmark.end('segmentPerson');
 
     this._benchmark.start('imageCompositing');
-    this._maskContext.putImageData(this._createPersonMask(segment), 0, 0);
+    this._maskContext.putImageData(personMask, 0, 0);
     this._outputContext.save();
     this._outputContext.filter = `blur(${this._maskBlurRadius}px)`;
     this._outputContext.globalCompositeOperation = 'copy';
@@ -227,7 +244,7 @@ export abstract class BackgroundProcessor extends Processor {
 
   protected abstract _setBackground(inputFrame: OffscreenCanvas): void;
 
-  private _createPersonMask(segment: SemanticPersonSegmentation) {
+  private _createBodyPixPersonMask(segment: SemanticPersonSegmentation) {
     const { data, width, height } = segment;
 
     if (this._masks.length >= this._historyCount) {
@@ -248,5 +265,35 @@ export abstract class BackgroundProcessor extends Processor {
 
     }
     return new ImageData(segmentMaskData, width, height);
+  }
+
+  private _createWasmPersonMask(resizedInputFrame: ImageData) {
+    const { width, height } = this._inferenceDimensions;
+    const inferencePixelCount = width * height;
+
+    if (this._maskUsageCounter < 1) {
+      for (let i = 0; i < inferencePixelCount; i++) {
+        this._tflite.HEAPF32[this._inputMemoryOffset + i * 3] = resizedInputFrame.data[i * 4] / 255;
+        this._tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 1] = resizedInputFrame.data[i * 4 + 1] / 255;
+        this._tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 2] = resizedInputFrame.data[i * 4 + 2] / 255;
+      }
+      this._tflite._runInference();
+      this._currentMask = new Uint8ClampedArray(inferencePixelCount * 4);
+
+      for (let i = 0; i < inferencePixelCount; i++) {
+        let alpha = this._tflite.HEAPF32[this._outputMemoryOffset + i] * 255;
+        if ((alpha / 255) < this._personProbabilityThreshold) {
+          alpha = 0;
+        }
+        this._currentMask[i] = alpha;
+      }
+      this._maskUsageCounter = this._debounce;
+    }
+    this._maskUsageCounter--;
+    for (let i = 0; i < inferencePixelCount; i++) {
+      resizedInputFrame.data[i * 4 + 3] = this._currentMask[i];
+    }
+
+    return resizedInputFrame;
   }
 }

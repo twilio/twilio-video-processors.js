@@ -48,6 +48,36 @@ You can also copy `video-processors.js` from the `dist` folder and include it di
  const VideoProcessors = Twilio.VideoProcessors;
  ```
 
+### Assets
+
+In order to achieve the best performance, the Video Processors uses WebAssembly to run TensorFlow Lite for inference. You need to serve the tflite model and binaries so you can reference them from your application. These files can be downloaded from the `dist/build` folder. Check the [examples](examples) folder for reference.
+
+Below is a list of files that you need to serve. The `xxx` indicates the version of the file.
+
+* model-xxx.tflite - Use this in the [modelUrl](https://twilio.github.io/video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#modelurl) parameter. See example below.
+* tflite-xxx.js - Load this using `<script>` tag. See example below.
+* tflite-simd-xxx.js - Load this using `<script>` tag. See example below.
+* tflite-xxx.wasm - This should live in the same folder as `tflite-xxx.js`.
+* tflite-simd-xxx.wasm - This should live in the same folder as `tflite-simd-xxx.js`.
+
+Example for specifying the `modelUrl` parameter.
+
+```ts
+const virtualBackground = new VirtualBackgroundProcessor({
+  backgroundImage: img,
+  modelUrl: 'https://my-server-path/model-selfiesegmentation_mlkit-256x256-2021_01_19-v1215.f16.tflite'
+});
+
+await virtualBackground.loadModel();
+```
+
+Example for loading the tflite JS files.
+
+```html
+ <script src="/my-server-path/tflite-1.0.0.js"></script>
+ <script src="/my-server-path/tflite-simd-1.0.0.js"></script>
+```
+
 ## Usage
 
 Please check out the following pages for example usage. These processors are only supported on the Chrome browser at this moment and will not work on other browsers. For best performance and accuracy, we recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate.

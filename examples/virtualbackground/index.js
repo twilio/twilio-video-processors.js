@@ -9,6 +9,7 @@ const virtualBackgroundForm = document.querySelector('form#virtualBackground-For
 const virtualBackgroundButton = document.querySelector('button#virtualBackground-Apply');
 const videoInput = document.querySelector('video#video-input');
 const removeProcessorButton = document.querySelector('button#no-processor-apply');
+const modelUrl = 'model-selfiesegmentation_mlkit-256x256-2021_01_19-v1215.f16.tflite';
 let videoTrack;
 let gaussianBlurProcessor;
 let virtualBackgroundProcessor;
@@ -32,7 +33,11 @@ Promise.all([
   return images;
 });
 
-Video.createLocalVideoTrack().then((track) => {
+Video.createLocalVideoTrack({
+  width: 640,
+  height: 480,
+  frameRate: 15,
+}).then((track) => {
   track.attach(videoInput);
   return videoTrack = track;
 });
@@ -49,63 +54,49 @@ const setProcessor = (processor, track) => {
   }
 };
 
-gaussianBlurButton.onclick = event => {
+gaussianBlurButton.onclick = async event => {
   event.preventDefault();
   const options = {};
-  let inferenceDimensions = {};
   const inputs = gaussianBlurForm.getElementsByTagName('input');
   for (let item of inputs) {
-    if (item.id === 'height' || item.id === 'width') {
-      item.valueAsNumber
-        ? (inferenceDimensions[item.id] = item.valueAsNumber)
-        : (inferenceDimensions[item.id] = 224);
-    } else {
-      options[item.id] = item.valueAsNumber;
-    }
+    options[item.id] = item.valueAsNumber;
   }
   const { maskBlurRadius, blurFilterRadius } = options;
   if (!gaussianBlurProcessor) {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
-      inferenceDimensions,
+      modelUrl,
       maskBlurRadius,
       blurFilterRadius,
     });
+    await gaussianBlurProcessor.loadModel();
   } else {
-    gaussianBlurProcessor.inferenceDimensions = inferenceDimensions;
     gaussianBlurProcessor.maskBlurRadius = maskBlurRadius;
     gaussianBlurProcessor.blurFilterRadius = blurFilterRadius;
   }
   setProcessor(gaussianBlurProcessor, videoTrack);
 };
 
-virtualBackgroundButton.onclick = event => {
+virtualBackgroundButton.onclick = async event => {
   event.preventDefault();
   const options = {};
-  let inferenceDimensions = {};
   const inputs = virtualBackgroundForm.elements;
   for (let item of inputs) {
-    if (item.id === 'height' || item.id === 'width') {
-      item.valueAsNumber
-        ? (inferenceDimensions[item.id] = item.valueAsNumber)
-        : (inferenceDimensions[item.id] = 224);
-    } else {
-      item.valueAsNumber
-        ? (options[item.id] = item.valueAsNumber)
-        : (options[item.id] = item.value);
-    }
+    item.valueAsNumber
+      ? (options[item.id] = item.valueAsNumber)
+      : (options[item.id] = item.value);
   }
   let backgroundImage = images[options.backgroundImage];
   let { maskBlurRadius, fitType } = options;
   if (!virtualBackgroundProcessor) {
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
-      inferenceDimensions,
+      modelUrl,
       maskBlurRadius,
       backgroundImage,
       fitType,
     });
+    await virtualBackgroundProcessor.loadModel();
   } else {
     virtualBackgroundProcessor.backgroundImage = backgroundImage;
-    virtualBackgroundProcessor.inferenceDimensions = inferenceDimensions;
     virtualBackgroundProcessor.fitType = fitType;
     virtualBackgroundProcessor.maskBlurRadius = maskBlurRadius;
   }
