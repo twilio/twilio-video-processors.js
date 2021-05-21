@@ -4,7 +4,7 @@
 Improvements
 ------------
 
-* The Video Processors now uses WebAssembly to run TensorFlow Lite for a faster and more accurate inference. You need to serve the tflite model and binaries so you can reference them from your application. See [assets](README.md#assets) section for details.
+* The Video Processors now uses WebAssembly to run TensorFlow Lite for a faster and more accurate inference. You need to serve the [tflite model and binaries](README.md#assets) so you can reference them from your application. Additionally, this improvement requires Chrome's [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. WebAssembly SIMD can be turned on by visiting `chrome://flags` on versions 84 through 90. This will be enabled by default on Chrome 91+. You can also enable this on versions 84-90 for your users without turning on the flag by registering for a Chrome Origin Trial for your website. See this [page](http://googlechrome.github.io/OriginTrials/developer-guide.html#:~:text=You%20can%20opt%20any%20page,a%20token%20for%20your%20origin.&text=NOTE%3A,tokens%20for%20a%20given%20page.) for more information about Chrome Origin Trial and this [page](https://developer.chrome.com/origintrials/#/view_trial/-4708513410415853567) for registration.
 
 1.0.0-beta.2 (April 16, 2021)
 ===================
