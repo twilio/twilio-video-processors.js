@@ -98,7 +98,7 @@ export abstract class BackgroundProcessor extends Processor {
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas;
   private _maskContext: OffscreenCanvasRenderingContext2D;
-  private _masks: SemanticPersonSegmentation[];
+  private _masks: (Uint8ClampedArray | Uint8Array)[];
   private _maskUsageCounter: number = 0;
   private _modelUrl: string;
   private _outputMemoryOffset: number = 0;
@@ -244,21 +244,23 @@ export abstract class BackgroundProcessor extends Processor {
 
   protected abstract _setBackground(inputFrame: OffscreenCanvas): void;
 
-  private _createBodyPixPersonMask(segment: SemanticPersonSegmentation) {
-    const { data, width, height } = segment;
-
+  private _addMask(mask: Uint8ClampedArray | Uint8Array) {
     if (this._masks.length >= this._historyCount) {
       this._masks.splice(0, this._masks.length - this._historyCount + 1);
     }
-    this._masks.push(segment);
+    this._masks.push(mask);
+  }
 
+  private _createBodyPixPersonMask(segment: SemanticPersonSegmentation) {
+    const { data, width, height } = segment;
+    this._addMask(data);
     const segmentMaskData = new Uint8ClampedArray(width * height * 4);
     const weightedSum = this._masks.reduce((sum, mask, j) => sum + (j + 1) * (j + 1), 0);
 
     for (let i = 0; i < data.length; i++) {
       const m = i * 4;
-      const hasPixel = this._masks.some(mask => mask.data[i] === 1);
-      const w = this._masks.reduce((sum, mask, j) => sum + mask.data[i] * (j + 1) * (j + 1), 0) / weightedSum;
+      const hasPixel = this._masks.some(mask => mask[i] === 1);
+      const w = this._masks.reduce((sum, mask, j) => sum + mask[i] * (j + 1) * (j + 1), 0) / weightedSum;
 
       segmentMaskData[m] = segmentMaskData[m + 1] = segmentMaskData[m + 2] = hasPixel ? 255 : 0;
       segmentMaskData[m + 3] = Math.floor(w * 255);
@@ -289,11 +291,14 @@ export abstract class BackgroundProcessor extends Processor {
       }
       this._maskUsageCounter = this._debounce;
     }
-    this._maskUsageCounter--;
-    for (let i = 0; i < inferencePixelCount; i++) {
-      resizedInputFrame.data[i * 4 + 3] = this._currentMask[i];
-    }
 
+    this._addMask(this._currentMask);
+    const weightedSum = this._masks.reduce((sum, mask, j) => sum + 255 * j * j, 0);
+    for (let i = 0; i < inferencePixelCount; i++) {
+      const w = this._masks.reduce((sum, mask, j) => sum + mask[i] * j * j, 0) / weightedSum;
+      resizedInputFrame.data[i * 4 + 3] = Math.floor(w * 255);
+    }
+    this._maskUsageCounter--;
     return resizedInputFrame;
   }
 }
