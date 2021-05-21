@@ -56,7 +56,7 @@ export interface BackgroundProcessorOptions {
    * ```ts
    * const virtualBackground = new VirtualBackgroundProcessor({
    *   backgroundImage: img,
-   *   modelUrl: 'https://my-server-path/model-xxx.tflite'
+   *   modelUrl: 'https://my-server-path/twilio-tflite-xxx.tflite'
    * });
    * await virtualBackground.loadModel();
    * ```
@@ -152,7 +152,7 @@ export abstract class BackgroundProcessor extends Processor {
   }
 
   /**
-   * Load the segmentation model and the required tflite assets.
+   * Load the segmentation model.
    * Call this method before attaching the processor to ensure
    * video frames are processed correctly.
    */
@@ -251,54 +251,50 @@ export abstract class BackgroundProcessor extends Processor {
     this._masks.push(mask);
   }
 
+  private _applyAlpha(imageData: ImageData) {
+    const weightedSum = this._masks.reduce((sum, mask, j) => sum + (j + 1) * (j + 1), 0);
+    const pixels = imageData.height * imageData.width;
+    for (let i = 0; i < pixels; i++) {
+      const w = this._masks.reduce((sum, mask, j) => sum + mask[i] * (j + 1) * (j + 1), 0) / weightedSum;
+      imageData.data[i * 4 + 3] = Math.round(w * 255);
+    }
+  }
+
   private _createBodyPixPersonMask(segment: SemanticPersonSegmentation) {
     const { data, width, height } = segment;
+    const imageData = new ImageData(new Uint8ClampedArray(width * height * 4), width, height);
+
     this._addMask(data);
-    const segmentMaskData = new Uint8ClampedArray(width * height * 4);
-    const weightedSum = this._masks.reduce((sum, mask, j) => sum + (j + 1) * (j + 1), 0);
+    this._applyAlpha(imageData);
 
-    for (let i = 0; i < data.length; i++) {
-      const m = i * 4;
-      const hasPixel = this._masks.some(mask => mask[i] === 1);
-      const w = this._masks.reduce((sum, mask, j) => sum + mask[i] * (j + 1) * (j + 1), 0) / weightedSum;
-
-      segmentMaskData[m] = segmentMaskData[m + 1] = segmentMaskData[m + 2] = hasPixel ? 255 : 0;
-      segmentMaskData[m + 3] = Math.floor(w * 255);
-
-    }
-    return new ImageData(segmentMaskData, width, height);
+    return imageData;
   }
 
   private _createWasmPersonMask(resizedInputFrame: ImageData) {
-    const { width, height } = this._inferenceDimensions;
-    const inferencePixelCount = width * height;
+    const { _inferenceDimensions: { width, height }, _tflite: tflite } = this;
+    const pixels = width * height;
 
     if (this._maskUsageCounter < 1) {
-      for (let i = 0; i < inferencePixelCount; i++) {
-        this._tflite.HEAPF32[this._inputMemoryOffset + i * 3] = resizedInputFrame.data[i * 4] / 255;
-        this._tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 1] = resizedInputFrame.data[i * 4 + 1] / 255;
-        this._tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 2] = resizedInputFrame.data[i * 4 + 2] / 255;
+      for (let i = 0; i < pixels; i++) {
+        tflite.HEAPF32[this._inputMemoryOffset + i * 3] = resizedInputFrame.data[i * 4] / 255;
+        tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 1] = resizedInputFrame.data[i * 4 + 1] / 255;
+        tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 2] = resizedInputFrame.data[i * 4 + 2] / 255;
       }
-      this._tflite._runInference();
-      this._currentMask = new Uint8ClampedArray(inferencePixelCount * 4);
+      tflite._runInference();
+      this._currentMask = new Uint8ClampedArray(pixels * 4);
 
-      for (let i = 0; i < inferencePixelCount; i++) {
-        let alpha = this._tflite.HEAPF32[this._outputMemoryOffset + i] * 255;
-        if ((alpha / 255) < this._personProbabilityThreshold) {
-          alpha = 0;
-        }
-        this._currentMask[i] = alpha;
+      for (let i = 0; i < pixels; i++) {
+        const personProbability = tflite.HEAPF32[this._outputMemoryOffset + i];
+        this._currentMask[i] = Number(personProbability >= this._personProbabilityThreshold) * personProbability;
       }
       this._maskUsageCounter = this._debounce;
     }
 
     this._addMask(this._currentMask);
-    const weightedSum = this._masks.reduce((sum, mask, j) => sum + 255 * j * j, 0);
-    for (let i = 0; i < inferencePixelCount; i++) {
-      const w = this._masks.reduce((sum, mask, j) => sum + mask[i] * j * j, 0) / weightedSum;
-      resizedInputFrame.data[i * 4 + 3] = Math.floor(w * 255);
-    }
+    this._applyAlpha(resizedInputFrame);
+
     this._maskUsageCounter--;
+
     return resizedInputFrame;
   }
 }

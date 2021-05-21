@@ -29,7 +29,7 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
  *
  * const blurBackground = new GaussianBlurBackgroundProcessor({
- *  modelUrl: 'https://my-server-path/model-xxx.tflite'
+ *  modelUrl: 'https://my-server-path/twilio-tflite-xxx.tflite'
  * });
  *
  * await blurBackground.loadModel();

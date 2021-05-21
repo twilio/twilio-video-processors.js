@@ -34,9 +34,9 @@ Promise.all([
 });
 
 Video.createLocalVideoTrack({
-  width: 640,
-  height: 480,
-  frameRate: 15,
+  width: 1280,
+  height: 720,
+  frameRate: 24,
 }).then((track) => {
   track.attach(videoInput);
   return videoTrack = track;
