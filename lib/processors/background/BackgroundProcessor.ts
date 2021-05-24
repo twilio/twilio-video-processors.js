@@ -315,11 +315,11 @@ export abstract class BackgroundProcessor extends Processor {
     let tflite: any;
     try {
       await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME_SIMD);
-      tflite = await window.createTFLiteSIMDModule();
+      tflite = await window.createTwilioTFLiteSIMDModule();
     } catch {
       console.warn('SIMD not supported. You may experience poor quality of background replacement.');
       await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME);
-      tflite = await window.createTFLiteModule();
+      tflite = await window.createTwilioTFLiteModule();
     }
     return tflite;
   }

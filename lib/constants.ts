@@ -7,8 +7,8 @@ export const MASK_BLUR_RADIUS = 5;
 export const HISTORY_COUNT = 5;
 export const PERSON_PROBABILITY_THRESHOLD = 0.4;
 export const MODEL_NAME = 'twilio-selfiesegmentation-256x256-float16-v1215.tflite';
-export const TFLITE_LOADER_NAME = 'tflite.js';
-export const TFLITE_LOADER_NAME_SIMD = 'tflite-simd.js';
+export const TFLITE_LOADER_NAME = 'tflite-1-0-0-rc2.js';
+export const TFLITE_LOADER_NAME_SIMD = 'tflite-simd-1-0-0-rc2.js';
 
 export const MODEL_CONFIG: ModelConfig = {
   architecture: 'MobileNetV1',

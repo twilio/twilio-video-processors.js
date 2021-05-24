@@ -3,8 +3,8 @@
  */
  declare global {
   interface Window {
-    createTFLiteModule: () => Promise<any>;
-    createTFLiteSIMDModule: () => Promise<any>;
+    createTwilioTFLiteModule: () => Promise<any>;
+    createTwilioTFLiteSIMDModule: () => Promise<any>;
     Twilio: Object & { VideoProcessors?: any };
   }
 }
