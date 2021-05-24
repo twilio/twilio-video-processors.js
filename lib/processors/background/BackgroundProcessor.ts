@@ -13,7 +13,10 @@ import {
   INFERENCE_CONFIG,
   MASK_BLUR_RADIUS,
   MODEL_CONFIG,
+  MODEL_NAME,
   PERSON_PROBABILITY_THRESHOLD,
+  TFLITE_LOADER_NAME,
+  TFLITE_LOADER_NAME_SIMD,
   WASM_INFERENCE_DIMENSIONS,
 } from '../../constants';
 
@@ -21,6 +24,21 @@ import {
  * @private
  */
 export interface BackgroundProcessorOptions {
+  /**
+   * The VideoProcessors load assets dynamically depending on certain browser features.
+   * You need to serve all the assets and provide the root path so they can be referenced by the SDK.
+   * These assets can be copied from the `dist/build` folder which you can add as part of your deployment process.
+   * @example
+   * ```ts
+   * const virtualBackground = new VirtualBackgroundProcessor({
+   *   backgroundImage: img,
+   *   assetsPath: 'https://my-server-path/assets'
+   * });
+   * await virtualBackground.loadModel();
+   * ```
+   */
+  assetsPath: string;
+
   /**
    * @private
    */
@@ -51,19 +69,6 @@ export interface BackgroundProcessorOptions {
   maskBlurRadius?: number;
 
   /**
-   * The URL of the model to use.
-   * @example
-   * ```ts
-   * const virtualBackground = new VirtualBackgroundProcessor({
-   *   backgroundImage: img,
-   *   modelUrl: 'https://my-server-path/twilio-tflite-xxx.tflite'
-   * });
-   * await virtualBackground.loadModel();
-   * ```
-   */
-   modelUrl: string;
-
-  /**
    * @private
    */
   personProbabilityThreshold?: number;
@@ -86,6 +91,7 @@ export abstract class BackgroundProcessor extends Processor {
   protected _outputCanvas: OffscreenCanvas;
   protected _outputContext: OffscreenCanvasRenderingContext2D;
 
+  private _assetsPath: string;
   private _benchmark: Benchmark;
   private _currentMask: Uint8ClampedArray = new Uint8ClampedArray();
   private _debounce: number = DEBOUNCE;
@@ -100,7 +106,6 @@ export abstract class BackgroundProcessor extends Processor {
   private _maskContext: OffscreenCanvasRenderingContext2D;
   private _masks: (Uint8ClampedArray | Uint8Array)[];
   private _maskUsageCounter: number = 0;
-  private _modelUrl: string;
   private _outputMemoryOffset: number = 0;
   private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
   private _tflite: any;
@@ -109,12 +114,16 @@ export abstract class BackgroundProcessor extends Processor {
   constructor(options: BackgroundProcessorOptions) {
     super();
 
-    if (!options.modelUrl) {
-      throw new Error('modelUrl parameter is missing');
+    if (typeof options.assetsPath !== 'string') {
+      throw new Error('assetsPath parameter is missing');
+    }
+    let assetsPath = options.assetsPath;
+    if (assetsPath && assetsPath[assetsPath.length - 1] !== '/') {
+      assetsPath += '/';
     }
 
     this.maskBlurRadius = options.maskBlurRadius!;
-    this._modelUrl = options.modelUrl;
+    this._assetsPath = assetsPath;
     this._debounce = options.debounce! || DEBOUNCE;
     this._historyCount = options.historyCount! || HISTORY_COUNT;
     this._inferenceConfig = options.inferenceConfig! || INFERENCE_CONFIG;
@@ -157,16 +166,10 @@ export abstract class BackgroundProcessor extends Processor {
    * video frames are processed correctly.
    */
    async loadModel() {
-    let tflite: any;
-    try {
-      tflite = await window.createTFLiteSIMDModule();
-    } catch {
-      console.warn('SIMD not supported. You may experience poor quality of background replacement.');
-      tflite = await window.createTFLiteModule();
-    }
-    const [, modelResponse ] = await Promise.all([
+    const [, tflite, modelResponse ] = await Promise.all([
       BackgroundProcessor._loadModel(),
-      fetch(this._modelUrl),
+      this._loadTfLite(),
+      fetch(this._assetsPath + MODEL_NAME),
     ]);
 
     const model = await modelResponse.arrayBuffer();
@@ -296,5 +299,28 @@ export abstract class BackgroundProcessor extends Processor {
     this._maskUsageCounter--;
 
     return resizedInputFrame;
+  }
+
+  private _loadJs(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.append(script);
+      script.src = url;
+    });
+  }
+
+  private async _loadTfLite(): Promise<any> {
+    let tflite: any;
+    try {
+      await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME_SIMD);
+      tflite = await window.createTFLiteSIMDModule();
+    } catch {
+      console.warn('SIMD not supported. You may experience poor quality of background replacement.');
+      await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME);
+      tflite = await window.createTFLiteModule();
+    }
+    return tflite;
   }
 }

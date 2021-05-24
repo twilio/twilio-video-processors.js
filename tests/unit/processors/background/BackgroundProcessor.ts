@@ -36,20 +36,34 @@ describe('BackgroundProcessor', () => {
     assert.throws(() => new MyBackgroundProcessor());
   });
 
-  describe('modelUrl', () => {
+  describe('assetsPath', () => {
     [
       null,
       undefined,
-      ''
     ].forEach((value: any) => {
-      it(`should throw if modelUrl param is ${value}`, () => {
-        assert.throws(() => new MyBackgroundProcessor({ modelUrl: value }));
+      it(`should throw if assetsPath param is ${value}`, () => {
+        assert.throws(() => new MyBackgroundProcessor({ assetsPath: value }));
       });
     });
 
-    it(`should set modelUrl`, () => {
-      const processor: any = new MyBackgroundProcessor({ modelUrl: 'foo' });
-      assert.strictEqual(processor._modelUrl, 'foo');
+    it(`should set assetsPath for empty string`, () => {
+      const processor: any = new MyBackgroundProcessor({ assetsPath: '' });
+      assert.strictEqual(processor._assetsPath, '');
+    });
+
+    it(`should set assetsPath for website root folder`, () => {
+      const processor: any = new MyBackgroundProcessor({ assetsPath: '/' });
+      assert.strictEqual(processor._assetsPath, '/');
+    });
+
+    it(`should set assetsPath for non-empty string and if path does not ends in /`, () => {
+      const processor: any = new MyBackgroundProcessor({ assetsPath: 'https://foo' });
+      assert.strictEqual(processor._assetsPath, 'https://foo/');
+    });
+
+    it(`should set assetsPath for non-empty string and if path ends in /`, () => {
+      const processor: any = new MyBackgroundProcessor({ assetsPath: 'https://foo/' });
+      assert.strictEqual(processor._assetsPath, 'https://foo/');
     });
   });
 
@@ -67,14 +81,14 @@ describe('BackgroundProcessor', () => {
       const useDefault = !option || typeof option.maskBlurRadius !== 'number';
       const param = option ? JSON.stringify(option) : option;
       it(`should set maskBlurRadius to ${useDefault ? 'default' : option.maskBlurRadius} if option is ${param}`, () => {
-        const processor = new MyBackgroundProcessor({ ...option, modelUrl: 'foo' });
+        const processor = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
         const expected = useDefault ? MASK_BLUR_RADIUS : option.maskBlurRadius;
         assert.strictEqual(processor.maskBlurRadius, expected);
       });
   
       if (option) {
         it(`should set maskBlurRadius to ${useDefault ? 'default' : option.maskBlurRadius} if maskBlurRadius being set is ${option.blurFilterRadius}`, () => {
-          const processor = new MyBackgroundProcessor({ modelUrl: 'foo' });
+          const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
           processor.maskBlurRadius = option.maskBlurRadius;
           const expected = useDefault ? MASK_BLUR_RADIUS : option.maskBlurRadius;
           assert.strictEqual(processor.maskBlurRadius, expected);
@@ -97,7 +111,7 @@ describe('BackgroundProcessor', () => {
       const useDefault = !option || !option.personProbabilityThreshold;
       const param = option ? JSON.stringify(option) : option;
       it(`should set personProbabilityThreshold to ${useDefault ? 'default' : option.personProbabilityThreshold} if option is ${param}`, () => {
-        const processor:any = new MyBackgroundProcessor({ ...option, modelUrl: 'foo' });
+        const processor:any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
         const expected = useDefault ? PERSON_PROBABILITY_THRESHOLD : option.personProbabilityThreshold;
         assert.strictEqual(processor._personProbabilityThreshold, expected);
       });
@@ -118,7 +132,7 @@ describe('BackgroundProcessor', () => {
       const useDefault = !option || !option.historyCount || option.historyCount < 1;
       const param = option ? JSON.stringify(option) : option;
       it(`should set historyCount to ${useDefault ? 'default' : option.historyCount} if option is ${param}`, () => {
-        const processor:any = new MyBackgroundProcessor({ ...option, modelUrl: 'foo' });
+        const processor:any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
         const expected = useDefault ? HISTORY_COUNT : option.historyCount;
         assert.strictEqual(processor._historyCount, expected);
       });
@@ -138,7 +152,7 @@ describe('BackgroundProcessor', () => {
       const useDefault = !option || !option.inferenceConfig;
       const param = option && option.inferenceConfig ? JSON.stringify(option) : option;
       it(`should set inferenceConfig to ${useDefault ? 'default' : option.inferenceConfig} if option is ${param}`, () => {
-        const processor:any = new MyBackgroundProcessor({ ...option, modelUrl: 'foo' });
+        const processor:any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
         const expected = useDefault ? INFERENCE_CONFIG : option.inferenceConfig;
         assert.deepStrictEqual(processor._inferenceConfig, expected);
       });
@@ -147,17 +161,17 @@ describe('BackgroundProcessor', () => {
 
   describe('useWasm', () => {
     it('should set inferenceDimensions to wasm default if useWasm is true', () => {
-      const processor:any = new MyBackgroundProcessor({ useWasm: true, modelUrl: 'foo' });
+      const processor:any = new MyBackgroundProcessor({ useWasm: true, assetsPath: 'foo' });
       assert.deepStrictEqual(processor._inferenceDimensions, WASM_INFERENCE_DIMENSIONS);
     });
 
     it('should set inferenceDimensions to wasm default if useWasm is not provided', () => {
-      const processor:any = new MyBackgroundProcessor({ modelUrl: 'foo' });
+      const processor:any = new MyBackgroundProcessor({ assetsPath: 'foo' });
       assert.deepStrictEqual(processor._inferenceDimensions, WASM_INFERENCE_DIMENSIONS);
     });
 
     it('should set inferenceDimensions to bodypix default if useWasm is false', () => {
-      const processor:any = new MyBackgroundProcessor({ useWasm: false, modelUrl: 'foo' });
+      const processor:any = new MyBackgroundProcessor({ useWasm: false, assetsPath: 'foo' });
       assert.deepStrictEqual(processor._inferenceDimensions, BODYPIX_INFERENCE_DIMENSIONS);
     });
   });
@@ -178,7 +192,7 @@ describe('BackgroundProcessor', () => {
       const useDefault = !option || !option.inferenceDimensions;
       const param = option && option.inferenceDimensions ? JSON.stringify(option) : option;
       it(`should set inferenceDimensions to ${useDefault ? 'default' : option.inferenceDimensions} if option is ${param}`, () => {
-        const processor:any = new MyBackgroundProcessor({ ...option, modelUrl: 'foo' });
+        const processor:any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
         const expected = useDefault ? WASM_INFERENCE_DIMENSIONS : option.inferenceDimensions;
         assert.deepStrictEqual(processor._inferenceDimensions, expected);
       });

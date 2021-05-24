@@ -9,7 +9,10 @@ const virtualBackgroundForm = document.querySelector('form#virtualBackground-For
 const virtualBackgroundButton = document.querySelector('button#virtualBackground-Apply');
 const videoInput = document.querySelector('video#video-input');
 const removeProcessorButton = document.querySelector('button#no-processor-apply');
-const modelUrl = 'model-selfiesegmentation_mlkit-256x256-2021_01_19-v1215.f16.tflite';
+
+// Same directory as the current js file
+const assetsPath = '';
+
 let videoTrack;
 let gaussianBlurProcessor;
 let virtualBackgroundProcessor;
@@ -64,7 +67,7 @@ gaussianBlurButton.onclick = async event => {
   const { maskBlurRadius, blurFilterRadius } = options;
   if (!gaussianBlurProcessor) {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
-      modelUrl,
+      assetsPath,
       maskBlurRadius,
       blurFilterRadius,
     });
@@ -89,7 +92,7 @@ virtualBackgroundButton.onclick = async event => {
   let { maskBlurRadius, fitType } = options;
   if (!virtualBackgroundProcessor) {
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
-      modelUrl,
+      assetsPath,
       maskBlurRadius,
       backgroundImage,
       fitType,

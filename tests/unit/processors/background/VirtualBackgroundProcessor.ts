@@ -26,16 +26,16 @@ describe('VirtualBackgroundProcessor', () => {
       it(`should ${shouldThrow ? 'throw an error' : 'set the image'} if the image provided in the constructor is ${JSON.stringify(img)}`, () => {
         if (shouldThrow) {
           assert.throws(() => {
-            const processor = new VirtualBackgroundProcessor({ backgroundImage: img, modelUrl: 'foo' });
+            const processor = new VirtualBackgroundProcessor({ backgroundImage: img, assetsPath: 'foo' });
           });
         } else {
-          const processor = new VirtualBackgroundProcessor({ backgroundImage: img, modelUrl: 'foo' });
+          const processor = new VirtualBackgroundProcessor({ backgroundImage: img, assetsPath: 'foo' });
           assert.deepStrictEqual(processor.backgroundImage, img);
         }
       });
 
       it(`should ${shouldThrow ? 'throw an error' : 'set the image'} if the image provided in the setter is ${JSON.stringify(img)}`, () => {
-        const processor = new VirtualBackgroundProcessor({ modelUrl: 'foo', backgroundImage: { complete: true, naturalHeight: 1 } } as any);
+        const processor = new VirtualBackgroundProcessor({ assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 } } as any);
         if (shouldThrow) {
           assert.throws(() => {
             processor.backgroundImage = img;
@@ -49,7 +49,7 @@ describe('VirtualBackgroundProcessor', () => {
   });
 
   describe('fitType', () => {
-    const options = { modelUrl: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }} as any;
+    const options = { assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }} as any;
     const validTypes = ['Contain', 'Cover', 'Fill', 'None'];
     [null, undefined, 'foo', ...validTypes].forEach((type: any) => {
       const isValid = validTypes.includes(type);
@@ -67,7 +67,7 @@ describe('VirtualBackgroundProcessor', () => {
   });
 
   describe('_getFitPosition', () => {
-    const options = { modelUrl: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }} as any;
+    const options = { assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }} as any;
     let processor: VirtualBackgroundProcessor;
 
     beforeEach(() => {

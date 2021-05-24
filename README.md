@@ -50,34 +50,7 @@ You can also copy `video-processors.js` from the `dist` folder and include it di
 
 ### Assets
 
-In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so you can reference them from your application. These files can be downloaded from the `dist/build` folder. Check the [examples](examples) folder for reference.
-
-Below is a list of files that you need to serve. The `xxx` indicates the version of the file.
-
-* model-xxx.tflite - Use this in the [modelUrl](https://twilio.github.io/video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#modelurl) parameter. See example below.
-* tflite-xxx.js - Load this using `<script>` tag before loading the VideoProcessors SDK. See example below.
-* tflite-simd-xxx.js - Load this using `<script>` tag before loading the VideoProcessors SDK. See example below.
-* tflite-xxx.wasm - This should live in the same folder as `tflite-xxx.js`.
-* tflite-simd-xxx.wasm - This should live in the same folder as `tflite-simd-xxx.js`.
-
-Example for specifying the `modelUrl` parameter.
-
-```ts
-const virtualBackground = new VirtualBackgroundProcessor({
-  backgroundImage: img,
-  modelUrl: 'https://my-server-path/twilio-tflite-xxx.tflite'
-});
-
-await virtualBackground.loadModel();
-```
-
-Example for loading the tflite JS files and the VideoProcessors SDK.
-
-```html
- <script src="/my-server-path/tflite-1.0.0.js"></script>
- <script src="/my-server-path/tflite-simd-1.0.0.js"></script>
- <script src="https://my-server-path/video-processors.js"></script>
-```
+In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so the SDK can load them properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath) for details and the [examples](examples) folder for reference.
 
 ## Usage
 

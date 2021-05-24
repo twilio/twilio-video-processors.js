@@ -42,7 +42,7 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  * img.onload = () => {
  *   virtualBackground = new VirtualBackgroundProcessor({
  *     backgroundImage: img,
- *     modelUrl: 'https://my-server-path/twilio-tflite-xxx.tflite'
+ *     assetsPath: 'https://my-server-path/assets'
  *   });
  *
  *   await virtualBackground.loadModel();

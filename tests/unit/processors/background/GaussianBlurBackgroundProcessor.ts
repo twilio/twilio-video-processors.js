@@ -28,14 +28,14 @@ describe('GaussianBlurBackgroundProcessor', () => {
     const useDefault = !option || !option.blurFilterRadius || option.blurFilterRadius < 1;
     const param = option ? JSON.stringify(option) : option;
     it(`should set blurFilterRadius to ${useDefault ? 'default' : option.blurFilterRadius} if option is ${param}`, () => {
-      const processor = new GaussianBlurBackgroundProcessor({ ...option, modelUrl: 'foo' });
+      const processor = new GaussianBlurBackgroundProcessor({ ...option, assetsPath: 'foo' });
       const expected = useDefault ? BLUR_FILTER_RADIUS : option.blurFilterRadius;
       assert.strictEqual(processor.blurFilterRadius, expected);
     });
 
     if (option) {
       it(`should set blurFilterRadius to ${useDefault ? 'default' : option.blurFilterRadius} if blurFilterRadius being set is ${option.blurFilterRadius}`, () => {
-        const processor = new GaussianBlurBackgroundProcessor({ modelUrl: 'foo' });
+        const processor = new GaussianBlurBackgroundProcessor({ assetsPath: 'foo' });
         processor.blurFilterRadius = option.blurFilterRadius;
         const expected = useDefault ? BLUR_FILTER_RADIUS : option.blurFilterRadius;
         assert.strictEqual(processor.blurFilterRadius, expected);
