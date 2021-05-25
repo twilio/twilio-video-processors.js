@@ -1,0 +1,14 @@
+import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
+import { Dimensions } from './types';
+export declare const BLUR_FILTER_RADIUS = 15;
+export declare const DEBOUNCE = 2;
+export declare const MASK_BLUR_RADIUS = 5;
+export declare const HISTORY_COUNT = 5;
+export declare const PERSON_PROBABILITY_THRESHOLD = 0.4;
+export declare const MODEL_NAME = "twilio-selfiesegmentation-256x256-float16-v1215.tflite";
+export declare const TFLITE_LOADER_NAME = "tflite-1-0-0-rc2.js";
+export declare const TFLITE_LOADER_NAME_SIMD = "tflite-simd-1-0-0-rc2.js";
+export declare const MODEL_CONFIG: ModelConfig;
+export declare const INFERENCE_CONFIG: PersonInferenceConfig;
+export declare const BODYPIX_INFERENCE_DIMENSIONS: Dimensions;
+export declare const WASM_INFERENCE_DIMENSIONS: Dimensions;
