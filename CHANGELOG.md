@@ -1,4 +1,4 @@
-1.0.0-beta.3 (In Progress)
+1.0.0-beta.3 (May 25, 2021)
 ===================
 
 Improvements
