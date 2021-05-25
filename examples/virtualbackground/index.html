@@ -26,17 +26,12 @@
                 <h4 class="card-title">Gaussian Blur Background Options</h4>
                 <form id="gaussianBlur-Form">
                   <div class="form-group">
-                    <label for="inferenceDimension">Inference Dimensions</label>
-                    <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width" value="224"></input>
-                    <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height" value="224"></input>
-                  </div>
-                  <div class="form-group">
                     <label for="maskBlurRadius">Mask Blur Radius</label>
-                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="maskBlurRadius" value="3"></input>
+                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="maskBlurRadius" value="5"></input>
                   </div>
                   <div class="form-group">
                     <label for="blurFilterRadius">Blur Filter Radius</label>
-                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="blurFilterRadius" value="5"></input>
+                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="blurFilterRadius" value="15"></input>
                   </div>
                 </form>
                 <button id="gaussianBlur-Apply" class="btn btn-primary btn-sm">Apply</button>
@@ -47,13 +42,8 @@
                 <h4 class="card-title">Virtual Background Options</h4>
                 <form id="virtualBackground-Form">
                   <div class="form-group">
-                    <label for="inferenceDimension">Inference Dimensions</label>
-                    <input class="form-control" type="number" id="width" min="0" oninput="validity.valid||(value='');" placeholder="width" value="224"></input>
-                    <input class="form-control" type="number" id="height" min="0" oninput="validity.valid||(value='');" placeholder="height" value="224"></input>
-                  </div>
-                  <div class="form-group">
                     <label for="maskBlurRadius">Mask Blur Radius</label>
-                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="maskBlurRadius" value="3" ></input>
+                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="maskBlurRadius" value="5" ></input>
                   </div>
                   <div class="form-group">
                     <label for="backgroundImage">Background Image</label>
