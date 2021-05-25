@@ -1,4 +1,4 @@
-/*! video-processors.js 1.0.0-rc4
+/*! video-processors.js 1.0.0-beta.3
 
 The following license applies to all parts of this software except as
 documented below.
