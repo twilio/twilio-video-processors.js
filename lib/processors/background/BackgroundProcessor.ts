@@ -31,8 +31,8 @@ export interface BackgroundProcessorOptions {
    * @example
    * ```ts
    * const virtualBackground = new VirtualBackgroundProcessor({
+   *   assetsPath: 'https://my-server-path/assets',
    *   backgroundImage: img,
-   *   assetsPath: 'https://my-server-path/assets'
    * });
    * await virtualBackground.loadModel();
    * ```
@@ -168,7 +168,7 @@ export abstract class BackgroundProcessor extends Processor {
    async loadModel() {
     const [, tflite, modelResponse ] = await Promise.all([
       BackgroundProcessor._loadModel(),
-      this._loadTfLite(),
+      this._loadTwilioTfLite(),
       fetch(this._assetsPath + MODEL_NAME),
     ]);
 
@@ -311,10 +311,11 @@ export abstract class BackgroundProcessor extends Processor {
     });
   }
 
-  private async _loadTfLite(): Promise<any> {
+  private async _loadTwilioTfLite(): Promise<any> {
     let tflite: any;
+    await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME_SIMD);
+
     try {
-      await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME_SIMD);
       tflite = await window.createTwilioTFLiteSIMDModule();
     } catch {
       console.warn('SIMD not supported. You may experience poor quality of background replacement.');

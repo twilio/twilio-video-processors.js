@@ -41,8 +41,8 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *
  * img.onload = () => {
  *   virtualBackground = new VirtualBackgroundProcessor({
+ *     assetsPath: 'https://my-server-path/assets',
  *     backgroundImage: img,
- *     assetsPath: 'https://my-server-path/assets'
  *   });
  *
  *   await virtualBackground.loadModel();
