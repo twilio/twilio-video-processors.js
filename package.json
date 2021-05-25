@@ -29,9 +29,10 @@
   "main": "./es5/index.js",
   "types": "./es5/index.d.ts",
   "scripts": {
-    "build": "npm-run-all clean build:es5 build:js build:js-min docs",
-    "build:js": "rimraf ./dist && node ./scripts/build.js ./LICENSE.md ./dist/video-processors.js",
-    "build:js-min": "uglifyjs ./dist/video-processors.js -o ./dist/video-processors.min.js --comments \"/^! video-processors.js/\" -b beautify=false,ascii_only=true",
+    "build": "npm-run-all clean build:es5 build:js build:js-min build:js-assets docs",
+    "build:js": "rimraf ./dist && node ./scripts/build.js ./LICENSE.md ./dist/build/video-processors.js",
+    "build:js-min": "uglifyjs ./dist/build/video-processors.js -o ./dist/build/video-processors.min.js --comments \"/^! video-processors.js/\" -b beautify=false,ascii_only=true",
+    "build:js-assets": "cp -r ./assets/* ./dist/build/",
     "build:es5": "tsc",
     "docs": "rimraf ./dist/docs && typedoc --excludePrivate --excludeProtected --readme none",
     "clean": "rimraf ./dist ./es5 ./coverage ./.nyc_output",

@@ -5,15 +5,6 @@ import { GrayscaleProcessor } from './processors/grayscale';
 import { Processor } from './processors/Processor';
 import { ImageFit, Dimensions } from './types';
 
-/**
- * @private
- */
-declare global {
-  interface Window {
-    Twilio: Object & { VideoProcessors?: any };
-  }
-}
-
 window.Twilio = window.Twilio || {};
 window.Twilio.VideoProcessors = {
   ...window.Twilio.VideoProcessors,

@@ -48,6 +48,10 @@ You can also copy `video-processors.js` from the `dist` folder and include it di
  const VideoProcessors = Twilio.VideoProcessors;
  ```
 
+### Assets
+
+In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so the SDK can load them properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath) for details and the [examples](examples) folder for reference.
+
 ## Usage
 
 Please check out the following pages for example usage. These processors are only supported on the Chrome browser at this moment and will not work on other browsers. For best performance and accuracy, we recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate.

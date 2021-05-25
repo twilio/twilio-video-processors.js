@@ -14,10 +14,6 @@ describe('VirtualBackgroundProcessor', () => {
     consoleWarnStub.restore();
   });
 
-  it('should throw an error if options is not provided', () => {
-    assert.throws(() => new (VirtualBackgroundProcessor as any)());
-  });
-
   describe('backgroundImage', () => {
     [
       null,
@@ -30,16 +26,16 @@ describe('VirtualBackgroundProcessor', () => {
       it(`should ${shouldThrow ? 'throw an error' : 'set the image'} if the image provided in the constructor is ${JSON.stringify(img)}`, () => {
         if (shouldThrow) {
           assert.throws(() => {
-            const processor = new VirtualBackgroundProcessor({ backgroundImage: img });
+            const processor = new VirtualBackgroundProcessor({ backgroundImage: img, assetsPath: 'foo' });
           });
         } else {
-          const processor = new VirtualBackgroundProcessor({ backgroundImage: img });
+          const processor = new VirtualBackgroundProcessor({ backgroundImage: img, assetsPath: 'foo' });
           assert.deepStrictEqual(processor.backgroundImage, img);
         }
       });
 
       it(`should ${shouldThrow ? 'throw an error' : 'set the image'} if the image provided in the setter is ${JSON.stringify(img)}`, () => {
-        const processor = new VirtualBackgroundProcessor({ backgroundImage: { complete: true, naturalHeight: 1 } } as any);
+        const processor = new VirtualBackgroundProcessor({ assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 } } as any);
         if (shouldThrow) {
           assert.throws(() => {
             processor.backgroundImage = img;
@@ -53,7 +49,7 @@ describe('VirtualBackgroundProcessor', () => {
   });
 
   describe('fitType', () => {
-    const options = { backgroundImage: { complete: true, naturalHeight: 1 }} as any;
+    const options = { assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }} as any;
     const validTypes = ['Contain', 'Cover', 'Fill', 'None'];
     [null, undefined, 'foo', ...validTypes].forEach((type: any) => {
       const isValid = validTypes.includes(type);
@@ -71,7 +67,7 @@ describe('VirtualBackgroundProcessor', () => {
   });
 
   describe('_getFitPosition', () => {
-    const options = { backgroundImage: { complete: true, naturalHeight: 1 }} as any;
+    const options = { assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }} as any;
     let processor: VirtualBackgroundProcessor;
 
     beforeEach(() => {

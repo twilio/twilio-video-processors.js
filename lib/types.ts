@@ -1,12 +1,26 @@
 /**
  * @private
  */
- export interface Timing {
+ declare global {
+  interface Window {
+    createTwilioTFLiteModule: () => Promise<any>;
+    createTwilioTFLiteSIMDModule: () => Promise<any>;
+    Twilio: Object & { VideoProcessors?: any };
+  }
+}
+
+/**
+ * @private
+ */
+export interface Timing {
   delay?: number;
   end?: number;
   start?: number;
 }
 
+/**
+ * @private
+ */
 export interface Dimensions {
   height: number;
   width: number;
