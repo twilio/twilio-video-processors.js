@@ -26,13 +26,13 @@ const loadImage = (name) =>
 
 let images = {};
 Promise.all([
-  loadImage('breaking-news'),
-  loadImage('red-carpet'),
-  loadImage('windows-field'),
-]).then(([breakingNews, redCarpet, windowsField]) => {
-  images.breakingNews = breakingNews;
-  images.redCarpet = redCarpet;
-  images.windowsField = windowsField;
+  loadImage('living_room'),
+  loadImage('office'),
+  loadImage('vacation'),
+]).then(([livingRoom, office, vacation]) => {
+  images.livingRoom = livingRoom;
+  images.office = office;
+  images.vacation = vacation;
   return images;
 });
 
