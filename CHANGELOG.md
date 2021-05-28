@@ -29,7 +29,7 @@ You can now use `GaussianBlurBackgroundProcessor` to apply a Gaussian blur filte
   import {
     GaussianBlurBackgroundProcessor,
     VirtualBackgroundProcessor,
-  } from '@twilio/video-processors';
+  } from '@twilio/video-processors-sdk';
 
   const blurBackground = new GaussianBlurBackgroundProcessor();
   const img = new Image();

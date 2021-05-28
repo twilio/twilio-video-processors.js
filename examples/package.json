@@ -1,5 +1,5 @@
 {
-  "name": "video-processors-examples",
+  "name": "twilio-video-processors-examples",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",

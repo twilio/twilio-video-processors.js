@@ -14,8 +14,8 @@ Otherwise, feel free to delete the template.
 
 -->
 
- - [ ] I have verified that the issue occurs with the latest video-processors.js release and is not marked as a known issue in the [CHANGELOG.md](https://github.com/twilio/video-processors.js/blob/master/CHANGELOG.md).
- - [ ] I reviewed the [Common Issues](https://github.com/twilio/video-processors.js/blob/master/COMMON_ISSUES.md) and open GitHub issues and verified that this report represents a potentially new issue.
+ - [ ] I have verified that the issue occurs with the latest twilio-video-processors.js release and is not marked as a known issue in the [CHANGELOG.md](https://github.com/twilio/twilio-video-processors.js/blob/master/CHANGELOG.md).
+ - [ ] I reviewed the [Common Issues](https://github.com/twilio/twilio-video-processors.js/blob/master/COMMON_ISSUES.md) and open GitHub issues and verified that this report represents a potentially new issue.
  - [ ] I am not sharing any [Personally Identifiable Information (PII)](https://www.twilio.com/docs/glossary/what-is-personally-identifiable-information-pii)
        or sensitive account information (API keys, credentials, etc.) when reporting this issue.
 
@@ -39,5 +39,5 @@ TODO
 
  - [ ] Browser(s):
  - [ ] Operating System:
- - [ ] video-processors.js:
+ - [ ] twilio-video-processors.js:
  - [ ] Third-party libraries (e.g., Angular, React, etc.):
