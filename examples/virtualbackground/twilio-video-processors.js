@@ -1,4 +1,4 @@
-/*! video-processors.js 1.0.0-beta.3
+/*! twilio-video-processors.js 1.0.0-rc5
 
 The following license applies to all parts of this software except as
 documented below.
@@ -125,8 +125,6 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -451,8 +449,6 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -473,7 +469,7 @@ var constants_1 = require("../../constants");
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+ * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors-sdk';
  *
  * const blurBackground = new GaussianBlurBackgroundProcessor({
  *   assetsPath: 'https://my-server-path/assets'
@@ -540,8 +536,6 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -562,7 +556,7 @@ var types_1 = require("../../types");
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors-sdk';
  *
  * let virtualBackground;
  * const img = new Image();
@@ -698,8 +692,6 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
