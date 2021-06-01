@@ -32,10 +32,9 @@ return Promise.all([
     throw new Error('Entry point ID not found!');
   }
 
-  const filename = pkg.name.substring(pkg.name.lastIndexOf('/') + 1);
   const license = Buffer.concat(results[0]);
   const bundle = Buffer.concat(results[1]);
-  const rendered = `/*! ${filename}.js ${pkg.version}
+  const rendered = `/*! twilio-video-processors.js ${pkg.version}
 
 ${license}
 */

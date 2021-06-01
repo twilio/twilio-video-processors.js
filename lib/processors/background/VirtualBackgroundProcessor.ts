@@ -34,7 +34,7 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors-sdk';
  *
  * let virtualBackground;
  * const img = new Image();
