@@ -1,7 +1,8 @@
 'use strict';
 
 const Video = Twilio.Video;
-const {GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor} = Twilio.VideoProcessors;
+const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor } = Twilio.VideoProcessors;
+const bootstrap = window.bootstrap;
 
 const gaussianBlurForm = document.querySelector('form#gaussianBlur-Form');
 const gaussianBlurButton = document.querySelector('button#gaussianBlur-Apply');
@@ -9,6 +10,8 @@ const virtualBackgroundForm = document.querySelector('form#virtualBackground-For
 const virtualBackgroundButton = document.querySelector('button#virtualBackground-Apply');
 const videoInput = document.querySelector('video#video-input');
 const removeProcessorButton = document.querySelector('button#no-processor-apply');
+const errorMessage = document.querySelector('div.modal-body');
+const errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
 
 // Same directory as the current js file
 const assetsPath = '';
@@ -16,6 +19,11 @@ const assetsPath = '';
 let videoTrack;
 let gaussianBlurProcessor;
 let virtualBackgroundProcessor;
+
+if(!window.chrome){
+  errorMessage.textContent = 'This browser is not supported.';
+  errorModal.show();
+}
 
 const loadImage = (name) =>
   new Promise((resolve) => {
