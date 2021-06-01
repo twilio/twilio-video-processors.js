@@ -1,9 +1,9 @@
 {
   "type": "JavaScript",
   "ci": "circleci",
-  "slug": "twilio/video-processors.js",
+  "slug": "twilio/twilio-video-processors.js",
   "env": {
-    "GH_REF": "github.com/twilio/video-processors.js.git"
+    "GH_REF": "github.com/twilio/twilio-video-processors.js.git"
   },
   "plans": {
     "release": {
