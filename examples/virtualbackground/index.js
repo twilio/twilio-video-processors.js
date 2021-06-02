@@ -1,7 +1,7 @@
 'use strict';
 
 const Video = Twilio.Video;
-const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor } = Twilio.VideoProcessors;
+const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported } = Twilio.VideoProcessors;
 const bootstrap = window.bootstrap;
 
 const gaussianBlurForm = document.querySelector('form#gaussianBlur-Form');
@@ -20,7 +20,7 @@ let videoTrack;
 let gaussianBlurProcessor;
 let virtualBackgroundProcessor;
 
-if(!Video.isSupported){
+if(!isSupported()){
   errorMessage.textContent = 'This browser is not supported.';
   errorModal.show();
 }
