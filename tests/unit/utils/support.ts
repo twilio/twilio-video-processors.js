@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { isBrowserSupported } from '../../../lib/utils/support';
 
-describe.only('isSupported', () => {
+describe('isSupported', () => {
   const root = global as any;
   [
     [
@@ -143,7 +143,7 @@ describe.only('isSupported', () => {
         root.window.OffscreenCanvas = originalOffscreenCanvas;
       });
 
-      it(`should return ${expectedResult}`, () => {
+      it(`should return ${expectedResult}.`, () => {
         assert.strictEqual(isBrowserSupported(), expectedResult);
       });
     });
