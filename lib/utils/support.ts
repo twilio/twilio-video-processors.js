@@ -7,11 +7,13 @@
 
 /**
  * Check if the current browser is officially supported by twilio-video-procesors.js.
- * @returns {boolean}
+ * This is set to `true` for chromium-based desktop browsers.
  * @example
  * ```ts
- * if(!isSupported){
- *  console.log('Browser is not supported');
+ * import { isSupported } from '@twilio/video-processors-sdk';
+ *
+ * if (isSupported) {
+ *   // Initialize the background processors
  * }
  * ```
  */

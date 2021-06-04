@@ -128,6 +128,7 @@ describe('isSupported', () => {
       let originalAgent: string;
       let originalChrome: string;
       let originalOffscreenCanvas: null;
+
       beforeEach(() => {
         originalAgent = root.window.navigator.userAgent;
         originalChrome = root.window.chrome;

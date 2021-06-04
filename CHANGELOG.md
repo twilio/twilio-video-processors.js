@@ -4,7 +4,14 @@
 New Features
 ------------
 
-* `Twilio.VideoProcessors.isSupported` now returns `true` for Desktop Chrome.
+* Added isSupported API which can be used to check whether the browser is supported or not. This API returns true for chromium-based desktop browsers.
+  ```ts
+  import { isSupported } from '@twilio/video-processors-sdk';
+
+  if (isSupported) {
+    // Initialize the background processors
+  }
+  ```
 
 1.0.0-beta.3 (May 25, 2021)
 ===================
