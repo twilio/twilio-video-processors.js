@@ -12,13 +12,6 @@ describe('isSupported', () => {
       true
     ],
     [
-      'Brave Mobile',
-      'Mozilla/5.0 (Linux; Android 9; ONEPLUS A6013) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Mobile Safari/537.36 Brave/74',
-      () => {},
-      {},
-      false
-    ],
-    [
       'Headless Chrome',
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/81.0.4044.0 Safari/537.36',
       () => {},
@@ -42,6 +35,13 @@ describe('isSupported', () => {
     [
       'Edge (Chromium)',
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox One) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36 Edg/15.15063',
+      () => {},
+      {},
+      true
+    ],
+    [
+      'Desktop Brave',
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Brave Chrome/78.0.3904.108 Safari/537.36',
       () => {},
       {},
       true
