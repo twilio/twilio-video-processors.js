@@ -1,3 +1,11 @@
+1.0.0-beta.4 (In Progress)
+==========================
+
+New Features
+------------
+
+* `Twilio.VideoProcessors.isSupported` now returns `true` for Desktop Chrome.
+
 1.0.0-beta.3 (May 25, 2021)
 ===================
 
@@ -15,7 +23,6 @@ Improvements
 ------------
 
 * The background processors now stabilize the boundary of the foreground (person), thereby reducing the 'shakiness' effect.
-
 
 1.0.0-beta1 (March 31, 2021)
 ===================

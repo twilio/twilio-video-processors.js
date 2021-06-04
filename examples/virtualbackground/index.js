@@ -20,7 +20,7 @@ let videoTrack;
 let gaussianBlurProcessor;
 let virtualBackgroundProcessor;
 
-if(!isSupported()){
+if(!isSupported){
   errorMessage.textContent = 'This browser is not supported.';
   errorModal.show();
 }

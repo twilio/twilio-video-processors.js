@@ -3,6 +3,7 @@
  */
  declare global {
   interface Window {
+    chrome: any;
     createTwilioTFLiteModule: () => Promise<any>;
     createTwilioTFLiteSIMDModule: () => Promise<any>;
     Twilio: Object & { VideoProcessors?: any };
