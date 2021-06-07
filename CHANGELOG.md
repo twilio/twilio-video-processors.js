@@ -30,6 +30,8 @@ New Features and Improvements
     : Promise<void> | void;
   ```
 
+* Added debounce logic on the image resizing step to improve performance.
+
 1.0.0-beta.3 (May 25, 2021)
 ===================
 
