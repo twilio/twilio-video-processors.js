@@ -1,3 +1,18 @@
+1.0.0-beta.4 (In Progress)
+==========================
+
+New Features
+------------
+
+* Added `isSupported` API which can be used to check whether the browser is supported or not. This API returns `true` for chromium-based desktop browsers.
+  ```ts
+  import { isSupported } from '@twilio/video-processors-sdk';
+
+  if (isSupported) {
+    // Initialize the background processors
+  }
+  ```
+
 1.0.0-beta.3 (May 25, 2021)
 ===================
 
@@ -15,7 +30,6 @@ Improvements
 ------------
 
 * The background processors now stabilize the boundary of the foreground (person), thereby reducing the 'shakiness' effect.
-
 
 1.0.0-beta1 (March 31, 2021)
 ===================
