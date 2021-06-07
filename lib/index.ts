@@ -3,7 +3,8 @@ import { GaussianBlurBackgroundProcessor, GaussianBlurBackgroundProcessorOptions
 import { VirtualBackgroundProcessor, VirtualBackgroundProcessorOptions } from './processors/background/VirtualBackgroundProcessor';
 import { GrayscaleProcessor } from './processors/grayscale';
 import { Processor } from './processors/Processor';
-import { ImageFit, Dimensions } from './types';
+import { Dimensions, ImageFit } from './types';
+import { isSupported } from './utils/support';
 
 window.Twilio = window.Twilio || {};
 window.Twilio.VideoProcessors = {
@@ -11,6 +12,7 @@ window.Twilio.VideoProcessors = {
   GaussianBlurBackgroundProcessor,
   GrayscaleProcessor,
   ImageFit,
+  isSupported,
   VirtualBackgroundProcessor,
 };
 
@@ -21,6 +23,7 @@ export {
   GaussianBlurBackgroundProcessorOptions,
   GrayscaleProcessor,
   ImageFit,
+  isSupported,
   Processor,
   Dimensions,
   VirtualBackgroundProcessor,
