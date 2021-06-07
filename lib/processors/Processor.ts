@@ -5,11 +5,10 @@
 export abstract class Processor {
 
   /**
-   * Applies a transform to the input frame and generate an output frame.
-   * The frame will be dropped if this method returns null or raises and exception.
-   * @param inputFrame - The input frame to process.
+   * Applies a transform to an input frame and draw the results to an output frame buffer.
+   * The frame will be dropped if this method raises an exception.
+   * @param inputFrameBuffer - The source of the input frame to process.
+   * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
    */
-  abstract processFrame(inputFrame: OffscreenCanvas)
-    : Promise<OffscreenCanvas | null>
-    | OffscreenCanvas | null;
+  abstract processFrame(inputFrameBuffer: OffscreenCanvas, outputFrameBuffer: HTMLCanvasElement): Promise<void> | void;
 }

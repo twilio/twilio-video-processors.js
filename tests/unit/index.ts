@@ -1,6 +1,8 @@
 import { Canvas } from './mocks/Canvas';
+import { ImageData } from './mocks/ImageData';
 
 const root = global as any;
+root.ImageData = root.ImageData || ImageData;
 root.OffscreenCanvas = root.OffscreenCanvas || Canvas;
 root.document = root.document || {
   createElement(name: string) {
