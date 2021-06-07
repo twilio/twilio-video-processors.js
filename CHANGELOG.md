@@ -4,7 +4,7 @@
 New Features
 ------------
 
-* Added isSupported API which can be used to check whether the browser is supported or not. This API returns true for chromium-based desktop browsers.
+* Added `isSupported` API which can be used to check whether the browser is supported or not. This API returns `true` for chromium-based desktop browsers.
   ```ts
   import { isSupported } from '@twilio/video-processors-sdk';
 
