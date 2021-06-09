@@ -61,6 +61,8 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
 
   private _backgroundImage!: HTMLImageElement;
   private _fitType!: ImageFit;
+  // tslint:disable-next-line no-unused-variable
+  private readonly _name: string = 'VirtualBackgroundProcessor';
 
   /**
    * Construct a VirtualBackgroundProcessor. Default values will be used for
