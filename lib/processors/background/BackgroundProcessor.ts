@@ -4,6 +4,7 @@ import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/
 import { BodyPix, load as loadModel } from '@tensorflow-models/body-pix';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
+import { version } from '../../utils/version';
 import { Dimensions } from '../../types';
 
 import {
@@ -102,6 +103,8 @@ export abstract class BackgroundProcessor extends Processor {
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
   private _inputMemoryOffset: number = 0;
+  // tslint:disable-next-line no-unused-variable
+  private _isSimdEnabled: boolean | null = null;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas;
   private _maskContext: OffscreenCanvasRenderingContext2D;
@@ -111,6 +114,8 @@ export abstract class BackgroundProcessor extends Processor {
   private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
   private _tflite: any;
   private _useWasm: boolean;
+  // tslint:disable-next-line no-unused-variable
+  private readonly _version: string = version;
 
   constructor(options: BackgroundProcessorOptions) {
     super();
@@ -198,8 +203,8 @@ export abstract class BackgroundProcessor extends Processor {
     if (!inputFrameBuffer || !outputFrameBuffer) {
       throw new Error('Missing input or output frame buffer');
     }
-    this._benchmark.end('processFrame(jsdk)');
-    this._benchmark.start('processFrame(processor)');
+    this._benchmark.end('captureFrameDelay');
+    this._benchmark.start('processFrameDelay');
 
     const inputFrame = inputFrameBuffer;
     const { width: captureWidth, height: captureHeight } = inputFrame;
@@ -230,7 +235,7 @@ export abstract class BackgroundProcessor extends Processor {
 
     const personMask = await this._createPersonMask(inputFrame);
 
-    this._benchmark.start('imageCompositing');
+    this._benchmark.start('imageCompositionDelay');
     this._maskContext.putImageData(personMask, 0, 0);
     this._outputContext.save();
     this._outputContext.filter = `blur(${this._maskBlurRadius}px)`;
@@ -243,14 +248,14 @@ export abstract class BackgroundProcessor extends Processor {
     this._setBackground(inputFrame);
     this._outputContext.restore();
 
-    this._benchmark.end('imageCompositing');
-    this._benchmark.end('processFrame(processor)');
-    this._benchmark.end('processFrame');
+    this._benchmark.end('imageCompositionDelay');
+    this._benchmark.end('processFrameDelay');
+    this._benchmark.end('totalProcessingDelay');
 
     // NOTE (csantos): Start the benchmark from here so we can include the delay from the Video sdk
     // for a more accurate fps
-    this._benchmark.start('processFrame');
-    this._benchmark.start('processFrame(jsdk)');
+    this._benchmark.start('totalProcessingDelay');
+    this._benchmark.start('captureFrameDelay');
   }
 
   protected abstract _setBackground(inputFrame: OffscreenCanvas): void;
@@ -275,13 +280,13 @@ export abstract class BackgroundProcessor extends Processor {
     let imageData = this._dummyImageData;
     const shouldRunInference = this._maskUsageCounter < 1;
 
-    this._benchmark.start('resizeInputImage');
+    this._benchmark.start('inputImageResizeDelay');
     if (shouldRunInference) {
       imageData = this._getResizedInputImageData(inputFrame);
     }
-    this._benchmark.end('resizeInputImage');
+    this._benchmark.end('inputImageResizeDelay');
 
-    this._benchmark.start('segmentPerson');
+    this._benchmark.start('segmentationDelay');
     if (shouldRunInference) {
       this._currentMask = this._useWasm
         ? this._runTwilioTfLiteInference(imageData)
@@ -291,7 +296,7 @@ export abstract class BackgroundProcessor extends Processor {
     this._addMask(this._currentMask);
     this._applyAlpha(imageData);
     this._maskUsageCounter--;
-    this._benchmark.end('segmentPerson');
+    this._benchmark.end('segmentationDelay');
 
     return imageData;
   }
@@ -319,10 +324,12 @@ export abstract class BackgroundProcessor extends Processor {
 
     try {
       tflite = await window.createTwilioTFLiteSIMDModule();
+      this._isSimdEnabled = true;
     } catch {
       console.warn('SIMD not supported. You may experience poor quality of background replacement.');
       await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME);
       tflite = await window.createTwilioTFLiteModule();
+      this._isSimdEnabled = false;
     }
     return tflite;
   }

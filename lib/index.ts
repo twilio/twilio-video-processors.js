@@ -5,6 +5,7 @@ import { GrayscaleProcessor } from './processors/grayscale';
 import { Processor } from './processors/Processor';
 import { Dimensions, ImageFit } from './types';
 import { isSupported } from './utils/support';
+import { version } from './utils/version';
 
 window.Twilio = window.Twilio || {};
 window.Twilio.VideoProcessors = {
@@ -13,6 +14,7 @@ window.Twilio.VideoProcessors = {
   GrayscaleProcessor,
   ImageFit,
   isSupported,
+  version,
   VirtualBackgroundProcessor,
 };
 
@@ -24,6 +26,7 @@ export {
   GrayscaleProcessor,
   ImageFit,
   isSupported,
+  version,
   Processor,
   Dimensions,
   VirtualBackgroundProcessor,
