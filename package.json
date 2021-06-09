@@ -42,7 +42,7 @@
     "test:unit": "npm run build:version && rimraf ./coverage ./.nyc_output && nyc mocha -r ts-node/register ./tests/unit/index.ts",
     "test:integration": "npm run build:version && karma start",
     "release": "release",
-    "watch": "nodemon"
+    "watch": "npm run build:version && nodemon"
   },
   "dependencies": {
     "@tensorflow-models/body-pix": "^2.1.0",
