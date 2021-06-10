@@ -45,6 +45,8 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
 export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
 
   private _blurFilterRadius: number = BLUR_FILTER_RADIUS;
+  // tslint:disable-next-line no-unused-variable
+  private readonly _name: string = 'GaussianBlurBackgroundProcessor';
 
   /**
    * Construct a GaussianBlurBackgroundProcessor. Default values will be used for

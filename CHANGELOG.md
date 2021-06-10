@@ -1,8 +1,8 @@
 1.0.0-beta.4 (In Progress)
 ==========================
 
-New Features
-------------
+New Features and Improvements
+-----------------------------
 
 * Added `isSupported` API which can be used to check whether the browser is supported or not. This API returns `true` for chromium-based desktop browsers.
   ```ts
@@ -12,6 +12,25 @@ New Features
     // Initialize the background processors
   }
   ```
+
+* [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html#processframe) and [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html#processframe)'s `processFrame` method signature has been updated in order to improve performance. With this update, the output frame buffer should now be provided to the `processFrame` method which will be used to draw the processed frame.
+
+  Old signature:
+
+  ```ts
+  processFrame(inputFrame: OffscreenCanvas)
+    : Promise<OffscreenCanvas | null>
+    | OffscreenCanvas | null;
+  ```
+
+  New signature:
+
+  ```ts
+  processFrame(inputFrameBuffer: OffscreenCanvas, outputFrameBuffer: HTMLCanvasElement)
+    : Promise<void> | void;
+  ```
+
+* Added debounce logic on the image resizing step to improve performance.
 
 1.0.0-beta.3 (May 25, 2021)
 ===================

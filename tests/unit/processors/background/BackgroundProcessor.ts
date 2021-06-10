@@ -36,6 +36,42 @@ describe('BackgroundProcessor', () => {
     assert.throws(() => new MyBackgroundProcessor());
   });
 
+  describe('createPersonMask', () => {
+    let processor: any;
+
+    beforeEach(() => {
+      processor = new MyBackgroundProcessor({ assetsPath: '' });
+      processor._getResizedInputImageData = sinon.stub();
+      processor._runTwilioTfLiteInference = sinon.stub();
+    });
+
+    it('should not run image resizing step when on debounced mode', () => {
+      processor._createPersonMask();
+      processor._createPersonMask();
+      sinon.assert.calledOnce(processor._getResizedInputImageData);
+    });
+
+    it('should run image resizing step when not on debounced mode', () => {
+      processor._createPersonMask();
+      sinon.assert.calledOnce(processor._getResizedInputImageData);
+      processor._createPersonMask();
+      sinon.assert.calledOnce(processor._getResizedInputImageData);
+    });
+
+    it('should not run inference step when on debounced mode', () => {
+      processor._createPersonMask();
+      processor._createPersonMask();
+      sinon.assert.calledOnce(processor._runTwilioTfLiteInference);
+    });
+
+    it('should run inference step when not on debounced mode', () => {
+      processor._createPersonMask();
+      sinon.assert.calledOnce(processor._runTwilioTfLiteInference);
+      processor._createPersonMask();
+      sinon.assert.calledOnce(processor._runTwilioTfLiteInference);
+    });
+  });
+
   describe('assetsPath', () => {
     [
       null,

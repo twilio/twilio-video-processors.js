@@ -1,9 +1,10 @@
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
-import { BodyPix, load as loadModel, SemanticPersonSegmentation } from '@tensorflow-models/body-pix';
+import { BodyPix, load as loadModel } from '@tensorflow-models/body-pix';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
+import { version } from '../../utils/version';
 import { Dimensions } from '../../types';
 
 import {
@@ -16,7 +17,7 @@ import {
   MODEL_NAME,
   PERSON_PROBABILITY_THRESHOLD,
   TFLITE_LOADER_NAME,
-  TFLITE_LOADER_NAME_SIMD,
+  TFLITE_SIMD_LOADER_NAME,
   WASM_INFERENCE_DIMENSIONS,
 } from '../../constants';
 
@@ -88,19 +89,22 @@ export abstract class BackgroundProcessor extends Processor {
     BackgroundProcessor._model = await loadModel(config)
       .catch((error: any) => console.error('Unable to load model.', error)) || null;
   }
-  protected _outputCanvas: OffscreenCanvas;
-  protected _outputContext: OffscreenCanvasRenderingContext2D;
+  protected _outputCanvas: HTMLCanvasElement;
+  protected _outputContext: CanvasRenderingContext2D;
 
   private _assetsPath: string;
   private _benchmark: Benchmark;
-  private _currentMask: Uint8ClampedArray = new Uint8ClampedArray();
+  private _currentMask: Uint8ClampedArray | Uint8Array = new Uint8ClampedArray();
   private _debounce: number = DEBOUNCE;
+  private _dummyImageData: ImageData = new ImageData(1, 1);
   private _historyCount: number = HISTORY_COUNT;
   private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
   private _inputMemoryOffset: number = 0;
+  // tslint:disable-next-line no-unused-variable
+  private _isSimdEnabled: boolean | null = null;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas;
   private _maskContext: OffscreenCanvasRenderingContext2D;
@@ -110,6 +114,8 @@ export abstract class BackgroundProcessor extends Processor {
   private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
   private _tflite: any;
   private _useWasm: boolean;
+  // tslint:disable-next-line no-unused-variable
+  private readonly _version: string = version;
 
   constructor(options: BackgroundProcessorOptions) {
     super();
@@ -137,8 +143,8 @@ export abstract class BackgroundProcessor extends Processor {
     this._inputContext = this._inputCanvas.getContext('2d') as CanvasRenderingContext2D;
     this._maskCanvas = new OffscreenCanvas(1, 1);
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-    this._outputCanvas = new OffscreenCanvas(1, 1);
-    this._outputContext = this._outputCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    this._outputCanvas = document.createElement('canvas');
+    this._outputContext = this._outputCanvas.getContext('2d') as CanvasRenderingContext2D;
     this._masks = [];
   }
 
@@ -186,41 +192,50 @@ export abstract class BackgroundProcessor extends Processor {
   /**
    * Apply a transform to the background of an input video frame and leaving
    * the foreground (person(s)) untouched. Any exception detected will
-   * return a null value and will result in the frame being dropped.
+   * result in the frame being dropped.
+   * @param inputFrameBuffer - The source of the input frame to process.
+   * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
    */
-  async processFrame(inputFrame: OffscreenCanvas): Promise<OffscreenCanvas | null> {
+  async processFrame(inputFrameBuffer: OffscreenCanvas, outputFrameBuffer: HTMLCanvasElement): Promise<void> {
     if (!BackgroundProcessor._model || !this._tflite) {
-      return inputFrame;
+      return;
     }
+    if (!inputFrameBuffer || !outputFrameBuffer) {
+      throw new Error('Missing input or output frame buffer');
+    }
+    this._benchmark.end('captureFrameDelay');
+    this._benchmark.start('processFrameDelay');
 
-    this._benchmark.end('processFrame(jsdk)');
-    this._benchmark.start('processFrame(processor)');
-
-    this._benchmark.start('resizeInputImage');
+    const inputFrame = inputFrameBuffer;
     const { width: captureWidth, height: captureHeight } = inputFrame;
     const { width: inferenceWidth, height: inferenceHeight } = this._inferenceDimensions;
-    this._inputCanvas.width = inferenceWidth;
-    this._inputCanvas.height = inferenceHeight;
-    this._maskCanvas.width = inferenceWidth;
-    this._maskCanvas.height = inferenceHeight;
-    this._outputCanvas.width = captureWidth;
-    this._outputCanvas.height = captureHeight;
-    this._inputContext.drawImage(inputFrame, 0, 0, inferenceWidth, inferenceHeight);
-    const imageData = this._inputContext.getImageData(0, 0, inferenceWidth, inferenceHeight);
-    this._benchmark.end('resizeInputImage');
 
-    this._benchmark.start('segmentPerson');
-    let personMask: ImageData;
-
-    if (this._useWasm) {
-      personMask = this._createWasmPersonMask(imageData);
-    } else {
-      const segment = await BackgroundProcessor._model.segmentPerson(imageData, this._inferenceConfig);
-      personMask = this._createBodyPixPersonMask(segment);
+    if (this._outputCanvas !== outputFrameBuffer) {
+      this._outputCanvas = outputFrameBuffer;
+      this._outputContext = outputFrameBuffer.getContext('2d') as CanvasRenderingContext2D;
     }
-    this._benchmark.end('segmentPerson');
 
-    this._benchmark.start('imageCompositing');
+    // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
+    let reInitDummyImage = false;
+    if (this._inputCanvas.width !== inferenceWidth) {
+      this._inputCanvas.width = inferenceWidth;
+      this._maskCanvas.width = inferenceWidth;
+      reInitDummyImage = true;
+    }
+    if (this._inputCanvas.height !== inferenceHeight) {
+      this._inputCanvas.height = inferenceHeight;
+      this._maskCanvas.height = inferenceHeight;
+      reInitDummyImage = true;
+    }
+    if (reInitDummyImage) {
+      this._dummyImageData = new ImageData(
+        new Uint8ClampedArray(inferenceWidth * inferenceHeight * 4),
+        inferenceWidth, inferenceHeight);
+    }
+
+    const personMask = await this._createPersonMask(inputFrame);
+
+    this._benchmark.start('imageCompositionDelay');
     this._maskContext.putImageData(personMask, 0, 0);
     this._outputContext.save();
     this._outputContext.filter = `blur(${this._maskBlurRadius}px)`;
@@ -233,16 +248,14 @@ export abstract class BackgroundProcessor extends Processor {
     this._setBackground(inputFrame);
     this._outputContext.restore();
 
-    this._benchmark.end('imageCompositing');
-    this._benchmark.end('processFrame(processor)');
-    this._benchmark.end('processFrame');
+    this._benchmark.end('imageCompositionDelay');
+    this._benchmark.end('processFrameDelay');
+    this._benchmark.end('totalProcessingDelay');
 
     // NOTE (csantos): Start the benchmark from here so we can include the delay from the Video sdk
     // for a more accurate fps
-    this._benchmark.start('processFrame');
-    this._benchmark.start('processFrame(jsdk)');
-
-    return this._outputCanvas;
+    this._benchmark.start('totalProcessingDelay');
+    this._benchmark.start('captureFrameDelay');
   }
 
   protected abstract _setBackground(inputFrame: OffscreenCanvas): void;
@@ -263,42 +276,36 @@ export abstract class BackgroundProcessor extends Processor {
     }
   }
 
-  private _createBodyPixPersonMask(segment: SemanticPersonSegmentation) {
-    const { data, width, height } = segment;
-    const imageData = new ImageData(new Uint8ClampedArray(width * height * 4), width, height);
+  private async _createPersonMask(inputFrame: OffscreenCanvas): Promise<ImageData> {
+    let imageData = this._dummyImageData;
+    const shouldRunInference = this._maskUsageCounter < 1;
 
-    this._addMask(data);
+    this._benchmark.start('inputImageResizeDelay');
+    if (shouldRunInference) {
+      imageData = this._getResizedInputImageData(inputFrame);
+    }
+    this._benchmark.end('inputImageResizeDelay');
+
+    this._benchmark.start('segmentationDelay');
+    if (shouldRunInference) {
+      this._currentMask = this._useWasm
+        ? this._runTwilioTfLiteInference(imageData)
+        : await this._runBodyPixInference(imageData);
+      this._maskUsageCounter = this._debounce;
+    }
+    this._addMask(this._currentMask);
     this._applyAlpha(imageData);
+    this._maskUsageCounter--;
+    this._benchmark.end('segmentationDelay');
 
     return imageData;
   }
 
-  private _createWasmPersonMask(resizedInputFrame: ImageData) {
-    const { _inferenceDimensions: { width, height }, _tflite: tflite } = this;
-    const pixels = width * height;
-
-    if (this._maskUsageCounter < 1) {
-      for (let i = 0; i < pixels; i++) {
-        tflite.HEAPF32[this._inputMemoryOffset + i * 3] = resizedInputFrame.data[i * 4] / 255;
-        tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 1] = resizedInputFrame.data[i * 4 + 1] / 255;
-        tflite.HEAPF32[this._inputMemoryOffset + i * 3 + 2] = resizedInputFrame.data[i * 4 + 2] / 255;
-      }
-      tflite._runInference();
-      this._currentMask = new Uint8ClampedArray(pixels * 4);
-
-      for (let i = 0; i < pixels; i++) {
-        const personProbability = tflite.HEAPF32[this._outputMemoryOffset + i];
-        this._currentMask[i] = Number(personProbability >= this._personProbabilityThreshold) * personProbability;
-      }
-      this._maskUsageCounter = this._debounce;
-    }
-
-    this._addMask(this._currentMask);
-    this._applyAlpha(resizedInputFrame);
-
-    this._maskUsageCounter--;
-
-    return resizedInputFrame;
+  private _getResizedInputImageData(inputFrame: OffscreenCanvas): ImageData {
+    const { width, height } = this._inputCanvas;
+    this._inputContext.drawImage(inputFrame, 0, 0, width, height);
+    const imageData = this._inputContext.getImageData(0, 0, width, height);
+    return imageData;
   }
 
   private _loadJs(url: string): Promise<void> {
@@ -313,15 +320,43 @@ export abstract class BackgroundProcessor extends Processor {
 
   private async _loadTwilioTfLite(): Promise<any> {
     let tflite: any;
-    await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME_SIMD);
+    await this._loadJs(this._assetsPath + TFLITE_SIMD_LOADER_NAME);
 
     try {
       tflite = await window.createTwilioTFLiteSIMDModule();
+      this._isSimdEnabled = true;
     } catch {
       console.warn('SIMD not supported. You may experience poor quality of background replacement.');
       await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME);
       tflite = await window.createTwilioTFLiteModule();
+      this._isSimdEnabled = false;
     }
     return tflite;
+  }
+
+  private async _runBodyPixInference(inputImage: ImageData): Promise<Uint8Array> {
+    const segment = await BackgroundProcessor._model!.segmentPerson(inputImage, this._inferenceConfig);
+    return segment.data;
+  }
+
+  private _runTwilioTfLiteInference(inputImage: ImageData): Uint8ClampedArray {
+    const { _inferenceDimensions: { width, height }, _inputMemoryOffset: offset, _tflite: tflite } = this;
+    const pixels = width * height;
+
+    for (let i = 0; i < pixels; i++) {
+      tflite.HEAPF32[offset + i * 3] = inputImage.data[i * 4] / 255;
+      tflite.HEAPF32[offset + i * 3 + 1] = inputImage.data[i * 4 + 1] / 255;
+      tflite.HEAPF32[offset + i * 3 + 2] = inputImage.data[i * 4 + 2] / 255;
+    }
+
+    tflite._runInference();
+    const inferenceData = new Uint8ClampedArray(pixels * 4);
+
+    for (let i = 0; i < pixels; i++) {
+      const personProbability = tflite.HEAPF32[this._outputMemoryOffset + i];
+      inferenceData[i] = Number(personProbability >= this._personProbabilityThreshold) * personProbability;
+    }
+
+    return inferenceData;
   }
 }
