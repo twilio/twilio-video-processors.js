@@ -17,7 +17,7 @@ import {
   MODEL_NAME,
   PERSON_PROBABILITY_THRESHOLD,
   TFLITE_LOADER_NAME,
-  TFLITE_LOADER_NAME_SIMD,
+  TFLITE_SIMD_LOADER_NAME,
   WASM_INFERENCE_DIMENSIONS,
 } from '../../constants';
 
@@ -320,7 +320,7 @@ export abstract class BackgroundProcessor extends Processor {
 
   private async _loadTwilioTfLite(): Promise<any> {
     let tflite: any;
-    await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME_SIMD);
+    await this._loadJs(this._assetsPath + TFLITE_SIMD_LOADER_NAME);
 
     try {
       tflite = await window.createTwilioTFLiteSIMDModule();
