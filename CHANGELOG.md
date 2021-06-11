@@ -1,4 +1,4 @@
-1.0.0-beta.4 (In Progress)
+1.0.0 (In Progress)
 ==========================
 
 New Features and Improvements
