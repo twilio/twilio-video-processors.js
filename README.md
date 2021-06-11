@@ -12,7 +12,7 @@ Twilio Video Processors is a collection of video processing tools which can be u
 
 ## Prerequisites
 
-* [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.13+)
+* [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.15+)
 * [Node.js](https://nodejs.org) (v14+)
 * NPM (v6+, comes installed with newer Node versions)
 
