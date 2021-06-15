@@ -45,13 +45,14 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *     backgroundImage: img,
  *   });
  *
- *   await virtualBackground.loadModel();
- *
- *   createLocalVideoTrack({
- *     width: 640,
- *     height: 480
- *   }).then(track => {
- *     track.addProcessor(virtualBackground);
+ *   virtualBackground.loadModel().then(() => {
+ *     createLocalVideoTrack({
+ *       width: 640,
+ *       height: 480,
+ *       frameRate: 24
+ *     }).then(track => {
+ *       track.addProcessor(virtualBackground);
+ *     });
  *   });
  * };
  * img.src = '/background.jpg';

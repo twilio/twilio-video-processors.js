@@ -32,13 +32,14 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *   assetsPath: 'https://my-server-path/assets'
  * });
  *
- * await blurBackground.loadModel();
- *
- * createLocalVideoTrack({
- *   width: 640,
- *   height: 480
- * }).then(track => {
- *   track.addProcessor(blurBackground);
+ * blurBackground.loadModel().then(() => {
+ *   createLocalVideoTrack({
+ *     width: 640,
+ *     height: 480,
+ *     frameRate: 24
+ *   }).then(track => {
+ *     track.addProcessor(blurBackground);
+ *   });
  * });
  * ```
  */

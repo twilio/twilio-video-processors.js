@@ -30,12 +30,28 @@ export interface BackgroundProcessorOptions {
    * You need to serve all the assets and provide the root path so they can be referenced by the SDK.
    * These assets can be copied from the `dist/build` folder which you can add as part of your deployment process.
    * @example
+   * <br/>
+   * <br/>
+   * For virtual background:
+   * <br/>
+   *
    * ```ts
    * const virtualBackground = new VirtualBackgroundProcessor({
    *   assetsPath: 'https://my-server-path/assets',
    *   backgroundImage: img,
    * });
    * await virtualBackground.loadModel();
+   * ```
+   *
+   * <br/>
+   * For blur background:
+   * <br/>
+   *
+   * ```ts
+   * const blurBackground = new GaussianBlurBackgroundProcessor({
+   *   assetsPath: 'https://my-server-path/assets'
+   * });
+   * await blurBackground.loadModel();
    * ```
    */
   assetsPath: string;
@@ -64,7 +80,7 @@ export interface BackgroundProcessorOptions {
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
-   * 3
+   * 5
    * ```
    */
   maskBlurRadius?: number;

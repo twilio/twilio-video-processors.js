@@ -35,7 +35,7 @@
     "build:js-assets": "cp -r ./assets/* ./dist/build/",
     "build:es5": "npm run build:version && tsc",
     "build:version": "node ./scripts/version.js",
-    "docs": "npm run build:version && rimraf ./dist/docs && typedoc --excludePrivate --excludeProtected --readme none",
+    "docs": "npm run build:version && rimraf ./dist/docs && typedoc --excludePrivate --excludeProtected",
     "clean": "rimraf ./dist ./es5 ./coverage ./.nyc_output lib/utils/version.ts",
     "lint": "tslint -c ./tslint.json --project ./tsconfig.json -t stylish",
     "test": "npm-run-all lint build test:unit test:integration",
