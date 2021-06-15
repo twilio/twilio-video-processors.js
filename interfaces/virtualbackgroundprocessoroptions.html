@@ -52,7 +52,7 @@
 		<div class="container">
 			<ul class="tsd-breadcrumb">
 				<li>
-					<a href="../index.html">@twilio/video-processors-sdk</a>
+					<a href="../modules.html">@twilio/video-processors-sdk</a>
 				</li>
 				<li>
 					<a href="virtualbackgroundprocessoroptions.html">VirtualBackgroundProcessorOptions</a>
@@ -109,7 +109,7 @@
 					<div class="tsd-signature tsd-kind-icon">assets<wbr>Path<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L41">processors/background/BackgroundProcessor.ts:41</a></li>
+							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L57">processors/background/BackgroundProcessor.ts:57</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -120,11 +120,23 @@
 						</div>
 						<dl class="tsd-comment-tags">
 							<dt>example</dt>
-							<dd><pre><code class="language-ts"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">virtualBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">VirtualBackgroundProcessor</span><span style="color: #000000">({</span>
+							<dd><br/>
+								<br/>
+								For virtual background:
+								<br/>
+								<pre><code class="language-ts"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">virtualBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">VirtualBackgroundProcessor</span><span style="color: #000000">({</span>
 <span style="color: #000000">  </span><span style="color: #001080">assetsPath:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;https://my-server-path/assets&#039;</span><span style="color: #000000">,</span>
 <span style="color: #000000">  </span><span style="color: #001080">backgroundImage:</span><span style="color: #000000"> </span><span style="color: #001080">img</span><span style="color: #000000">,</span>
 <span style="color: #000000">});</span>
 <span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">virtualBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">();</span>
+</code></pre>
+								<br/>
+								For blur background:
+								<br/>
+								<pre><code class="language-ts"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">blurBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">GaussianBlurBackgroundProcessor</span><span style="color: #000000">({</span>
+<span style="color: #000000">  </span><span style="color: #001080">assetsPath:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;https://my-server-path/assets&#039;</span>
+<span style="color: #000000">});</span>
+<span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">blurBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">();</span>
 </code></pre>
 							</dd>
 						</dl>
@@ -136,7 +148,7 @@
 					<div class="tsd-signature tsd-kind-icon">background<wbr>Image<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLImageElement</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/VirtualBackgroundProcessor.ts#L14">processors/background/VirtualBackgroundProcessor.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/VirtualBackgroundProcessor.ts#L14">processors/background/VirtualBackgroundProcessor.ts:14</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -154,7 +166,7 @@
 					<div class="tsd-signature tsd-kind-icon">fit<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#contain" class="tsd-signature-type" data-tsd-kind="Enumeration member">Contain</a><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#cover" class="tsd-signature-type" data-tsd-kind="Enumeration member">Cover</a><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#fill" class="tsd-signature-type" data-tsd-kind="Enumeration member">Fill</a><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#none" class="tsd-signature-type" data-tsd-kind="Enumeration member">None</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/VirtualBackgroundProcessor.ts#L23">processors/background/VirtualBackgroundProcessor.ts:23</a></li>
+							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/VirtualBackgroundProcessor.ts#L23">processors/background/VirtualBackgroundProcessor.ts:23</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -175,7 +187,7 @@
 					<div class="tsd-signature tsd-kind-icon">mask<wbr>Blur<wbr>Radius<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L70">processors/background/BackgroundProcessor.ts:70</a></li>
+							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L86">processors/background/BackgroundProcessor.ts:86</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -184,7 +196,7 @@
 						</div>
 						<dl class="tsd-comment-tags">
 							<dt>default</dt>
-							<dd><pre><code class="language-html"><span style="color: #000000">3</span>
+							<dd><pre><code class="language-html"><span style="color: #000000">5</span>
 </code></pre>
 							</dd>
 						</dl>
@@ -196,7 +208,7 @@
 			<nav class="tsd-navigation primary">
 				<ul>
 					<li class=" ">
-						<a href="../index.html">Exports</a>
+						<a href="../modules.html">Exports</a>
 					</li>
 				</ul>
 			</nav>
@@ -236,10 +248,10 @@
 				</ul>
 				<ul class="after-current">
 					<li class=" tsd-kind-variable">
-						<a href="../index.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
+						<a href="../modules.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../index.html#version" class="tsd-kind-icon">version</a>
+						<a href="../modules.html#version" class="tsd-kind-icon">version</a>
 					</li>
 				</ul>
 			</nav>

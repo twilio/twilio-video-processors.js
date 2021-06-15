@@ -52,7 +52,7 @@
 		<div class="container">
 			<ul class="tsd-breadcrumb">
 				<li>
-					<a href="../index.html">@twilio/video-processors-sdk</a>
+					<a href="../modules.html">@twilio/video-processors-sdk</a>
 				</li>
 				<li>
 					<a href="gaussianblurbackgroundprocessor.html">GaussianBlurBackgroundProcessor</a>
@@ -83,13 +83,14 @@
 <span style="color: #000000">  </span><span style="color: #001080">assetsPath:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;https://my-server-path/assets&#039;</span>
 <span style="color: #000000">});</span>
 
-<span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">blurBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">();</span>
-
-<span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
-<span style="color: #000000">  </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
-<span style="color: #000000">  </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span>
-<span style="color: #000000">}).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">  </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">blurBackground</span><span style="color: #000000">);</span>
+<span style="color: #001080">blurBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">().</span><span style="color: #795E26">then</span><span style="color: #000000">(() </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">  </span><span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">frameRate:</span><span style="color: #000000"> </span><span style="color: #098658">24</span>
+<span style="color: #000000">  }).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">blurBackground</span><span style="color: #000000">);</span>
+<span style="color: #000000">  });</span>
 <span style="color: #000000">});</span>
 </code></pre>
 						</dd>
@@ -148,7 +149,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L49">processors/background/GaussianBlurBackgroundProcessor.ts:49</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L50">processors/background/GaussianBlurBackgroundProcessor.ts:50</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -182,7 +183,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L64">processors/background/GaussianBlurBackgroundProcessor.ts:64</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L65">processors/background/GaussianBlurBackgroundProcessor.ts:65</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -195,7 +196,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L71">processors/background/GaussianBlurBackgroundProcessor.ts:71</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L72">processors/background/GaussianBlurBackgroundProcessor.ts:72</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -224,7 +225,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L154">processors/background/BackgroundProcessor.ts:154</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L170">processors/background/BackgroundProcessor.ts:170</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -237,7 +238,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L161">processors/background/BackgroundProcessor.ts:161</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L177">processors/background/BackgroundProcessor.ts:177</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -268,7 +269,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L174">processors/background/BackgroundProcessor.ts:174</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L190">processors/background/BackgroundProcessor.ts:190</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -292,7 +293,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L199">processors/background/BackgroundProcessor.ts:199</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L215">processors/background/BackgroundProcessor.ts:215</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -327,7 +328,7 @@
 			<nav class="tsd-navigation primary">
 				<ul>
 					<li class=" ">
-						<a href="../index.html">Exports</a>
+						<a href="../modules.html">Exports</a>
 					</li>
 				</ul>
 			</nav>
@@ -370,10 +371,10 @@
 						<a href="../interfaces/virtualbackgroundprocessoroptions.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../index.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
+						<a href="../modules.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../index.html#version" class="tsd-kind-icon">version</a>
+						<a href="../modules.html#version" class="tsd-kind-icon">version</a>
 					</li>
 				</ul>
 			</nav>

@@ -57,90 +57,69 @@
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<section class="tsd-panel-group tsd-index-group">
-				<h2>Index</h2>
-				<section class="tsd-panel tsd-index-panel">
-					<div class="tsd-index-content">
-						<section class="tsd-index-section ">
-							<h3>Enumerations</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-enum"><a href="enums/imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
-							<h3>Classes</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-class"><a href="classes/gaussianblurbackgroundprocessor.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor</a></li>
-								<li class="tsd-kind-class"><a href="classes/virtualbackgroundprocessor.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
-							<h3>Interfaces</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-interface"><a href="interfaces/gaussianblurbackgroundprocessoroptions.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor<wbr>Options</a></li>
-								<li class="tsd-kind-interface"><a href="interfaces/virtualbackgroundprocessoroptions.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor<wbr>Options</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
-							<h3>Variables</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-variable"><a href="index.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a></li>
-								<li class="tsd-kind-variable"><a href="index.html#version" class="tsd-kind-icon">version</a></li>
-							</ul>
-						</section>
-					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Variables</h2>
-				<section class="tsd-panel tsd-member tsd-kind-variable">
-					<a name="issupported" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagConst">Const</span> is<wbr>Supported</h3>
-					<div class="tsd-signature tsd-kind-icon">is<wbr>Supported<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = ...</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/utils/support.ts#L20">utils/support.ts:20</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Check if the current browser is officially supported by twilio-video-procesors.js.
-							This is set to <code>true</code> for chromium-based desktop browsers.</p>
-						</div>
-						<dl class="tsd-comment-tags">
-							<dt>example</dt>
-							<dd><pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">isSupported</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors-sdk&#039;</span><span style="color: #000000">;</span>
-
-<span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">isSupported</span><span style="color: #000000">) {</span>
-<span style="color: #000000">  </span><span style="color: #008000">// Initialize the background processors</span>
-<span style="color: #000000">}</span>
+			<div class="tsd-panel tsd-typography">
+				<a href="#twilio-video-processors" id="twilio-video-processors" style="color: inherit; text-decoration: none;">
+					<h1>Twilio Video Processors</h1>
+				</a>
+				<p>Twilio Video Processors is a collection of video processing tools which can be used with <a href="https://github.com/twilio/twilio-video.js">Twilio Video JavaScript SDK</a> to apply transformations and filters to a VideoTrack.</p>
+				<p>&nbsp;&nbsp; <a href="https://twilio.github.io/twilio-video-processors.js/examples/virtualbackground/">See it live here!</a></p>
+				<a href="#features" id="features" style="color: inherit; text-decoration: none;">
+					<h2>Features</h2>
+				</a>
+				<ul>
+					<li>Virtual Background</li>
+					<li>Background Blur</li>
+				</ul>
+				<a href="#prerequisites" id="prerequisites" style="color: inherit; text-decoration: none;">
+					<h2>Prerequisites</h2>
+				</a>
+				<ul>
+					<li><a href="https://github.com/twilio/twilio-video.js">Twilio Video JavaScript SDK</a> (v2.15+)</li>
+					<li><a href="https://nodejs.org">Node.js</a> (v14+)</li>
+					<li>NPM (v6+, comes installed with newer Node versions)</li>
+				</ul>
+				<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
+					<h2>Installation</h2>
+				</a>
+				<a href="#npm" id="npm" style="color: inherit; text-decoration: none;">
+					<h3>NPM</h3>
+				</a>
+				<p>You can install directly from npm.</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">install</span><span style="color: #000000"> @</span><span style="color: #001080">twilio</span><span style="color: #000000">/</span><span style="color: #001080">video</span><span style="color: #000000">-</span><span style="color: #001080">processors</span><span style="color: #000000">-</span><span style="color: #001080">sdk</span><span style="color: #000000"> --</span><span style="color: #001080">save</span>
 </code></pre>
-							</dd>
-						</dl>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-variable">
-					<a name="version" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagConst">Const</span> version</h3>
-					<div class="tsd-signature tsd-kind-icon">version<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;1.0.0-rc6&#x27;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/utils/version.ts#L6">utils/version.ts:6</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The current version of the SDK</p>
-						</div>
-					</div>
-				</section>
-			</section>
+				<p>Using this method, you can import <code>twilio-video-processors</code> like so:</p>
+				<pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #0000FF">*</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #001080">VideoProcessors</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors-sdk&#039;</span><span style="color: #000000">;</span>
+</code></pre>
+				<a href="#script-tag" id="script-tag" style="color: inherit; text-decoration: none;">
+					<h3>Script tag</h3>
+				</a>
+				<p>You can also copy <code>twilio-video-processors.js</code> from the <code>dist/build</code> folder and include it directly in your web app using a <code>&lt;script&gt;</code> tag.</p>
+				<pre><code class="language-html"><span style="color: #800000">&lt;script</span><span style="color: #000000FF"> </span><span style="color: #FF0000">src</span><span style="color: #000000FF">=</span><span style="color: #0000FF">&quot;https://my-server-path/twilio-video-processors.js&quot;</span><span style="color: #800000">&gt;&lt;/script&gt;</span>
+</code></pre>
+				<p> Using this method, <code>twilio-video-processors.js</code> will set a browser global:</p>
+				<pre><code class="language-ts"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">VideoProcessors</span><span style="color: #000000"> = </span><span style="color: #001080">Twilio</span><span style="color: #000000">.</span><span style="color: #001080">VideoProcessors</span><span style="color: #000000">;</span>
+</code></pre>
+				<a href="#assets" id="assets" style="color: inherit; text-decoration: none;">
+					<h3>Assets</h3>
+				</a>
+				<p>In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so the SDK can load them properly. These files can be downloaded from the <code>dist/build</code> folder. Check the <a href="https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath">API docs</a> for details and the <a href="https://github.com/twilio/twilio-video-processors.js/tree/master/examples">examples</a> folder for reference.</p>
+				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+					<h2>Usage</h2>
+				</a>
+				<p>These processors are only supported on chromium-based desktop browsers at this moment and will not work on other browsers. For best performance and accuracy, we recommend that, when calling <a href="https://sdk.twilio.com/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor">Video.createLocalVideoTrack</a>, the video capture constraints be set to <code>24 fps</code> frame rate with <code>640x480</code> capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.</p>
+				<p>Additionally, these processors use WebAssembly to run TensorFlow Lite and requires Chrome&#39;s <a href="https://v8.dev/features/simd">WebAssembly SIMD</a> support in order to achieve the best performance. WebAssembly SIMD can be turned on by visiting <code>chrome://flags</code> on versions 84 through 90. This will be enabled by default on Chrome 91+. You can also enable this on versions 84-90 for your users without turning on the flag by <a href="https://developer.chrome.com/origintrials/#/trials/active">registering</a> for a <a href="http://googlechrome.github.io/OriginTrials/developer-guide.html#:~:text=You%20can%20opt%20any%20page,a%20token%20for%20your%20origin.&amp;text=NOTE%3A,tokens%20for%20a%20given%20page.">Chrome Origin Trial</a> for your website.</p>
+				<p>Please check out the following pages for example usage. For more information, please refer to the <a href="https://twilio.github.io/twilio-video-processors.js/">API Docs</a>.</p>
+				<ul>
+					<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html">VirtualBackgroundProcessor</a></li>
+					<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html">GaussianBlurBackgroundProcessor</a></li>
+				</ul>
+			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation primary">
 				<ul>
-					<li class="current ">
-						<a href="index.html">Exports</a>
+					<li class=" ">
+						<a href="modules.html">Exports</a>
 					</li>
 				</ul>
 			</nav>
@@ -162,10 +141,10 @@
 						<a href="interfaces/virtualbackgroundprocessoroptions.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="index.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
+						<a href="modules.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="index.html#version" class="tsd-kind-icon">version</a>
+						<a href="modules.html#version" class="tsd-kind-icon">version</a>
 					</li>
 				</ul>
 			</nav>

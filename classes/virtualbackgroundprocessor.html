@@ -52,7 +52,7 @@
 		<div class="container">
 			<ul class="tsd-breadcrumb">
 				<li>
-					<a href="../index.html">@twilio/video-processors-sdk</a>
+					<a href="../modules.html">@twilio/video-processors-sdk</a>
 				</li>
 				<li>
 					<a href="virtualbackgroundprocessor.html">VirtualBackgroundProcessor</a>
@@ -88,13 +88,14 @@
 <span style="color: #000000">    </span><span style="color: #001080">backgroundImage:</span><span style="color: #000000"> </span><span style="color: #001080">img</span><span style="color: #000000">,</span>
 <span style="color: #000000">  });</span>
 
-<span style="color: #000000">  </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">virtualBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">();</span>
-
-<span style="color: #000000">  </span><span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
-<span style="color: #000000">    </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
-<span style="color: #000000">    </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span>
-<span style="color: #000000">  }).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">virtualBackground</span><span style="color: #000000">);</span>
+<span style="color: #000000">  </span><span style="color: #001080">virtualBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">().</span><span style="color: #795E26">then</span><span style="color: #000000">(() </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
+<span style="color: #000000">      </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
+<span style="color: #000000">      </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span><span style="color: #000000">,</span>
+<span style="color: #000000">      </span><span style="color: #001080">frameRate:</span><span style="color: #000000"> </span><span style="color: #098658">24</span>
+<span style="color: #000000">    }).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">      </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">virtualBackground</span><span style="color: #000000">);</span>
+<span style="color: #000000">    });</span>
 <span style="color: #000000">  });</span>
 <span style="color: #000000">};</span>
 <span style="color: #001080">img</span><span style="color: #000000">.</span><span style="color: #001080">src</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;/background.jpg&#039;</span><span style="color: #000000">;</span>
@@ -156,7 +157,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/VirtualBackgroundProcessor.ts#L65">processors/background/VirtualBackgroundProcessor.ts:65</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/VirtualBackgroundProcessor.ts#L66">processors/background/VirtualBackgroundProcessor.ts:66</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -190,7 +191,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/VirtualBackgroundProcessor.ts#L81">processors/background/VirtualBackgroundProcessor.ts:81</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/VirtualBackgroundProcessor.ts#L82">processors/background/VirtualBackgroundProcessor.ts:82</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -203,7 +204,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/VirtualBackgroundProcessor.ts#L91">processors/background/VirtualBackgroundProcessor.ts:91</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/VirtualBackgroundProcessor.ts#L92">processors/background/VirtualBackgroundProcessor.ts:92</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -235,7 +236,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/VirtualBackgroundProcessor.ts#L101">processors/background/VirtualBackgroundProcessor.ts:101</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/VirtualBackgroundProcessor.ts#L102">processors/background/VirtualBackgroundProcessor.ts:102</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -248,7 +249,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/VirtualBackgroundProcessor.ts#L108">processors/background/VirtualBackgroundProcessor.ts:108</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/VirtualBackgroundProcessor.ts#L109">processors/background/VirtualBackgroundProcessor.ts:109</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -277,7 +278,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L154">processors/background/BackgroundProcessor.ts:154</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L170">processors/background/BackgroundProcessor.ts:170</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -290,7 +291,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L161">processors/background/BackgroundProcessor.ts:161</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L177">processors/background/BackgroundProcessor.ts:177</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -321,7 +322,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L174">processors/background/BackgroundProcessor.ts:174</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L190">processors/background/BackgroundProcessor.ts:190</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -345,7 +346,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/fcf896b/lib/processors/background/BackgroundProcessor.ts#L199">processors/background/BackgroundProcessor.ts:199</a></li>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/abab2d6/lib/processors/background/BackgroundProcessor.ts#L215">processors/background/BackgroundProcessor.ts:215</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -380,7 +381,7 @@
 			<nav class="tsd-navigation primary">
 				<ul>
 					<li class=" ">
-						<a href="../index.html">Exports</a>
+						<a href="../modules.html">Exports</a>
 					</li>
 				</ul>
 			</nav>
@@ -426,10 +427,10 @@
 						<a href="../interfaces/virtualbackgroundprocessoroptions.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../index.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
+						<a href="../modules.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../index.html#version" class="tsd-kind-icon">version</a>
+						<a href="../modules.html#version" class="tsd-kind-icon">version</a>
 					</li>
 				</ul>
 			</nav>

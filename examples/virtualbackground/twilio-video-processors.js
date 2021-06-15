@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 1.0.0-rc6
+/*! twilio-video-processors.js 1.0.0-preview1
 
 The following license applies to all parts of this software except as
 documented below.
@@ -33,6 +33,28 @@ documented below.
     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+This software includes a converted model using a conversion script under the following (MIT) license.
+
+    Copyright (c) 2019 Katsuya Hyodo
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 
 */
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -538,13 +560,14 @@ var constants_1 = require("../../constants");
  *   assetsPath: 'https://my-server-path/assets'
  * });
  *
- * await blurBackground.loadModel();
- *
- * createLocalVideoTrack({
- *   width: 640,
- *   height: 480
- * }).then(track => {
- *   track.addProcessor(blurBackground);
+ * blurBackground.loadModel().then(() => {
+ *   createLocalVideoTrack({
+ *     width: 640,
+ *     height: 480,
+ *     frameRate: 24
+ *   }).then(track => {
+ *     track.addProcessor(blurBackground);
+ *   });
  * });
  * ```
  */
@@ -632,13 +655,14 @@ var types_1 = require("../../types");
  *     backgroundImage: img,
  *   });
  *
- *   await virtualBackground.loadModel();
- *
- *   createLocalVideoTrack({
- *     width: 640,
- *     height: 480
- *   }).then(track => {
- *     track.addProcessor(virtualBackground);
+ *   virtualBackground.loadModel().then(() => {
+ *     createLocalVideoTrack({
+ *       width: 640,
+ *       height: 480,
+ *       frameRate: 24
+ *     }).then(track => {
+ *       track.addProcessor(virtualBackground);
+ *     });
  *   });
  * };
  * img.src = '/background.jpg';
@@ -936,7 +960,7 @@ exports.version = void 0;
 /**
  * The current version of the SDK
  */
-exports.version = '1.0.0-rc6';
+exports.version = '1.0.0-preview1';
 
 },{}],12:[function(require,module,exports){
 "use strict";
