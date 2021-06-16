@@ -6,7 +6,7 @@ Twilio Video Processors is a collection of video processing tools which can be u
 
 ## Features
 
-The SDK provides the following Video Processors to apply transformations and filters to a person's background. If you want to create your own transformations or filters, you can extend the [BackgroundProcessor](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/BackgroundProcessor.ts) class and implement the `_setBackground` method. See the [blur filter](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/GaussianBlurBackgroundProcessor.ts) implementation for reference.
+The following Video Processors are provided to apply transformations and filters to a person's background. If you want to create your own transformations or filters, you can extend the [BackgroundProcessor](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/BackgroundProcessor.ts) class and implement the `_setBackground` method. See the [blur filter](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/GaussianBlurBackgroundProcessor.ts) implementation for reference.
 
 - [Virtual Background](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
 - [Background Blur](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)
@@ -24,13 +24,13 @@ The SDK provides the following Video Processors to apply transformations and fil
 You can install directly from npm.
 
 ```
-npm install @twilio/video-processors-sdk --save
+npm install @twilio/video-processors --save
 ```
 
 Using this method, you can import `twilio-video-processors` like so:
 
 ```ts
-import * as VideoProcessors from '@twilio/video-processors-sdk';
+import * as VideoProcessors from '@twilio/video-processors';
 ```
 
 ### Script tag
@@ -49,7 +49,7 @@ You can also copy `twilio-video-processors.js` from the `dist/build` folder and 
 
 ### Assets
 
-In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so the SDK can load them properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
+In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so they can be loaded properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
 
 ## Usage
 
