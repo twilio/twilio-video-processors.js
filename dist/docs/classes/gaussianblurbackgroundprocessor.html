@@ -1,0 +1,405 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>GaussianBlurBackgroundProcessor | @twilio/video-processors</title>
+	<meta name="description" content="Documentation for @twilio/video-processors">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+	<script async src="../assets/js/search.js" id="search-script"></script>
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">@twilio/video-processors</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../modules.html">@twilio/video-processors</a>
+				</li>
+				<li>
+					<a href="gaussianblurbackgroundprocessor.html">GaussianBlurBackgroundProcessor</a>
+				</li>
+			</ul>
+			<h1>Class GaussianBlurBackgroundProcessor</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The GaussianBlurBackgroundProcessor, when added to a VideoTrack,
+							applies a gaussian blur filter on the background in each video frame
+							and leaves the foreground (person(s)) untouched. Each instance of
+							GaussianBlurBackgroundProcessor should be added to only one VideoTrack
+						at a time to prevent overlapping of image data from multiple VideoTracks.</p>
+					</div>
+					<dl class="tsd-comment-tags">
+						<dt>example</dt>
+						<dd><pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">createLocalVideoTrack</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;twilio-video&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">GaussianBlurBackgroundProcessor</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">blurBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">GaussianBlurBackgroundProcessor</span><span style="color: #000000">({</span>
+<span style="color: #000000">  </span><span style="color: #001080">assetsPath:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;https://my-server-path/assets&#039;</span>
+<span style="color: #000000">});</span>
+
+<span style="color: #001080">blurBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">().</span><span style="color: #795E26">then</span><span style="color: #000000">(() </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">  </span><span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">frameRate:</span><span style="color: #000000"> </span><span style="color: #098658">24</span>
+<span style="color: #000000">  }).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">blurBackground</span><span style="color: #000000">);</span>
+<span style="color: #000000">  });</span>
+<span style="color: #000000">});</span>
+</code></pre>
+						</dd>
+					</dl>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="tsd-signature-type">BackgroundProcessor</span>
+						<ul class="tsd-hierarchy">
+							<li>
+								<span class="target">GaussianBlurBackgroundProcessor</span>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="gaussianblurbackgroundprocessor.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="gaussianblurbackgroundprocessor.html#blurfilterradius" class="tsd-kind-icon">blur<wbr>Filter<wbr>Radius</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="gaussianblurbackgroundprocessor.html#maskblurradius" class="tsd-kind-icon">mask<wbr>Blur<wbr>Radius</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="gaussianblurbackgroundprocessor.html#loadmodel" class="tsd-kind-icon">load<wbr>Model</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="gaussianblurbackgroundprocessor.html#processframe" class="tsd-kind-icon">process<wbr>Frame</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Gaussian<wbr>Blur<wbr>Background<wbr>Processor<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">: </span><a href="../interfaces/gaussianblurbackgroundprocessoroptions.html" class="tsd-signature-type" data-tsd-kind="Interface">GaussianBlurBackgroundProcessorOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="gaussianblurbackgroundprocessor.html" class="tsd-signature-type" data-tsd-kind="Class">GaussianBlurBackgroundProcessor</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/6bb0595/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L50">processors/background/GaussianBlurBackgroundProcessor.ts:50</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Construct a GaussianBlurBackgroundProcessor. Default values will be used for
+										any missing properties in <a href="../interfaces/gaussianblurbackgroundprocessoroptions.html">GaussianBlurBackgroundProcessorOptions</a>, and
+									invalid properties will be ignored.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>options: <a href="../interfaces/gaussianblurbackgroundprocessoroptions.html" class="tsd-signature-type" data-tsd-kind="Interface">GaussianBlurBackgroundProcessorOptions</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="gaussianblurbackgroundprocessor.html" class="tsd-signature-type" data-tsd-kind="Class">GaussianBlurBackgroundProcessor</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="blurfilterradius" class="tsd-anchor"></a>
+					<h3>blur<wbr>Filter<wbr>Radius</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> blurFilterRadius<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> blurFilterRadius<span class="tsd-signature-symbol">(</span>radius<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/6bb0595/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L65">processors/background/GaussianBlurBackgroundProcessor.ts:65</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>The current background blur filter radius in pixels.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/6bb0595/lib/processors/background/GaussianBlurBackgroundProcessor.ts#L72">processors/background/GaussianBlurBackgroundProcessor.ts:72</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set a new background blur filter radius in pixels.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>radius: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="maskblurradius" class="tsd-anchor"></a>
+					<h3>mask<wbr>Blur<wbr>Radius</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> maskBlurRadius<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> maskBlurRadius<span class="tsd-signature-symbol">(</span>radius<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/6bb0595/lib/processors/background/BackgroundProcessor.ts#L170">processors/background/BackgroundProcessor.ts:170</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>The current blur radius when smoothing out the edges of the person&#39;s mask.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/6bb0595/lib/processors/background/BackgroundProcessor.ts#L177">processors/background/BackgroundProcessor.ts:177</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set a new blur radius to be used when smoothing out the edges of the person&#39;s mask.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>radius: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="loadmodel" class="tsd-anchor"></a>
+					<h3>load<wbr>Model</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">load<wbr>Model<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/6bb0595/lib/processors/background/BackgroundProcessor.ts#L190">processors/background/BackgroundProcessor.ts:190</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Load the segmentation model.
+										Call this method before attaching the processor to ensure
+									video frames are processed correctly.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="processframe" class="tsd-anchor"></a>
+					<h3>process<wbr>Frame</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">process<wbr>Frame<span class="tsd-signature-symbol">(</span>inputFrameBuffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">OffscreenCanvas</span>, outputFrameBuffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/twilio/twilio-video-processors.js/blob/6bb0595/lib/processors/background/BackgroundProcessor.ts#L215">processors/background/BackgroundProcessor.ts:215</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Apply a transform to the background of an input video frame and leaving
+										the foreground (person(s)) untouched. Any exception detected will
+									result in the frame being dropped.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>inputFrameBuffer: <span class="tsd-signature-type">OffscreenCanvas</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The source of the input frame to process.</p>
+									</div>
+								</li>
+								<li>
+									<h5>outputFrameBuffer: <span class="tsd-signature-type">HTMLCanvasElement</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The output frame buffer to use to draw the processed frame.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="../modules.html">Exports</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-enum">
+						<a href="../enums/imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a>
+					</li>
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class">
+						<a href="gaussianblurbackgroundprocessor.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor</a>
+						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="gaussianblurbackgroundprocessor.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="gaussianblurbackgroundprocessor.html#blurfilterradius" class="tsd-kind-icon">blur<wbr>Filter<wbr>Radius</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="gaussianblurbackgroundprocessor.html#maskblurradius" class="tsd-kind-icon">mask<wbr>Blur<wbr>Radius</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="gaussianblurbackgroundprocessor.html#loadmodel" class="tsd-kind-icon">load<wbr>Model</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="gaussianblurbackgroundprocessor.html#processframe" class="tsd-kind-icon">process<wbr>Frame</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-class">
+						<a href="virtualbackgroundprocessor.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="../interfaces/gaussianblurbackgroundprocessoroptions.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="../interfaces/virtualbackgroundprocessoroptions.html" class="tsd-kind-icon">Virtual<wbr>Background<wbr>Processor<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../modules.html#issupported" class="tsd-kind-icon">is<wbr>Supported</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../modules.html#version" class="tsd-kind-icon">version</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>
