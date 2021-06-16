@@ -532,7 +532,7 @@ var constants_1 = require("../../constants");
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors-sdk';
+ * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
  *
  * const blurBackground = new GaussianBlurBackgroundProcessor({
  *   assetsPath: 'https://my-server-path/assets'
@@ -622,7 +622,7 @@ var types_1 = require("../../types");
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { VirtualBackgroundProcessor } from '@twilio/video-processors-sdk';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
  *
  * let virtualBackground;
  * const img = new Image();
@@ -921,7 +921,7 @@ exports.isBrowserSupported = isBrowserSupported;
  * This is set to `true` for chromium-based desktop browsers.
  * @example
  * ```ts
- * import { isSupported } from '@twilio/video-processors-sdk';
+ * import { isSupported } from '@twilio/video-processors';
  *
  * if (isSupported) {
  *   // Initialize the background processors
@@ -936,7 +936,7 @@ exports.isSupported = isBrowserSupported();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.version = void 0;
 /**
- * The current version of the SDK
+ * The current version of the library.
  */
 exports.version = '1.0.0-rc7';
 
