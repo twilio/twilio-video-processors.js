@@ -30,6 +30,8 @@ New Features and Improvements
     : Promise<void> | void;
   ```
 
+* The segmentation model has been changed from [MLKit Selfie Segmentation](https://developers.google.com/ml-kit/images/vision/selfie-segmentation/selfie-model-card.pdf) to [MediaPipe Selfie Segmentation Landscape](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) to improve performance.
+
 * Added debounce logic on the image resizing step to improve performance.
 
 1.0.0-beta.3 (May 25, 2021)
