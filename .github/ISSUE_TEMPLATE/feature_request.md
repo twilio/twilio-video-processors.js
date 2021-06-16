@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**What is the feature that you would like to see in the SDK? Please describe.**
+**What is the feature that you would like to see? Please describe.**
 A clear and concise description of the proposed feature.
 
 **Is your feature request related to a problem? Please describe.**

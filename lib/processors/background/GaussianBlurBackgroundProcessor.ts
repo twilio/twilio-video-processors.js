@@ -26,7 +26,7 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors-sdk';
+ * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
  *
  * const blurBackground = new GaussianBlurBackgroundProcessor({
  *   assetsPath: 'https://my-server-path/assets'

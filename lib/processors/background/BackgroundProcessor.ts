@@ -27,7 +27,7 @@ import {
 export interface BackgroundProcessorOptions {
   /**
    * The VideoProcessors load assets dynamically depending on certain browser features.
-   * You need to serve all the assets and provide the root path so they can be referenced by the SDK.
+   * You need to serve all the assets and provide the root path so they can be referenced properly.
    * These assets can be copied from the `dist/build` folder which you can add as part of your deployment process.
    * @example
    * <br/>

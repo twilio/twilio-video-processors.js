@@ -1,5 +1,5 @@
 {
-  "name": "@twilio/video-processors-sdk",
+  "name": "@twilio/video-processors",
   "title": "Twilio Video Processors",
   "description": "Twilio Video Processors JavaScript Library",
   "version": "1.0.0-dev",
