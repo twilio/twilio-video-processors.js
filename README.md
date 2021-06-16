@@ -2,13 +2,14 @@
 
 Twilio Video Processors is a collection of video processing tools which can be used with [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) to apply transformations and filters to a VideoTrack.
 
-* [API Docs](https://twilio.github.io/twilio-video-processors.js/)
-* [Virtual Background Demo](https://twilio.github.io/twilio-video-processors.js/examples/virtualbackground/)
+&nbsp;&nbsp; [See it live here!](https://twilio.github.io/twilio-video-processors.js/examples/virtualbackground/)
 
 ## Features
 
-- Virtual Background
-- Background Blur
+The following Video Processors are provided to apply transformations and filters to a person's background. If you want to create your own transformations or filters, you can extend the [BackgroundProcessor](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/BackgroundProcessor.ts) class and implement the `_setBackground` method. See the [blur filter](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/GaussianBlurBackgroundProcessor.ts) implementation for reference.
+
+- [Virtual Background](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
+- [Background Blur](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)
 
 ## Prerequisites
 
@@ -20,23 +21,21 @@ Twilio Video Processors is a collection of video processing tools which can be u
 
 ### NPM
 
-Install from a local directory.
+You can install directly from npm.
 
 ```
-# package-folder contains the package.json
-npm install /local-path-to-package/package-folder
-
+npm install @twilio/video-processors --save
 ```
 
-Using this method, you can import `video-processors` like so:
+Using this method, you can import `twilio-video-processors` like so:
 
 ```ts
-import * as VideoProcessors from '@twilio/video-processors-sdk';
+import * as VideoProcessors from '@twilio/video-processors';
 ```
 
 ### Script tag
 
-You can also copy `twilio-video-processors.js` from the `dist` folder and include it directly in your web app using a `<script>` tag.
+You can also copy `twilio-video-processors.js` from the `dist/build` folder and include it directly in your web app using a `<script>` tag.
 
  ```html
  <script src="https://my-server-path/twilio-video-processors.js"></script>
@@ -50,16 +49,15 @@ You can also copy `twilio-video-processors.js` from the `dist` folder and includ
 
 ### Assets
 
-In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so the SDK can load them properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath) for details and the [examples](examples) folder for reference.
+In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so they can be loaded properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
 
 ## Usage
 
-Please check out the following pages for example usage. These processors are only supported on the Chrome browser at this moment and will not work on other browsers. For best performance and accuracy, we recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate.
+These processors are only supported on chromium-based desktop browsers at this moment and will not work on other browsers. For best performance and accuracy, we recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.
+
+Additionally, these processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landscape Model](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) and requires Chrome's [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. WebAssembly SIMD can be turned on by visiting `chrome://flags` on versions 84 through 90. This will be enabled by default on Chrome 91+. You can also enable this on versions 84-90 for your users without turning on the flag by [registering](https://developer.chrome.com/origintrials/#/trials/active) for a [Chrome Origin Trial](http://googlechrome.github.io/OriginTrials/developer-guide.html#:~:text=You%20can%20opt%20any%20page,a%20token%20for%20your%20origin.&text=NOTE%3A,tokens%20for%20a%20given%20page.) for your website.
+
+Please check out the following pages for example usage. For more information, please refer to the [API Docs](https://twilio.github.io/twilio-video-processors.js/).
 
 * [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
 * [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)
-
-## Known Issues
-
-* Video Processor execution will result in a significant increase in CPU usage.
-* Precision on segmentation mask can be poor on certain conditions such as uneven lighting and increased body movements.

@@ -10,7 +10,7 @@
  * This is set to `true` for chromium-based desktop browsers.
  * @example
  * ```ts
- * import { isSupported } from '@twilio/video-processors-sdk';
+ * import { isSupported } from '@twilio/video-processors';
  *
  * if (isSupported) {
  *   // Initialize the background processors

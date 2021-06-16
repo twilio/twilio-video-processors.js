@@ -6,7 +6,7 @@ export const DEBOUNCE = 2;
 export const MASK_BLUR_RADIUS = 5;
 export const HISTORY_COUNT = 5;
 export const PERSON_PROBABILITY_THRESHOLD = 0.4;
-export const MODEL_NAME = 'twilio-selfiesegmentation-256x256-float16-v1215.tflite';
+export const MODEL_NAME = 'selfie_segmentation_landscape.tflite';
 export const TFLITE_LOADER_NAME = 'tflite-1-0-0.js';
 export const TFLITE_SIMD_LOADER_NAME = 'tflite-simd-1-0-0.js';
 
@@ -30,5 +30,5 @@ export const BODYPIX_INFERENCE_DIMENSIONS: Dimensions = {
 
 export const WASM_INFERENCE_DIMENSIONS: Dimensions = {
   width: 256,
-  height: 256,
+  height: 144,
 };
