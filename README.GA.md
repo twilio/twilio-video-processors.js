@@ -6,8 +6,10 @@ Twilio Video Processors is a collection of video processing tools which can be u
 
 ## Features
 
-- Virtual Background
-- Background Blur
+The SDK provides the following Video Processors to apply transformations and filters to a person's background. If you want to create your own transformations or filters, you can extend the [BackgroundProcessor](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/BackgroundProcessor.ts) class and implement the `_setBackground` method. See the [blur filter](https://github.com/twilio/twilio-video-processors.js/blob/master/lib/processors/background/GaussianBlurBackgroundProcessor.ts) implementation for reference.
+
+- [Virtual Background](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
+- [Background Blur](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)
 
 ## Prerequisites
 
