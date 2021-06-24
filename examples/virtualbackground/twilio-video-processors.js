@@ -1,9 +1,9 @@
-/*! twilio-video-processors.js 1.0.0-rc7
+/*! twilio-video-processors.js 1.0.0
 
 The following license applies to all parts of this software except as
 documented below.
 
-    Copyright (C) 2021 Twilio, inc.
+    Copyright (C) 2021 Twilio Inc.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -938,7 +938,7 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '1.0.0-rc7';
+exports.version = '1.0.0';
 
 },{}],12:[function(require,module,exports){
 "use strict";
