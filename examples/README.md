@@ -2,7 +2,7 @@
 
 ## Setup
 
-Checkout the latest release branch (see the latest releases [here](https://github.com/twilio/twilio-video-processors.js/releases)). For example, to checkout release 1.0.0:
+Checkout the latest release tag (see the latest releases [here](https://github.com/twilio/twilio-video-processors.js/releases)). For example, to checkout release 1.0.0:
 
 ```
 git checkout 1.0.0
