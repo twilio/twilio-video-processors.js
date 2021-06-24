@@ -1,8 +1,7 @@
-1.0.0 (In Progress)
+1.0.0 (June 24, 2021)
 ==========================
 
-New Features and Improvements
------------------------------
+1.0.0-beta.3 has been promoted to 1.0.0 GA. Twilio Video Processors will use [Semantic Versioning 2.0.0](https://semver.org/#semantic-versioning-200) for all future changes. Additionally, this release also includes the following new features and improvements.
 
 * Added `isSupported` API which can be used to check whether the browser is supported or not. This API returns `true` for chromium-based desktop browsers.
   ```ts
