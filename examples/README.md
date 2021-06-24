@@ -2,7 +2,13 @@
 
 ## Setup
 
-Run `npm install` from the `examples` folder. It will install the dependencies and run the application server.
+Checkout the latest release branch (see the latest releases [here](https://github.com/twilio/twilio-video-processors.js/releases)). For example, to checkout release 1.0.0:
+
+```
+git checkout 1.0.0
+```
+
+Then, run `npm install` from the `examples` folder. It will install the dependencies and run the application server.
 
 ## App (Chrome Only)
 
