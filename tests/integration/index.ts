@@ -1,1 +1,1 @@
-import './GrayscaleProcessor';
+import './spec/GrayscaleProcessor';

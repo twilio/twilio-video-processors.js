@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { GrayscaleProcessor } from '../../lib/processors/grayscale';
+import { GrayscaleProcessor } from '../../../lib/processors/grayscale';
 
 describe('GrayscaleProcessor', () => {
   it('should process frame without an exception', () => {
