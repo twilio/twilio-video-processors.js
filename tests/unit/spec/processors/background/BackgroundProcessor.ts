@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { BackgroundProcessor } from '../../../../lib/processors/background/BackgroundProcessor';
+import { BackgroundProcessor } from '../../../../../lib/processors/background/BackgroundProcessor';
 import {
   INFERENCE_CONFIG,
   WASM_INFERENCE_DIMENSIONS,
@@ -8,7 +8,7 @@ import {
   MASK_BLUR_RADIUS,
   HISTORY_COUNT,
   PERSON_PROBABILITY_THRESHOLD,
-} from '../../../../lib/constants';
+} from '../../../../../lib/constants';
 
 class MyBackgroundProcessor extends BackgroundProcessor {
   constructor(options?: any) {
