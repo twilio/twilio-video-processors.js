@@ -1,3 +1,16 @@
+1.0.1 (In Progress)
+=====================
+
+Bug Fixes
+---------
+
+* Fixed an issue where the following internal classes and interfaces are being exported.
+  - BackgroundProcessor
+  - BackgroundProcessorOptions
+  - GrayscaleProcessor
+  - Processor
+  - Dimensions
+
 1.0.0 (June 24, 2021)
 ==========================
 
