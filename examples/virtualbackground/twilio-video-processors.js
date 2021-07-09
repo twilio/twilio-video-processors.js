@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 1.0.0
+/*! twilio-video-processors.js 1.0.1-rc1
 
 The following license applies to all parts of this software except as
 documented below.
@@ -81,17 +81,11 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VirtualBackgroundProcessor = exports.Processor = exports.version = exports.isSupported = exports.ImageFit = exports.GrayscaleProcessor = exports.GaussianBlurBackgroundProcessor = exports.BackgroundProcessor = void 0;
-var BackgroundProcessor_1 = require("./processors/background/BackgroundProcessor");
-Object.defineProperty(exports, "BackgroundProcessor", { enumerable: true, get: function () { return BackgroundProcessor_1.BackgroundProcessor; } });
+exports.VirtualBackgroundProcessor = exports.version = exports.isSupported = exports.ImageFit = exports.GaussianBlurBackgroundProcessor = void 0;
 var GaussianBlurBackgroundProcessor_1 = require("./processors/background/GaussianBlurBackgroundProcessor");
 Object.defineProperty(exports, "GaussianBlurBackgroundProcessor", { enumerable: true, get: function () { return GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor; } });
 var VirtualBackgroundProcessor_1 = require("./processors/background/VirtualBackgroundProcessor");
 Object.defineProperty(exports, "VirtualBackgroundProcessor", { enumerable: true, get: function () { return VirtualBackgroundProcessor_1.VirtualBackgroundProcessor; } });
-var grayscale_1 = require("./processors/grayscale");
-Object.defineProperty(exports, "GrayscaleProcessor", { enumerable: true, get: function () { return grayscale_1.GrayscaleProcessor; } });
-var Processor_1 = require("./processors/Processor");
-Object.defineProperty(exports, "Processor", { enumerable: true, get: function () { return Processor_1.Processor; } });
 var types_1 = require("./types");
 Object.defineProperty(exports, "ImageFit", { enumerable: true, get: function () { return types_1.ImageFit; } });
 var support_1 = require("./utils/support");
@@ -100,13 +94,12 @@ var version_1 = require("./utils/version");
 Object.defineProperty(exports, "version", { enumerable: true, get: function () { return version_1.version; } });
 window.Twilio = window.Twilio || {};
 window.Twilio.VideoProcessors = __assign(__assign({}, window.Twilio.VideoProcessors), { GaussianBlurBackgroundProcessor: GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor,
-    GrayscaleProcessor: grayscale_1.GrayscaleProcessor,
     ImageFit: types_1.ImageFit,
     isSupported: support_1.isSupported,
     version: version_1.version,
     VirtualBackgroundProcessor: VirtualBackgroundProcessor_1.VirtualBackgroundProcessor });
 
-},{"./processors/Processor":3,"./processors/background/BackgroundProcessor":4,"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./processors/grayscale":7,"./types":8,"./utils/support":10,"./utils/version":11}],3:[function(require,module,exports){
+},{"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./types":7,"./utils/support":9,"./utils/version":10}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Processor = void 0;
@@ -502,7 +495,7 @@ var BackgroundProcessor = /** @class */ (function (_super) {
 }(Processor_1.Processor));
 exports.BackgroundProcessor = BackgroundProcessor;
 
-},{"../../constants":1,"../../utils/Benchmark":9,"../../utils/version":11,"../Processor":3,"@tensorflow-models/body-pix":16,"@tensorflow/tfjs-backend-cpu":33,"@tensorflow/tfjs-backend-webgl":34}],5:[function(require,module,exports){
+},{"../../constants":1,"../../utils/Benchmark":8,"../../utils/version":10,"../Processor":3,"@tensorflow-models/body-pix":15,"@tensorflow/tfjs-backend-cpu":32,"@tensorflow/tfjs-backend-webgl":33}],5:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -751,51 +744,7 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
 }(BackgroundProcessor_1.BackgroundProcessor));
 exports.VirtualBackgroundProcessor = VirtualBackgroundProcessor;
 
-},{"../../types":8,"./BackgroundProcessor":4}],7:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GrayscaleProcessor = void 0;
-var Processor_1 = require("../Processor");
-/**
- * @private
- * The [[GrayscaleProcessor]] is a [[Processor]] which applies
- * a grayscale transform to a frame.
- */
-var GrayscaleProcessor = /** @class */ (function (_super) {
-    __extends(GrayscaleProcessor, _super);
-    function GrayscaleProcessor() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    /**
-     * Applies a grayscale transform to the input frame and draw the results to an output frame.
-     * @param inputFrameBuffer - The source of the input frame to process.
-     * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
-     */
-    GrayscaleProcessor.prototype.processFrame = function (inputFrameBuffer, outputFrameBuffer) {
-        var context = outputFrameBuffer.getContext('2d');
-        if (context) {
-            context.filter = 'grayscale(100%)';
-            context.drawImage(inputFrameBuffer, 0, 0, inputFrameBuffer.width, inputFrameBuffer.height);
-        }
-    };
-    return GrayscaleProcessor;
-}(Processor_1.Processor));
-exports.GrayscaleProcessor = GrayscaleProcessor;
-
-},{"../Processor":3}],8:[function(require,module,exports){
+},{"../../types":7,"./BackgroundProcessor":4}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageFit = void 0;
@@ -825,7 +774,7 @@ var ImageFit;
     ImageFit["None"] = "None";
 })(ImageFit = exports.ImageFit || (exports.ImageFit = {}));
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -905,7 +854,7 @@ var Benchmark = /** @class */ (function () {
 }());
 exports.Benchmark = Benchmark;
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isSupported = exports.isBrowserSupported = void 0;
@@ -930,7 +879,7 @@ exports.isBrowserSupported = isBrowserSupported;
  */
 exports.isSupported = isBrowserSupported();
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 // This file is generated on build. To make changes, see scripts/version.js
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -938,9 +887,9 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '1.0.0';
+exports.version = '1.0.1-rc1';
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -1026,7 +975,7 @@ var BaseModel = /** @class */ (function () {
 }());
 exports.BaseModel = BaseModel;
 
-},{"@tensorflow/tfjs-core":36}],13:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":35}],12:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -1070,7 +1019,7 @@ function cpuBlur(canvas, image, blur) {
 }
 exports.cpuBlur = cpuBlur;
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -1796,7 +1745,7 @@ function load(config) {
 }
 exports.load = load;
 
-},{"./decode_part_map":15,"./mobilenet":18,"./multi_person/decode_instance_masks":20,"./multi_person/decode_multiple_poses":23,"./resnet":29,"./saved_models":30,"./util":31,"@tensorflow/tfjs-converter":35,"@tensorflow/tfjs-core":36}],15:[function(require,module,exports){
+},{"./decode_part_map":14,"./mobilenet":17,"./multi_person/decode_instance_masks":19,"./multi_person/decode_multiple_poses":22,"./resnet":28,"./saved_models":29,"./util":30,"@tensorflow/tfjs-converter":34,"@tensorflow/tfjs-core":35}],14:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -1889,7 +1838,7 @@ function decodeOnlyPartSegmentation(partHeatmapScores) {
 }
 exports.decodeOnlyPartSegmentation = decodeOnlyPartSegmentation;
 
-},{"@tensorflow/tfjs-core":36}],16:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":35}],15:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -1927,7 +1876,7 @@ Object.defineProperty(exports, "scaleAndCropToInputTensorShape", { enumerable: t
 var version_1 = require("./version");
 Object.defineProperty(exports, "version", { enumerable: true, get: function () { return version_1.version; } });
 
-},{"./body_pix_model":14,"./output_rendering_util":27,"./part_channels":28,"./util":31,"./version":32}],17:[function(require,module,exports){
+},{"./body_pix_model":13,"./output_rendering_util":26,"./part_channels":27,"./util":30,"./version":31}],16:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -1986,7 +1935,7 @@ exports.CONNECTED_PART_INDICES = CONNECTED_PART_NAMES.map(function (_a) {
     return ([exports.PART_IDS[jointNameA], exports.PART_IDS[jointNameB]]);
 });
 
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2047,7 +1996,7 @@ var MobileNet = /** @class */ (function (_super) {
 }(base_model_1.BaseModel));
 exports.MobileNet = MobileNet;
 
-},{"./base_model":12,"@tensorflow/tfjs-core":36}],19:[function(require,module,exports){
+},{"./base_model":11,"@tensorflow/tfjs-core":35}],18:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2119,7 +2068,7 @@ function buildPartWithScoreQueue(scoreThreshold, localMaximumRadius, scores) {
 }
 exports.buildPartWithScoreQueue = buildPartWithScoreQueue;
 
-},{"./max_heap":25}],20:[function(require,module,exports){
+},{"./max_heap":24}],19:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2272,7 +2221,7 @@ function decodePersonInstancePartMasks(segmentation, longOffsets, partSegmentati
 }
 exports.decodePersonInstancePartMasks = decodePersonInstancePartMasks;
 
-},{"./decode_multiple_masks_cpu":21,"./decode_multiple_masks_webgl":22,"@tensorflow/tfjs-core":36}],21:[function(require,module,exports){
+},{"./decode_multiple_masks_cpu":20,"./decode_multiple_masks_webgl":21,"@tensorflow/tfjs-core":35}],20:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2414,7 +2363,7 @@ function decodeMultiplePartMasksCPU(segmentation, longOffsets, partSegmentaion, 
 }
 exports.decodeMultiplePartMasksCPU = decodeMultiplePartMasksCPU;
 
-},{"../keypoints":17,"./util":26}],22:[function(require,module,exports){
+},{"../keypoints":16,"./util":25}],21:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2472,7 +2421,7 @@ function decodeMultipleMasksWebGl(segmentation, longOffsets, posesAboveScore, he
 }
 exports.decodeMultipleMasksWebGl = decodeMultipleMasksWebGl;
 
-},{"../keypoints":17,"./util":26,"@tensorflow/tfjs-core":36}],23:[function(require,module,exports){
+},{"../keypoints":16,"./util":25,"@tensorflow/tfjs-core":35}],22:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2604,7 +2553,7 @@ function decodeMultiplePoses(scoresBuffer, offsetsBuffer, displacementsFwdBuffer
 }
 exports.decodeMultiplePoses = decodeMultiplePoses;
 
-},{"./build_part_with_score_queue":19,"./decode_pose":24,"./util":26}],24:[function(require,module,exports){
+},{"./build_part_with_score_queue":18,"./decode_pose":23,"./util":25}],23:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2721,7 +2670,7 @@ function decodePose(root, scores, offsets, outputStride, displacementsFwd, displ
 }
 exports.decodePose = decodePose;
 
-},{"../keypoints":17,"./util":26}],25:[function(require,module,exports){
+},{"../keypoints":16,"./util":25}],24:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2809,7 +2758,7 @@ var MaxHeap = /** @class */ (function () {
 }());
 exports.MaxHeap = MaxHeap;
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -2888,7 +2837,7 @@ function clampVector(a, min, max) {
 }
 exports.clampVector = clampVector;
 
-},{"../keypoints":17}],27:[function(require,module,exports){
+},{"../keypoints":16}],26:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -3431,7 +3380,7 @@ function blurBodyPart(canvas, image, partSegmentation, bodyPartIdsToBlur, backgr
 }
 exports.blurBodyPart = blurBodyPart;
 
-},{"./blur":13,"./util":31}],28:[function(require,module,exports){
+},{"./blur":12,"./util":30}],27:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -3479,7 +3428,7 @@ exports.PART_CHANNELS = [
     'right_feet'
 ];
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -3540,7 +3489,7 @@ var ResNet = /** @class */ (function (_super) {
 }(base_model_1.BaseModel));
 exports.ResNet = ResNet;
 
-},{"./base_model":12,"@tensorflow/tfjs-core":36}],30:[function(require,module,exports){
+},{"./base_model":11,"@tensorflow/tfjs-core":35}],29:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -3591,7 +3540,7 @@ function mobileNetSavedModel(stride, multiplier, quantBytes) {
 }
 exports.mobileNetSavedModel = mobileNetSavedModel;
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 /**
  * @license
@@ -3936,7 +3885,7 @@ function scaleAndFlipPoses(poses, _a, _b, padding, flipHorizontal) {
 }
 exports.scaleAndFlipPoses = scaleAndFlipPoses;
 
-},{"@tensorflow/tfjs-core":36}],32:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":35}],31:[function(require,module,exports){
 "use strict";
 /** @license See the LICENSE file. */
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3945,7 +3894,7 @@ exports.version = void 0;
 var version = '2.2.0';
 exports.version = version;
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /**
  * @license
  * Copyright 2021 Google LLC. All Rights Reserved.
@@ -13954,7 +13903,7 @@ exports.shared = shared;
 exports.version_cpu = version;
 
 
-},{"@tensorflow/tfjs-core":36,"seedrandom":42}],34:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":35,"seedrandom":41}],33:[function(require,module,exports){
 /**
  * @license
  * Copyright 2021 Google LLC. All Rights Reserved.
@@ -30252,7 +30201,7 @@ exports.webgl = webgl;
 exports.webgl_util = webgl_util;
 
 
-},{"@tensorflow/tfjs-core":36}],35:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":35}],34:[function(require,module,exports){
 (function (Buffer){(function (){
 /**
  * @license
@@ -38310,7 +38259,7 @@ exports.version_converter = version;
 
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"@tensorflow/tfjs-core":36,"buffer":39}],36:[function(require,module,exports){
+},{"@tensorflow/tfjs-core":35,"buffer":38}],35:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,setImmediate){(function (){
 /**
  * @license
@@ -65989,7 +65938,7 @@ exports.zerosLike = zerosLike;
 
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],require("timers").setImmediate)
-},{"_process":41,"buffer":39,"crypto":38,"node-fetch":38,"timers":50,"util":38}],37:[function(require,module,exports){
+},{"_process":40,"buffer":38,"crypto":37,"node-fetch":37,"timers":49,"util":37}],36:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -66141,9 +66090,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -67924,7 +67873,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":37,"buffer":39,"ieee754":40}],40:[function(require,module,exports){
+},{"base64-js":36,"buffer":38,"ieee754":39}],39:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -68011,7 +67960,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -68197,7 +68146,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],42:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 // A library of seedable RNGs implemented in Javascript.
 //
 // Usage:
@@ -68259,7 +68208,7 @@ sr.tychei = tychei;
 
 module.exports = sr;
 
-},{"./lib/alea":43,"./lib/tychei":44,"./lib/xor128":45,"./lib/xor4096":46,"./lib/xorshift7":47,"./lib/xorwow":48,"./seedrandom":49}],43:[function(require,module,exports){
+},{"./lib/alea":42,"./lib/tychei":43,"./lib/xor128":44,"./lib/xor4096":45,"./lib/xorshift7":46,"./lib/xorwow":47,"./seedrandom":48}],42:[function(require,module,exports){
 // A port of an algorithm by Johannes Baagøe <baagoe@baagoe.com>, 2010
 // http://baagoe.com/en/RandomMusings/javascript/
 // https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -68375,7 +68324,7 @@ if (module && module.exports) {
 
 
 
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 // A Javascript implementaion of the "Tyche-i" prng algorithm by
 // Samuel Neves and Filipe Araujo.
 // See https://eden.dei.uc.pt/~sneves/pubs/2011-snfa2.pdf
@@ -68480,7 +68429,7 @@ if (module && module.exports) {
 
 
 
-},{}],45:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 // A Javascript implementaion of the "xor128" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -68563,7 +68512,7 @@ if (module && module.exports) {
 
 
 
-},{}],46:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 // A Javascript implementaion of Richard Brent's Xorgens xor4096 algorithm.
 //
 // This fast non-cryptographic random number generator is designed for
@@ -68711,7 +68660,7 @@ if (module && module.exports) {
   (typeof define) == 'function' && define   // present with an AMD loader
 );
 
-},{}],47:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 // A Javascript implementaion of the "xorshift7" algorithm by
 // François Panneton and Pierre L'ecuyer:
 // "On the Xorgshift Random Number Generators"
@@ -68810,7 +68759,7 @@ if (module && module.exports) {
 );
 
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 // A Javascript implementaion of the "xorwow" prng algorithm by
 // George Marsaglia.  See http://www.jstatsoft.org/v08/i14/paper
 
@@ -68898,7 +68847,7 @@ if (module && module.exports) {
 
 
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /*
 Copyright 2014 David Bau.
 
@@ -69147,7 +69096,7 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":38}],50:[function(require,module,exports){
+},{"crypto":37}],49:[function(require,module,exports){
 (function (setImmediate,clearImmediate){(function (){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -69226,4 +69175,4 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
   delete immediateIds[id];
 };
 }).call(this)}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
-},{"process/browser.js":41,"timers":50}]},{},[2]);
+},{"process/browser.js":40,"timers":49}]},{},[2]);
