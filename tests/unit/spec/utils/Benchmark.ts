@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { Benchmark } from '../../../lib/utils/Benchmark';
+import { Benchmark } from '../../../../lib/utils/Benchmark';
 
 describe('Benchmark', () => {
   let clock: sinon.SinonFakeTimers;

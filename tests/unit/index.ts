@@ -17,9 +17,8 @@ root.document = root.document || {
   }
 };
 
-import './processors/background/BackgroundProcessor';
-import './processors/background/GaussianBlurBackgroundProcessor';
-import './processors/background/VirtualBackgroundProcessor';
-import './processors/grayscale';
-import './utils/Benchmark';
-import './utils/support';
+import './spec/processors/background/BackgroundProcessor';
+import './spec/processors/background/GaussianBlurBackgroundProcessor';
+import './spec/processors/background/VirtualBackgroundProcessor';
+import './spec/utils/Benchmark';
+import './spec/utils/support';

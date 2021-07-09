@@ -45,7 +45,7 @@ export default function(config: any) {
     // list of files / patterns to load in the browser
     files: [
       './lib/**/*.ts',
-      './tests/integration/*.ts',
+      './tests/integration/**/*.ts',
     ],
 
     // list of files / patterns to exclude
@@ -55,7 +55,7 @@ export default function(config: any) {
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
       './lib/**/*.ts': 'karma-typescript',
-      './tests/integration/*.ts': 'karma-typescript',
+      './tests/integration/**/*.ts': 'karma-typescript',
     },
 
     envPreprocessor: ['BROWSER'],
@@ -94,7 +94,7 @@ export default function(config: any) {
     karmaTypescriptConfig: {
       include: [
         './lib/**/*.ts',
-        './tests/integration/*.ts',
+        './tests/integration/**/*.ts',
       ],
       tsconfig: './tsconfig.json',
     },

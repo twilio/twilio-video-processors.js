@@ -1,8 +1,8 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { BackgroundProcessor } from '../../../../lib/processors/background/BackgroundProcessor';
-import { GaussianBlurBackgroundProcessor } from '../../../../lib/processors/background/GaussianBlurBackgroundProcessor';
-import { BLUR_FILTER_RADIUS } from '../../../../lib/constants';
+import { BackgroundProcessor } from '../../../../../lib/processors/background/BackgroundProcessor';
+import { GaussianBlurBackgroundProcessor } from '../../../../../lib/processors/background/GaussianBlurBackgroundProcessor';
+import { BLUR_FILTER_RADIUS } from '../../../../../lib/constants';
 
 describe('GaussianBlurBackgroundProcessor', () => {
   let consoleWarnStub: any;

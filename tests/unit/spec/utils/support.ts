@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { isBrowserSupported } from '../../../lib/utils/support';
+import { isBrowserSupported } from '../../../../lib/utils/support';
 
 describe('isSupported', () => {
   const root = global as any;
