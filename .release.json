@@ -34,7 +34,7 @@
         "cp -r dist/build/* dist/docs/examples/virtualbackground/",
         "git stage dist/docs -f",
         "git commit -nm \"${RELEASE_VERSION}\"",
-        "if [[ \"${RELEASE_VERSION}\" == *\"rc\"* ]]; then echo \"Skipping gh-pages deployment\"; else git subtree push --prefix dist/docs origin gh-pages; fi",
+        "git subtree push --prefix dist/docs origin gh-pages",
         "git checkout ${BRANCH}",
         "git reset --hard origin/${BRANCH}"
       ]
