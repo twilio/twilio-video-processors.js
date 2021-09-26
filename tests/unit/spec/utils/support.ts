@@ -149,4 +149,21 @@ describe('isSupported', () => {
       });
     });
   });
+
+  describe('For server', () => {
+    let originalWindow: any;
+
+    beforeEach(() => {
+      originalWindow = root.window;
+      root.window = undefined;
+    });
+
+    afterEach(() => {
+      root.window = originalWindow;
+    })
+
+    it('should return false', () => {
+      assert.strictEqual(isBrowserSupported(), false);
+    });
+  });
 });

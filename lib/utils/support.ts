@@ -2,7 +2,7 @@
  * @private
  */
  export function isBrowserSupported() {
-  return !!window.OffscreenCanvas && !(/Mobi/i.test(window.navigator.userAgent)) && !!window.chrome;
+  return !!window && !!window.OffscreenCanvas && !(/Mobi/i.test(window.navigator.userAgent)) && !!window.chrome;
 }
 
 /**
