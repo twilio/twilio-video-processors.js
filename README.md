@@ -17,6 +17,10 @@ The following Video Processors are provided to apply transformations and filters
 * [Node.js](https://nodejs.org) (v14+)
 * NPM (v6+, comes installed with newer Node versions)
 
+### Note
+
+The **Node.js** and **NPM** requirements do not apply if the goal is to use this library as a dependency of your project. They only apply if you want to check the source code out and build the artifacts and/or run tests.
+
 ## Installation
 
 ### NPM
