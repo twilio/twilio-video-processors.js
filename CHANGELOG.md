@@ -1,3 +1,11 @@
+1.0.2 (In Progress)
+=====================
+
+Changes
+-------
+
+* Moving `@types/node` to devDependencies.
+
 1.0.1 (July 12, 2021)
 =====================
 
