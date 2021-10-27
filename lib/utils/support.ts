@@ -1,8 +1,12 @@
 /**
  * @private
  */
- export function isBrowserSupported() {
-  return !!window.OffscreenCanvas && !(/Mobi/i.test(window.navigator.userAgent)) && !!window.chrome;
+export function isBrowserSupported() {
+  if (typeof window !== 'undefined') {
+    return !!window.OffscreenCanvas && !(/Mobi/i.test(window.navigator.userAgent)) && !!window.chrome;
+  } else {
+    return false;
+  }
 }
 
 /**
@@ -17,4 +21,4 @@
  * }
  * ```
  */
- export const isSupported = isBrowserSupported();
+export const isSupported = isBrowserSupported();

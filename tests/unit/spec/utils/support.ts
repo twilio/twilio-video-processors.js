@@ -7,14 +7,14 @@ describe('isSupported', () => {
     [
       'Chrome on Desktop',
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-      () => {},
+      () => { },
       {},
       true
     ],
     [
       'Headless Chrome',
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/81.0.4044.0 Safari/537.36',
-      () => {},
+      () => { },
       {},
       true
     ],
@@ -35,21 +35,21 @@ describe('isSupported', () => {
     [
       'Edge (Chromium)',
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; Xbox One) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36 Edg/15.15063',
-      () => {},
+      () => { },
       {},
       true
     ],
     [
       'Desktop Brave',
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Brave Chrome/78.0.3904.108 Safari/537.36',
-      () => {},
+      () => { },
       {},
       true
     ],
     [
       'Electron',
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Electron/3.1.12 Safari/537.36',
-      () => {},
+      () => { },
       {},
       true
     ],
@@ -70,14 +70,14 @@ describe('isSupported', () => {
     [
       'Moto G7 Android Chrome',
       'Mozilla/5.0 (Linux; Android 9; moto g(7) power) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.96 Mobile Safari/537.36',
-      () => {},
+      () => { },
       {},
       false
     ],
     [
       'Brave on Android',
       'Mozilla/5.0 (Linux; Android 9; ONEPLUS A6013) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Mobile Safari/537.36 Brave/74',
-      () => {},
+      () => { },
       {},
       false
     ],
@@ -98,7 +98,7 @@ describe('isSupported', () => {
     [
       'Edge on Android',
       'Mozilla/5.0 (Linux; Android 10; HD1913) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Mobile Safari/537.36 EdgA/46.3.4.5155',
-      () => {},
+      () => { },
       {},
       false
     ],
@@ -112,7 +112,7 @@ describe('isSupported', () => {
     [
       'Chrome on iPhone',
       'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/90.0.4430.216 Mobile/15E148 Safari/604.1',
-      () => {},
+      () => { },
       {},
       false
     ],
@@ -149,4 +149,22 @@ describe('isSupported', () => {
       });
     });
   });
+
+  describe('For server side rendering', () => {
+    let originalWindow: any;
+
+    before(() => {
+      originalWindow = root.window;
+      delete root.window;
+    });
+
+    after(() => {
+      root.window = originalWindow;
+    });
+
+    it('should return false.', () => {
+      assert.strictEqual(isBrowserSupported(), false);
+    });
+  });
 });
+
