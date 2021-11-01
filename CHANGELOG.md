@@ -5,6 +5,7 @@ Changes
 -------
 
 * Moving `@types/node` to devDependencies.
+* Fixed an issue where twilio-video-processors is throwing an exception in a server-side rendering application.
 
 1.0.1 (July 12, 2021)
 =====================
