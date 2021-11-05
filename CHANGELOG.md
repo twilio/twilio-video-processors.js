@@ -1,4 +1,4 @@
-1.0.2 (In Progress)
+1.0.2 (November 5, 2021)
 =====================
 
 Changes
