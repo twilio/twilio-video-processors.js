@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 1.0.2-rc1
+/*! twilio-video-processors.js 1.0.2
 
 The following license applies to all parts of this software except as
 documented below.
@@ -894,7 +894,7 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '1.0.2-rc1';
+exports.version = '1.0.2';
 
 },{}],11:[function(require,module,exports){
 "use strict";
