@@ -7,7 +7,6 @@ import { BLUR_FILTER_RADIUS } from '../../../../../lib/constants';
 describe('GaussianBlurBackgroundProcessor', () => {
   let consoleWarnStub: any;
   before(() => {
-    (BackgroundProcessor as any)._loadModel = sinon.stub();
     consoleWarnStub = sinon.stub(console, 'warn');
   });
 

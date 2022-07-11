@@ -1,19 +1,12 @@
-import '@tensorflow/tfjs-backend-webgl';
-import '@tensorflow/tfjs-backend-cpu';
-import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
-import { BodyPix, load as loadModel } from '@tensorflow-models/body-pix';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { version } from '../../utils/version';
 import { Dimensions } from '../../types';
 
 import {
-  BODYPIX_INFERENCE_DIMENSIONS,
   DEBOUNCE,
   HISTORY_COUNT,
-  INFERENCE_CONFIG,
   MASK_BLUR_RADIUS,
-  MODEL_CONFIG,
   MODEL_NAME,
   PERSON_PROBABILITY_THRESHOLD,
   TFLITE_LOADER_NAME,
@@ -69,11 +62,6 @@ export interface BackgroundProcessorOptions {
   /**
    * @private
    */
-  inferenceConfig?: PersonInferenceConfig;
-
-  /**
-   * @private
-   */
   inferenceDimensions?: Dimensions;
 
   /**
@@ -89,22 +77,14 @@ export interface BackgroundProcessorOptions {
    * @private
    */
   personProbabilityThreshold?: number;
-
-  /**
-   * @private
-   */
-   useWasm?: boolean;
 }
 
 /**
  * @private
  */
 export abstract class BackgroundProcessor extends Processor {
-  private static _model: BodyPix | null = null;
-  private static async _loadModel(config: ModelConfig = MODEL_CONFIG): Promise<void> {
-    BackgroundProcessor._model = await loadModel(config)
-      .catch((error: any) => console.error('Unable to load model.', error)) || null;
-  }
+  private static _loadedScripts: string[] = [];
+
   protected _outputCanvas: HTMLCanvasElement;
   protected _outputContext: CanvasRenderingContext2D;
 
@@ -114,7 +94,6 @@ export abstract class BackgroundProcessor extends Processor {
   private _debounce: number = DEBOUNCE;
   private _dummyImageData: ImageData = new ImageData(1, 1);
   private _historyCount: number = HISTORY_COUNT;
-  private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
@@ -129,7 +108,6 @@ export abstract class BackgroundProcessor extends Processor {
   private _outputMemoryOffset: number = 0;
   private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
   private _tflite: any;
-  private _useWasm: boolean;
   // tslint:disable-next-line no-unused-variable
   private readonly _version: string = version;
 
@@ -148,11 +126,8 @@ export abstract class BackgroundProcessor extends Processor {
     this._assetsPath = assetsPath;
     this._debounce = options.debounce! || DEBOUNCE;
     this._historyCount = options.historyCount! || HISTORY_COUNT;
-    this._inferenceConfig = options.inferenceConfig! || INFERENCE_CONFIG;
     this._personProbabilityThreshold = options.personProbabilityThreshold! || PERSON_PROBABILITY_THRESHOLD;
-    this._useWasm = typeof options.useWasm === 'boolean' ? options.useWasm : true;
-    this._inferenceDimensions = options.inferenceDimensions! ||
-      (this._useWasm ? WASM_INFERENCE_DIMENSIONS : BODYPIX_INFERENCE_DIMENSIONS);
+    this._inferenceDimensions = options.inferenceDimensions! || WASM_INFERENCE_DIMENSIONS;
 
     this._benchmark = new Benchmark();
     this._inputCanvas = document.createElement('canvas');
@@ -188,8 +163,7 @@ export abstract class BackgroundProcessor extends Processor {
    * video frames are processed correctly.
    */
    async loadModel() {
-    const [, tflite, modelResponse ] = await Promise.all([
-      BackgroundProcessor._loadModel(),
+    const [tflite, modelResponse ] = await Promise.all([
       this._loadTwilioTfLite(),
       fetch(this._assetsPath + MODEL_NAME),
     ]);
@@ -213,7 +187,7 @@ export abstract class BackgroundProcessor extends Processor {
    * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
    */
   async processFrame(inputFrameBuffer: OffscreenCanvas, outputFrameBuffer: HTMLCanvasElement): Promise<void> {
-    if (!BackgroundProcessor._model || !this._tflite) {
+    if (!this._tflite) {
       return;
     }
     if (!inputFrameBuffer || !outputFrameBuffer) {
@@ -304,9 +278,7 @@ export abstract class BackgroundProcessor extends Processor {
 
     this._benchmark.start('segmentationDelay');
     if (shouldRunInference) {
-      this._currentMask = this._useWasm
-        ? this._runTwilioTfLiteInference(imageData)
-        : await this._runBodyPixInference(imageData);
+      this._currentMask = this._runTwilioTfLiteInference(imageData);
       this._maskUsageCounter = this._debounce;
     }
     this._addMask(this._currentMask);
@@ -325,9 +297,15 @@ export abstract class BackgroundProcessor extends Processor {
   }
 
   private _loadJs(url: string): Promise<void> {
+    if (BackgroundProcessor._loadedScripts.includes(url)) {
+      return Promise.resolve();
+    }
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.onload = () => resolve();
+      script.onload = () => {
+        BackgroundProcessor._loadedScripts.push(url);
+        resolve();
+      };
       script.onerror = reject;
       document.head.append(script);
       script.src = url;
@@ -348,11 +326,6 @@ export abstract class BackgroundProcessor extends Processor {
       this._isSimdEnabled = false;
     }
     return tflite;
-  }
-
-  private async _runBodyPixInference(inputImage: ImageData): Promise<Uint8Array> {
-    const segment = await BackgroundProcessor._model!.segmentPerson(inputImage, this._inferenceConfig);
-    return segment.data;
   }
 
   private _runTwilioTfLiteInference(inputImage: ImageData): Uint8ClampedArray {

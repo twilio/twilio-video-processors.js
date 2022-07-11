@@ -44,13 +44,6 @@
     "release": "release",
     "watch": "npm run build:version && nodemon"
   },
-  "dependencies": {
-    "@tensorflow-models/body-pix": "^2.1.0",
-    "@tensorflow/tfjs-backend-cpu": "^3.3.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.2.0",
-    "@tensorflow/tfjs-converter": "^3.2.0",
-    "@tensorflow/tfjs-core": "^3.2.0"
-  },
   "devDependencies": {
     "@types/mocha": "^8.2.1",
     "@types/node": "^14.14.31",

@@ -2,9 +2,7 @@ import * as assert from 'assert';
 import * as sinon from 'sinon';
 import { BackgroundProcessor } from '../../../../../lib/processors/background/BackgroundProcessor';
 import {
-  INFERENCE_CONFIG,
   WASM_INFERENCE_DIMENSIONS,
-  BODYPIX_INFERENCE_DIMENSIONS,
   MASK_BLUR_RADIUS,
   HISTORY_COUNT,
   PERSON_PROBABILITY_THRESHOLD,
@@ -24,7 +22,6 @@ describe('BackgroundProcessor', () => {
   let loadModel: any;
   before(() => {
     loadModel = sinon.stub();
-    (BackgroundProcessor as any)._loadModel = loadModel;
     consoleWarnStub = sinon.stub(console, 'warn');
   });
 
@@ -172,43 +169,6 @@ describe('BackgroundProcessor', () => {
         const expected = useDefault ? HISTORY_COUNT : option.historyCount;
         assert.strictEqual(processor._historyCount, expected);
       });
-    });
-  });
-
-  describe('inferenceConfig', () => {
-    [
-      null, 
-      undefined, 
-      { }, 
-      { inferenceConfig: null },
-      { inferenceConfig: undefined },
-      { inferenceConfig: {} },
-      { inferenceConfig: { foo: 'foo' } }
-    ].forEach((option: any) => {
-      const useDefault = !option || !option.inferenceConfig;
-      const param = option && option.inferenceConfig ? JSON.stringify(option) : option;
-      it(`should set inferenceConfig to ${useDefault ? 'default' : option.inferenceConfig} if option is ${param}`, () => {
-        const processor:any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
-        const expected = useDefault ? INFERENCE_CONFIG : option.inferenceConfig;
-        assert.deepStrictEqual(processor._inferenceConfig, expected);
-      });
-    });
-  });
-
-  describe('useWasm', () => {
-    it('should set inferenceDimensions to wasm default if useWasm is true', () => {
-      const processor:any = new MyBackgroundProcessor({ useWasm: true, assetsPath: 'foo' });
-      assert.deepStrictEqual(processor._inferenceDimensions, WASM_INFERENCE_DIMENSIONS);
-    });
-
-    it('should set inferenceDimensions to wasm default if useWasm is not provided', () => {
-      const processor:any = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      assert.deepStrictEqual(processor._inferenceDimensions, WASM_INFERENCE_DIMENSIONS);
-    });
-
-    it('should set inferenceDimensions to bodypix default if useWasm is false', () => {
-      const processor:any = new MyBackgroundProcessor({ useWasm: false, assetsPath: 'foo' });
-      assert.deepStrictEqual(processor._inferenceDimensions, BODYPIX_INFERENCE_DIMENSIONS);
     });
   });
 

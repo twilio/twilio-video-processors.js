@@ -6,7 +6,6 @@ import { VirtualBackgroundProcessor } from '../../../../../lib/processors/backgr
 describe('VirtualBackgroundProcessor', () => {
   let consoleWarnStub: any;
   before(() => {
-    (BackgroundProcessor as any)._loadModel = sinon.stub();
     consoleWarnStub = sinon.stub(console, 'warn');
   });
 
