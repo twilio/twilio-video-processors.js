@@ -10,7 +10,7 @@
   ],
   "reporter": [
     "html",
-    "lcov",
     "text"
-  ]
+  ],
+  "report-dir": "./coverage/unit"
 }
