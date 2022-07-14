@@ -1,3 +1,12 @@
+1.1.0 (In Progress)
+==================
+
+Changes
+-------
+
+* Removing unused BodyPix related logic.
+* Removing unnecessary loading of JS files after loading the model.
+
 1.0.2 (November 5, 2021)
 =====================
 
