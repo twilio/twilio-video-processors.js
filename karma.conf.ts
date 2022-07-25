@@ -1,3 +1,5 @@
+import { resolve as resolvePath } from 'path';
+
 export default function(config: any) {
   const firefoxFlags = ['-headless'];
   const chromeFlags = [
@@ -42,10 +44,25 @@ export default function(config: any) {
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
     frameworks: ['mocha', 'karma-typescript'],
 
+    proxies: {
+      '/images/': resolvePath('./tests/integration/images'),
+      '/assets/': resolvePath('./assets'),
+    },
+
     // list of files / patterns to load in the browser
     files: [
       './lib/**/*.ts',
       './tests/integration/**/*.ts',
+      './tests/integration/**/*.js',
+      './tests/integration/**/*.png',
+      './tests/integration/**/*.jpg',
+      {
+        pattern: './assets/**/*',
+        included: false,
+        served: true,
+        watched: false,
+        nocache: true,
+      }
     ],
 
     // list of files / patterns to exclude
@@ -92,11 +109,18 @@ export default function(config: any) {
 
     // options passed to the typescript compiler
     karmaTypescriptConfig: {
+      coverageOptions: {
+        exclude: /tests\/.*/,
+      },
       include: [
         './lib/**/*.ts',
         './tests/integration/**/*.ts',
       ],
       tsconfig: './tsconfig.json',
+      reports: {
+        html: './coverage/integration',
+        text: '',
+      },
     },
 
     customLaunchers,

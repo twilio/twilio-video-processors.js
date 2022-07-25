@@ -86,6 +86,9 @@ commands:
       - run:
           name: Running Integration Tests on <<pipeline.parameters.browser>>
           command: BROWSER=<<pipeline.parameters.browser>> npm run test:integration
+      - store_artifacts:
+          path: ./coverage
+          destination: coverage
 jobs:
   Lint:
     executor: docker-with-browser

@@ -39,8 +39,8 @@
     "clean": "rimraf ./dist ./es5 ./coverage ./.nyc_output lib/utils/version.ts",
     "lint": "tslint -c ./tslint.json --project ./tsconfig.json -t stylish",
     "test": "npm-run-all lint build test:unit test:integration",
-    "test:unit": "npm run build:version && rimraf ./coverage ./.nyc_output && nyc mocha -r ts-node/register ./tests/unit/index.ts",
-    "test:integration": "npm run build:version && karma start",
+    "test:unit": "npm run build:version && rimraf ./coverage/unit ./.nyc_output && nyc mocha -r ts-node/register ./tests/unit/index.ts",
+    "test:integration": "npm run build:version && rimraf ./coverage/integration && karma start",
     "release": "release",
     "watch": "npm run build:version && nodemon"
   },
