@@ -4,9 +4,9 @@ import { BackgroundProcessor } from '../../../../../lib/processors/background/Ba
 import {
   WASM_INFERENCE_DIMENSIONS,
   MASK_BLUR_RADIUS,
-  HISTORY_COUNT,
   PERSON_PROBABILITY_THRESHOLD,
 } from '../../../../../lib/constants';
+import { WebGL2PipelineType } from '../../../../../lib/types';
 
 class MyBackgroundProcessor extends BackgroundProcessor {
   constructor(options?: any) {
@@ -14,6 +14,9 @@ class MyBackgroundProcessor extends BackgroundProcessor {
   }
   protected _setBackground(inputFrame: OffscreenCanvas): void {
     
+  }
+  protected _getWebGL2PipelineType(): WebGL2PipelineType {
+    return WebGL2PipelineType.Blur;
   }
 }
 
@@ -147,27 +150,6 @@ describe('BackgroundProcessor', () => {
         const processor:any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
         const expected = useDefault ? PERSON_PROBABILITY_THRESHOLD : option.personProbabilityThreshold;
         assert.strictEqual(processor._personProbabilityThreshold, expected);
-      });
-    });
-  });
-
-  describe('historyCount', () => {
-    [
-      null,
-      undefined,
-      { },
-      { historyCount: null },
-      { historyCount: undefined },
-      { historyCount: 0 },
-      { historyCount: 1 },
-      { historyCount: 2 }
-    ].forEach((option: any) => {
-      const useDefault = !option || !option.historyCount || option.historyCount < 1;
-      const param = option ? JSON.stringify(option) : option;
-      it(`should set historyCount to ${useDefault ? 'default' : option.historyCount} if option is ${param}`, () => {
-        const processor:any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
-        const expected = useDefault ? HISTORY_COUNT : option.historyCount;
-        assert.strictEqual(processor._historyCount, expected);
       });
     });
   });

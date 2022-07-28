@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { ImageFit, VirtualBackgroundProcessor, VirtualBackgroundProcessorOptions } from '../../../lib/index';
-import { compareImages, getImageFromCanvas, loadImage } from '../util';
+import { compareImages, getImageFromCanvas, loadImage, pause } from '../util';
+import { Pipeline } from '../../../lib/index';
 
 describe('VirtualBackgroundProcessor', function() {
   this.timeout(30000);
@@ -21,6 +22,7 @@ describe('VirtualBackgroundProcessor', function() {
 
   describe('should render correct output', async () => {
     const runTest = async (options?: any) => {
+      options = options || {};
       const inputCanvas = new OffscreenCanvas(1, 1);
       const outputCanvas = document.createElement('canvas');
       const inputImage = await loadImage('/images/input/input_person.jpg');
@@ -34,39 +36,63 @@ describe('VirtualBackgroundProcessor', function() {
 
       const processor = new VirtualBackgroundProcessor({ ...options, assetsPath: '/assets', backgroundImage });
       await processor.loadModel();
-      await processor.processFrame(inputCanvas, outputCanvas);
+
+      const processCount = options.processCount || 1;
+      await new Promise(resolve => {
+        let counter = 0;
+        const render = () => {
+          if (counter >= processCount) {
+            return resolve(null);
+          }
+          processor.processFrame(inputCanvas, outputCanvas).then(() => {
+            counter++;
+            setTimeout(render, 0);
+          });
+        };
+        render();
+      });
 
       return getImageFromCanvas(outputCanvas);
     };
-    [{
-      name: 'using default configuration',
-      expectedImageName: 'background_default',
-    },{
-      name: 'fitType is None',
-      options: { fitType: ImageFit.None },
-      expectedImageName: 'background_none',
-    },{
-      name: 'fitType is Fill',
-      options: { fitType: ImageFit.Fill },
-      expectedImageName: 'background_fill',
-    },{
-      name: 'fitType is Cover',
-      options: { fitType: ImageFit.Cover },
-      expectedImageName: 'background_cover',
-    },{
-      name: 'fitType is Contain',
-      options: { fitType: ImageFit.Contain },
-      expectedImageName: 'background_contain',
-    },{
-      name: 'maskBlurRadius is not default',
-      options: { maskBlurRadius: 30 },
-      expectedImageName: 'background_mask_blur_30',
-    }].forEach(({ name, options, expectedImageName }) => {
-      it(`when ${name}`, async () => {
-        const outputImageResult = await runTest(options);
-        const expectedOutputImage = await loadImage(`/images/output/${expectedImageName}.png`);
-        await compareImages(outputImageResult, expectedOutputImage);
+
+    describe('with Canvas2D pipeline', () => {
+      [{
+        name: 'using default configuration',
+        expectedImageName: 'background_default',
+      },{
+        name: 'fitType is None',
+        options: { fitType: ImageFit.None },
+        expectedImageName: 'background_none',
+      },{
+        name: 'fitType is Fill',
+        options: { fitType: ImageFit.Fill },
+        expectedImageName: 'background_fill',
+      },{
+        name: 'fitType is Cover',
+        options: { fitType: ImageFit.Cover },
+        expectedImageName: 'background_cover',
+      },{
+        name: 'fitType is Contain',
+        options: { fitType: ImageFit.Contain },
+        expectedImageName: 'background_contain',
+      },{
+        name: 'maskBlurRadius is not default',
+        options: { maskBlurRadius: 30 },
+        expectedImageName: 'background_mask_blur_30',
+      }].forEach(({ name, options, expectedImageName }) => {
+        it(`when ${name}`, async () => {
+          const outputImageResult = await runTest(options);
+          const expectedOutputImage = await loadImage(`/images/output/${expectedImageName}.png`);
+          await compareImages(outputImageResult, expectedOutputImage);
+        });
       });
+    });
+
+    it('with WebGL2 pipeline', async () => {
+      // It takes at about 5 process frame calls to render the GPU contents out to the canvas
+      const outputImageResult = await runTest({ pipeline: Pipeline.WebGL2, processCount: 5 });
+      const expectedOutputImage = await loadImage('/images/output/background_webgl.png');
+      await compareImages(outputImageResult, expectedOutputImage);
     });
   });
 });
