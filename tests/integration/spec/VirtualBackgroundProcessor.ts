@@ -4,7 +4,7 @@ import { compareImages, getImageFromCanvas, loadImage, pause } from '../util';
 import { Pipeline } from '../../../lib/index';
 
 describe('VirtualBackgroundProcessor', function() {
-  this.timeout(30000);
+  this.timeout(60000);
 
   it('should create instance', async () => {
     const img = { complete: true, naturalHeight: 720 } as HTMLImageElement;
