@@ -44,6 +44,7 @@ describe('VirtualBackgroundProcessor', function() {
           if (counter >= processCount) {
             return resolve(null);
           }
+          console.log('rendering...');
           processor.processFrame(inputCanvas, outputCanvas).then(() => {
             counter++;
             setTimeout(render, 0);

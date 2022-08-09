@@ -128,8 +128,6 @@ export default function(config: any) {
 
     customLaunchers,
 
-    browserDisconnectTolerance: 3,
-    browserDisconnectTimeout : 5000,
-    browserNoActivityTimeout : 120000,
+    browserDisconnectTimeout : 15000,
   });
 }
