@@ -40,7 +40,6 @@ describe('GaussianBlurBackgroundProcessor', function() {
           if (counter >= processCount) {
             return resolve(null);
           }
-          console.log('rendering...');
           processor.processFrame(inputCanvas, outputCanvas).then(() => {
             counter++;
             setTimeout(render, 0);
@@ -76,7 +75,16 @@ describe('GaussianBlurBackgroundProcessor', function() {
       // It takes at about 5 process frame calls to render the GPU contents out to the canvas
       const outputImageResult = await runTest({ pipeline: Pipeline.WebGL2, processCount: 5 });
       const expectedOutputImage = await loadImage('/images/output/blur_webgl.png');
-      await compareImages(outputImageResult, expectedOutputImage);
+      const Rembrandt = (window as any).Rembrandt;
+
+      // WebGL renders pixels with slight variation per run. Let's put some thresholds
+      // to account for those. See http://rembrandtjs.com for more information
+      await compareImages(outputImageResult, expectedOutputImage, {
+        thresholdType: Rembrandt.THRESHOLD_PERCENT,
+        maxThreshold: 0.01,
+        maxDelta: 20,
+        maxOffset: 0,
+      });
     });
   });
 });
