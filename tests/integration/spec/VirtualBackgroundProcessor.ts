@@ -82,7 +82,7 @@ describe('VirtualBackgroundProcessor', function() {
         expectedImageName: 'background_mask_blur_30',
       }].forEach(({ name, options, expectedImageName }) => {
         it(`when ${name}`, async () => {
-          const outputImageResult = await runTest(options);
+          const outputImageResult = await runTest({ ...options, pipeline: Pipeline.Canvas2D });
           const expectedOutputImage = await loadImage(`/images/output/${expectedImageName}.png`);
           await compareImages(outputImageResult, expectedOutputImage);
         });
@@ -91,7 +91,7 @@ describe('VirtualBackgroundProcessor', function() {
 
     it('with WebGL2 pipeline', async () => {
       // It takes at about 5 process frame calls to render the GPU contents out to the canvas
-      const outputImageResult = await runTest({ pipeline: Pipeline.WebGL2, processCount: 5 });
+      const outputImageResult = await runTest({ processCount: 5 });
       const expectedOutputImage = await loadImage('/images/output/background_webgl.png');
       const Rembrandt = (window as any).Rembrandt;
 
