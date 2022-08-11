@@ -82,7 +82,7 @@ export interface BackgroundProcessorOptions {
    * Specifies which pipeline to use when processing video frames.
    * @default
    * ```html
-   * 'Canvas2D'
+   * 'WebGL2'
    * ```
    */
   pipeline?: Pipeline;
@@ -119,7 +119,7 @@ export abstract class BackgroundProcessor extends Processor {
   private _maskUsageCounter: number = 0;
   private _outputMemoryOffset: number = 0;
   private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
-  private _pipeline: Pipeline = Pipeline.Canvas2D;
+  private _pipeline: Pipeline = Pipeline.WebGL2;
   private _tflite: any;
   // tslint:disable-next-line no-unused-variable
   private readonly _version: string = version;

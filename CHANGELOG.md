@@ -1,4 +1,4 @@
-1.1.0 (In Progress)
+2.0.0 (In Progress)
 ==================
 
 The VideoProcessors now works on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.24.0](https://www.npmjs.com/package/twilio-video/v/2.24.0), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.24.0/docs/VideoTrack.html#addProcessor__anchor) for details.

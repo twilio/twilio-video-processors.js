@@ -10,7 +10,7 @@ function getCanvas() {
  */
 export function isBrowserSupported() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    return (!!getCanvas().getContext('2d') || !!getCanvas().getContext('webgl2'));
+    return !!(getCanvas().getContext('2d') || getCanvas().getContext('webgl2'));
   } else {
     return false;
   }
