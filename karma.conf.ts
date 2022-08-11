@@ -110,7 +110,10 @@ export default function(config: any) {
     // options passed to the typescript compiler
     karmaTypescriptConfig: {
       coverageOptions: {
-        exclude: /tests\/.*/,
+        exclude: [
+          /tests\/.*/,
+          /lib\/processors\/webgl2\/.*/
+        ]
       },
       include: [
         './lib/**/*.ts',
@@ -124,5 +127,7 @@ export default function(config: any) {
     },
 
     customLaunchers,
+
+    browserDisconnectTimeout : 15000,
   });
 }

@@ -28,6 +28,7 @@ describe('exports', () => {
       'GaussianBlurBackgroundProcessor',
       'ImageFit',
       'isSupported',
+      'Pipeline',
       'version',
       'VirtualBackgroundProcessor'
     ];

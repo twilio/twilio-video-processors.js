@@ -17,8 +17,9 @@ export const getImageFromCanvas = async (canvas: HTMLCanvasElement): Promise<HTM
     image.src = canvas.toDataURL();
   });
 
-export const compareImages = async (inputImageA: HTMLImageElement, inputImageB: HTMLImageElement): Promise<void> =>
+export const compareImages = async (inputImageA: HTMLImageElement, inputImageB: HTMLImageElement, options?: any): Promise<void> =>
   new Promise((resolve, reject) => {
+    options = options || {};
     const Rembrandt = (window as any).Rembrandt;
     const imageA = new Rembrandt.Image(inputImageA.width, inputImageA.height, inputImageA);
     const imageB = new Rembrandt.Image(inputImageB.width, inputImageB.height, inputImageB);
@@ -26,6 +27,7 @@ export const compareImages = async (inputImageA: HTMLImageElement, inputImageB: 
     const rembrandt = new Rembrandt({
       imageA,
       imageB,
+      ...options,
     });
 
     return rembrandt.compare().then((result: any) => {

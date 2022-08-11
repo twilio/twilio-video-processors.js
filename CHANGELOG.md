@@ -1,8 +1,29 @@
-1.1.0 (In Progress)
+2.0.0 (In Progress)
 ==================
 
-Changes
--------
+The VideoProcessors now works on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.24.0](https://www.npmjs.com/package/twilio-video/v/2.24.0), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.24.0/docs/VideoTrack.html#addProcessor__anchor) for details.
+
+#### API Changes
+
+* [isSupported](https://twilio.github.io/twilio-video-processors.js/modules.html#issupported) now returns `true` for browsers that supports canvas [2D](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) or [webgl2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext) rendering context.
+* [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html#processframe) and [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html#processframe)'s `processFrame` method now accepts different types of `inputFrameBuffer` - `OffscreenCanvas`, `HTMLCanvasElement` or `HTMLVideoElement`.
+* Added the following new options
+  - [GaussianBlurBackgroundProcessorOptions.debounce](https://twilio.github.io/twilio-video-processors.js/interfaces/gaussianblurbackgroundprocessoroptions.html#debounce)
+  - [GaussianBlurBackgroundProcessorOptions.pipeline](https://twilio.github.io/twilio-video-processors.js/interfaces/gaussianblurbackgroundprocessoroptions.html#pipeline)
+  - [VirtualBackgroundProcessorOptions.debounce](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#debounce)
+  - [VirtualBackgroundProcessorOptions.pipeline](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#pipeline)
+
+*NOTE: Currently, desktop Safari and iOS browsers do not support [WebAssembly SIMD](https://v8.dev/features/simd). It is recommended to use camera input dimensions of 640x480 or lower to maintain an acceptable frame rate for these browsers.*
+
+#### Example
+
+See the following pages for best practice.
+
+* [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
+* [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)
+
+Other Changes
+-------------
 
 * Removing unused BodyPix related logic.
 * Removing unnecessary loading of JS files after loading the model.

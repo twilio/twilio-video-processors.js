@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor } from '../../../lib/index';
+import { GaussianBlurBackgroundProcessor, Pipeline, VirtualBackgroundProcessor } from '../../../lib/index';
 import { loadImage } from '../util';
 
 describe('Benchmark', function() {
@@ -8,12 +8,12 @@ describe('Benchmark', function() {
 
   [{
     name: 'GaussianBlurBackgroundProcessor',
-    initProcessor: async () => new GaussianBlurBackgroundProcessor({ assetsPath: '/assets' }),
+    initProcessor: async () => new GaussianBlurBackgroundProcessor({ assetsPath: '/assets', pipeline: Pipeline.Canvas2D }),
   },{
     name: 'VirtualBackgroundProcessor',
     initProcessor: async () => {
       const backgroundImage = await loadImage('/images/input/input_background.jpg');
-      return new VirtualBackgroundProcessor({ assetsPath: '/assets', backgroundImage });
+      return new VirtualBackgroundProcessor({ assetsPath: '/assets', backgroundImage, pipeline: Pipeline.Canvas2D });
     },
   }].forEach(({ name, initProcessor }) => {
     it(`should not exceed max delays for ${name}`, async () => {
