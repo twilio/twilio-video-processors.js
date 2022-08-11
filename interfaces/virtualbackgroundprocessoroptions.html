@@ -94,8 +94,10 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#assetspath" class="tsd-kind-icon">assets<wbr>Path</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#backgroundimage" class="tsd-kind-icon">background<wbr>Image</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#debounce" class="tsd-kind-icon">debounce</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#fittype" class="tsd-kind-icon">fit<wbr>Type</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#maskblurradius" class="tsd-kind-icon">mask<wbr>Blur<wbr>Radius</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="virtualbackgroundprocessoroptions.html#pipeline" class="tsd-kind-icon">pipeline</a></li>
 							</ul>
 						</section>
 					</div>
@@ -155,6 +157,24 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="debounce" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> debounce</h3>
+					<div class="tsd-signature tsd-kind-icon">debounce<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to skip processing every other frame to improve the output frame rate, but reducing accuracy in the process.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><pre><code class="language-html"><span style="color: #000000">true</span>
+</code></pre>
+							</dd>
+						</dl>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="fittype" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> fit<wbr>Type</h3>
 					<div class="tsd-signature tsd-kind-icon">fit<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#contain" class="tsd-signature-type" data-tsd-kind="Enumeration member">Contain</a><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#cover" class="tsd-signature-type" data-tsd-kind="Enumeration member">Cover</a><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#fill" class="tsd-signature-type" data-tsd-kind="Enumeration member">Fill</a><span class="tsd-signature-symbol"> | </span><a href="../enums/imagefit.html#none" class="tsd-signature-type" data-tsd-kind="Enumeration member">None</a></div>
@@ -190,6 +210,24 @@
 						</dl>
 					</div>
 				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="pipeline" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> pipeline</h3>
+					<div class="tsd-signature tsd-kind-icon">pipeline<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../enums/pipeline.html#canvas2d" class="tsd-signature-type" data-tsd-kind="Enumeration member">Canvas2D</a><span class="tsd-signature-symbol"> | </span><a href="../enums/pipeline.html#webgl2" class="tsd-signature-type" data-tsd-kind="Enumeration member">WebGL2</a></div>
+					<aside class="tsd-sources">
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Specifies which pipeline to use when processing video frames.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><pre><code class="language-html"><span style="color: #000000">&#039;WebGL2&#039;</span>
+</code></pre>
+							</dd>
+						</dl>
+					</div>
+				</section>
 			</section>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -204,6 +242,9 @@
 				<ul class="before-current">
 					<li class=" tsd-kind-enum">
 						<a href="../enums/imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a>
+					</li>
+					<li class=" tsd-kind-enum">
+						<a href="../enums/pipeline.html" class="tsd-kind-icon">Pipeline</a>
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="../classes/gaussianblurbackgroundprocessor.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor</a>
@@ -226,10 +267,16 @@
 								<a href="virtualbackgroundprocessoroptions.html#backgroundimage" class="tsd-kind-icon">background<wbr>Image</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="virtualbackgroundprocessoroptions.html#debounce" class="tsd-kind-icon">debounce</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="virtualbackgroundprocessoroptions.html#fittype" class="tsd-kind-icon">fit<wbr>Type</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="virtualbackgroundprocessoroptions.html#maskblurradius" class="tsd-kind-icon">mask<wbr>Blur<wbr>Radius</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="virtualbackgroundprocessoroptions.html#pipeline" class="tsd-kind-icon">pipeline</a>
 							</li>
 						</ul>
 					</li>

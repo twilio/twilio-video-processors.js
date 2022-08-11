@@ -17,55 +17,14 @@
                 <h4 class="card-title">Local Video</h4>
                 <video id="video-input" autoplay></video>
               </div>
-              <button id="no-processor-apply" class="btn btn-primary btn-sm ">Remove Processor</button>
             </div>
           </div>
           <div class="col-sm-4 left-form">
-            <div class="card">
-              <div class="card-block">
-                <h4 class="card-title">Gaussian Blur Background Options</h4>
-                <form id="gaussianBlur-Form">
-                  <div class="form-group">
-                    <label for="maskBlurRadius">Mask Blur Radius</label>
-                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="maskBlurRadius" value="5"></input>
-                  </div>
-                  <div class="form-group">
-                    <label for="blurFilterRadius">Blur Filter Radius</label>
-                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="blurFilterRadius" value="15"></input>
-                  </div>
-                </form>
-                <button id="gaussianBlur-Apply" class="btn btn-primary btn-sm">Apply</button>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-block">
-                <h4 class="card-title">Virtual Background Options</h4>
-                <form id="virtualBackground-Form">
-                  <div class="form-group">
-                    <label for="maskBlurRadius">Mask Blur Radius</label>
-                    <input class="form-control" type="number" min="0" oninput="validity.valid||(value='');" id="maskBlurRadius" value="5" ></input>
-                  </div>
-                  <div class="form-group">
-                    <label for="backgroundImage">Background Image</label>
-                    <select class="form-control selectpicker" id="backgroundImage">
-                      <option value="vacation">Vacation</option>
-                      <option value="office">Office</option>
-                      <option value="livingRoom">Living Room</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label for="fitType">Image Fit</label>
-                    <select class="form-control" id="fitType">
-                      <option>Fill</option>
-                      <option>Contain</option>
-                      <option>Cover</option>
-                      <option>None</option>
-                    </select>
-                  </div>
-                </form>
-                <button id="virtualBackground-Apply" class="btn btn-primary btn-sm">Apply</button>
-              </div>
-            </div>
+            <div id="none" class="img-btn" style="background-image: url('none.png');"></div>
+            <div id="blur" class="img-btn" style="background-image: url('blur.png');"></div>
+            <div id="living_room" class="img-btn" style="background-image: url('backgrounds/living_room.jpg');"></div>
+            <div id="office" class="img-btn" style="background-image: url('backgrounds/office.jpg');"></div>
+            <div id="vacation" class="img-btn" style="background-image: url('backgrounds/vacation.jpg');"></div>
           </div>
         </div>
       </div>
@@ -81,8 +40,9 @@
           </div>
         </div>
       </div>
-  <script src="https://sdk.twilio.com/js/video/releases/2.15.0/twilio-video.min.js"></script>
-  <script src="twilio-video-processors.min.js"></script>
+    <pre id="stats"></pre>
+  <script src="https://sdk.stage.twilio.com/js/video/releases/2.23.1-rc1/twilio-video.js"></script>
+  <script src="twilio-video-processors.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
   <script src="index.js"></script>
 </body>

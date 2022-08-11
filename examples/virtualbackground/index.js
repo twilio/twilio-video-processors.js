@@ -1,20 +1,34 @@
 'use strict';
 
 const Video = Twilio.Video;
-const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported } = Twilio.VideoProcessors;
+const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported, Pipeline } = Twilio.VideoProcessors;
 const bootstrap = window.bootstrap;
 
-const gaussianBlurForm = document.querySelector('form#gaussianBlur-Form');
-const gaussianBlurButton = document.querySelector('button#gaussianBlur-Apply');
-const virtualBackgroundForm = document.querySelector('form#virtualBackground-Form');
-const virtualBackgroundButton = document.querySelector('button#virtualBackground-Apply');
 const videoInput = document.querySelector('video#video-input');
-const removeProcessorButton = document.querySelector('button#no-processor-apply');
 const errorMessage = document.querySelector('div.modal-body');
 const errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
+const stats = document.querySelector('#stats');
 
-// Same directory as the current js file
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const params = Object.fromEntries(new URLSearchParams(location.search).entries());
+const showStats = params.stats === 'true';
+
 const assetsPath = '';
+const pipeline = Pipeline.WebGL2;
+// debounce will set to true if safari and on blur.
+// See GaussianBlurBackgroundProcessor initialization below
+const debounce = isSafari;
+const addProcessorOptions = {
+  inputFrameBufferType: 'video',
+  outputFrameBufferContextType: 'webgl2',
+};
+const captureConfig = {
+  width: isSafari ? 640 : 1280,
+  height: isSafari ? 480 : 720,
+  frameRate: 24,
+};
+
+videoInput.style.maxWidth = `${captureConfig.width}px`;
 
 let videoTrack;
 let gaussianBlurProcessor;
@@ -32,90 +46,67 @@ const loadImage = (name) =>
     image.onload = () => resolve(image);
   });
 
-let images = {};
-Promise.all([
-  loadImage('living_room'),
-  loadImage('office'),
-  loadImage('vacation'),
-]).then(([livingRoom, office, vacation]) => {
-  images.livingRoom = livingRoom;
-  images.office = office;
-  images.vacation = vacation;
-  return images;
-});
-
-Video.createLocalVideoTrack({
-  width: 1280,
-  height: 720,
-  frameRate: 24,
-}).then((track) => {
+Video.createLocalVideoTrack(captureConfig).then((track) => {
   track.attach(videoInput);
   return videoTrack = track;
 });
 
-// Adding processor to Video Track
 const setProcessor = (processor, track) => {
   if (track.processor) {
-    removeProcessorButton.disabled = true;
     track.removeProcessor(track.processor);
   }
   if (processor) {
-    removeProcessorButton.disabled = false;
-    track.addProcessor(processor);
+    track.addProcessor(processor, addProcessorOptions);
   }
 };
 
-gaussianBlurButton.onclick = async event => {
-  event.preventDefault();
-  const options = {};
-  const inputs = gaussianBlurForm.getElementsByTagName('input');
-  for (let item of inputs) {
-    options[item.id] = item.valueAsNumber;
-  }
-  const { maskBlurRadius, blurFilterRadius } = options;
+const handleButtonClick = async bg => {
   if (!gaussianBlurProcessor) {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
-      maskBlurRadius,
-      blurFilterRadius,
+      pipeline,
+      debounce: true,
     });
     await gaussianBlurProcessor.loadModel();
-  } else {
-    gaussianBlurProcessor.maskBlurRadius = maskBlurRadius;
-    gaussianBlurProcessor.blurFilterRadius = blurFilterRadius;
   }
-  setProcessor(gaussianBlurProcessor, videoTrack);
-};
-
-virtualBackgroundButton.onclick = async event => {
-  event.preventDefault();
-  const options = {};
-  const inputs = virtualBackgroundForm.elements;
-  for (let item of inputs) {
-    item.valueAsNumber
-      ? (options[item.id] = item.valueAsNumber)
-      : (options[item.id] = item.value);
-  }
-  let backgroundImage = images[options.backgroundImage];
-  let { maskBlurRadius, fitType } = options;
   if (!virtualBackgroundProcessor) {
+    const backgroundImage = await loadImage('living_room');
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
       assetsPath,
-      maskBlurRadius,
       backgroundImage,
-      fitType,
+      pipeline,
+      debounce,
     });
     await virtualBackgroundProcessor.loadModel();
-  } else {
-    virtualBackgroundProcessor.backgroundImage = backgroundImage;
-    virtualBackgroundProcessor.fitType = fitType;
-    virtualBackgroundProcessor.maskBlurRadius = maskBlurRadius;
   }
-  setProcessor(virtualBackgroundProcessor, videoTrack);
+  if (bg === 'none') {
+    setProcessor(null, videoTrack);
+  } else if (bg === 'blur') {
+    setProcessor(gaussianBlurProcessor, videoTrack);
+  } else {
+    virtualBackgroundProcessor.backgroundImage = await loadImage(bg);
+    setProcessor(virtualBackgroundProcessor, videoTrack);
+  }
 };
 
-removeProcessorButton.disabled = true;
-removeProcessorButton.onclick = event => {
-  event.preventDefault();
-  setProcessor(null, videoTrack);
-};
+document.querySelectorAll('.img-btn').forEach(btn => btn.onclick = () => handleButtonClick(btn.id));
+
+setInterval(() => {
+  if (!videoTrack || !videoTrack.processor) {
+    stats.style.display = 'none';
+    return;
+  }
+  if (showStats) {
+    stats.style.display = 'block';
+  }
+  const b = videoTrack.processor._benchmark;
+  stats.innerText = `input fps: ${videoTrack.mediaStreamTrack.getSettings().frameRate}`;
+  stats.innerText += `\noutput fps: ${b.getRate('totalProcessingDelay').toFixed(2)}`;
+  ['segmentationDelay', 'inputImageResizeDelay', 'imageCompositionDelay', 'processFrameDelay', 'captureFrameDelay'].forEach(stat => {
+    try {
+      stats.innerText += `\n${stat}: ${b.getAverageDelay(stat).toFixed(2)}`;
+    } catch {
+
+    }
+  });
+}, 1000);

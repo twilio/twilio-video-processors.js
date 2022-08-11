@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ImageFit | @twilio/video-processors</title>
+	<title>Pipeline | @twilio/video-processors</title>
 	<meta name="description" content="Documentation for @twilio/video-processors">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,10 +55,10 @@
 					<a href="../modules.html">@twilio/video-processors</a>
 				</li>
 				<li>
-					<a href="imagefit.html">ImageFit</a>
+					<a href="pipeline.html">Pipeline</a>
 				</li>
 			</ul>
-			<h1>Enumeration ImageFit</h1>
+			<h1>Enumeration Pipeline</h1>
 		</div>
 	</div>
 </header>
@@ -68,7 +68,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>ImageFit specifies the positioning of an image inside a viewport.</p>
+						<p>Specifies which pipeline to use when processing video frames.</p>
 					</div>
 				</div>
 			</section>
@@ -79,10 +79,8 @@
 						<section class="tsd-index-section ">
 							<h3>Enumeration members</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="imagefit.html#contain" class="tsd-kind-icon">Contain</a></li>
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="imagefit.html#cover" class="tsd-kind-icon">Cover</a></li>
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="imagefit.html#fill" class="tsd-kind-icon">Fill</a></li>
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="imagefit.html#none" class="tsd-kind-icon">None</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="pipeline.html#canvas2d" class="tsd-kind-icon">Canvas2D</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="pipeline.html#webgl2" class="tsd-kind-icon">WebGL2</a></li>
 							</ul>
 						</section>
 					</div>
@@ -91,53 +89,32 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Enumeration members</h2>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="contain" class="tsd-anchor"></a>
-					<h3>Contain</h3>
-					<div class="tsd-signature tsd-kind-icon">Contain<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;Contain&quot;</span></div>
+					<a name="canvas2d" class="tsd-anchor"></a>
+					<h3>Canvas2D</h3>
+					<div class="tsd-signature tsd-kind-icon">Canvas2D<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;Canvas2D&quot;</span></div>
 					<aside class="tsd-sources">
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Scale the image up or down to fill the viewport while preserving the aspect ratio.
-								The image will be fully visible but will add empty space in the viewport if
-							aspect ratios do not match.</p>
+							<p>Use canvas 2d rendering context. Some browsers such as Safari do not
+								have full support of this feature. Please test your application to make sure it works as intented. See
+								<a href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D#browser_compatibility">browser compatibility page</a>
+							for reference.</p>
 						</div>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="cover" class="tsd-anchor"></a>
-					<h3>Cover</h3>
-					<div class="tsd-signature tsd-kind-icon">Cover<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;Cover&quot;</span></div>
+					<a name="webgl2" class="tsd-anchor"></a>
+					<h3>WebGL2</h3>
+					<div class="tsd-signature tsd-kind-icon">WebGL2<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;WebGL2&quot;</span></div>
 					<aside class="tsd-sources">
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Scale the image to fill both height and width of the viewport while preserving
-							the aspect ratio, but will crop the image if aspect ratios do not match.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="fill" class="tsd-anchor"></a>
-					<h3>Fill</h3>
-					<div class="tsd-signature tsd-kind-icon">Fill<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;Fill&quot;</span></div>
-					<aside class="tsd-sources">
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Stretches the image to fill the viewport regardless of aspect ratio.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="none" class="tsd-anchor"></a>
-					<h3>None</h3>
-					<div class="tsd-signature tsd-kind-icon">None<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = &quot;None&quot;</span></div>
-					<aside class="tsd-sources">
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Ignore height and width and use the original size.</p>
+							<p>Use canvas webgl2 rendering context. Major browsers have support for this feature. However, this does not work
+								on some older versions of browsers. Please test your application to make sure it works as intented. See
+								<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext#browser_compatibility">browser compatibility page</a>
+							for reference.</p>
 						</div>
 					</div>
 				</section>
@@ -153,30 +130,24 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum">
+						<a href="imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-enum">
-						<a href="imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a>
+						<a href="pipeline.html" class="tsd-kind-icon">Pipeline</a>
 						<ul>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="imagefit.html#contain" class="tsd-kind-icon">Contain</a>
+								<a href="pipeline.html#canvas2d" class="tsd-kind-icon">Canvas2D</a>
 							</li>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="imagefit.html#cover" class="tsd-kind-icon">Cover</a>
-							</li>
-							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="imagefit.html#fill" class="tsd-kind-icon">Fill</a>
-							</li>
-							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="imagefit.html#none" class="tsd-kind-icon">None</a>
+								<a href="pipeline.html#webgl2" class="tsd-kind-icon">WebGL2</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-enum">
-						<a href="pipeline.html" class="tsd-kind-icon">Pipeline</a>
-					</li>
 					<li class=" tsd-kind-class">
 						<a href="../classes/gaussianblurbackgroundprocessor.html" class="tsd-kind-icon">Gaussian<wbr>Blur<wbr>Background<wbr>Processor</a>
 					</li>

@@ -77,19 +77,27 @@
 					<dl class="tsd-comment-tags">
 						<dt>example</dt>
 						<dd><pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">createLocalVideoTrack</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;twilio-video&#039;</span><span style="color: #000000">;</span>
-<span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">GaussianBlurBackgroundProcessor</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">Pipeline</span><span style="color: #000000">, </span><span style="color: #001080">GaussianBlurBackgroundProcessor</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@twilio/video-processors&#039;</span><span style="color: #000000">;</span>
 
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">blurBackground</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">GaussianBlurBackgroundProcessor</span><span style="color: #000000">({</span>
-<span style="color: #000000">  </span><span style="color: #001080">assetsPath:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;https://my-server-path/assets&#039;</span>
+<span style="color: #000000">  </span><span style="color: #001080">assetsPath:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;https://my-server-path/assets&#039;</span><span style="color: #000000">,</span>
+<span style="color: #000000">  </span><span style="color: #001080">pipeline:</span><span style="color: #000000"> </span><span style="color: #001080">Pipeline</span><span style="color: #000000">.</span><span style="color: #001080">WebGL2</span><span style="color: #000000">,</span>
+<span style="color: #000000">  </span><span style="color: #001080">debounce:</span><span style="color: #000000"> </span><span style="color: #0000FF">true</span><span style="color: #000000">,</span>
 <span style="color: #000000">});</span>
 
 <span style="color: #001080">blurBackground</span><span style="color: #000000">.</span><span style="color: #795E26">loadModel</span><span style="color: #000000">().</span><span style="color: #795E26">then</span><span style="color: #000000">(() </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
 <span style="color: #000000">  </span><span style="color: #795E26">createLocalVideoTrack</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #008000">// Increasing the capture resolution decreases the output FPS</span>
+<span style="color: #000000">    </span><span style="color: #008000">// especially on browsers that do not support SIMD</span>
+<span style="color: #000000">    </span><span style="color: #008000">// such as desktop Safari and iOS browsers</span>
 <span style="color: #000000">    </span><span style="color: #001080">width:</span><span style="color: #000000"> </span><span style="color: #098658">640</span><span style="color: #000000">,</span>
 <span style="color: #000000">    </span><span style="color: #001080">height:</span><span style="color: #000000"> </span><span style="color: #098658">480</span><span style="color: #000000">,</span>
 <span style="color: #000000">    </span><span style="color: #001080">frameRate:</span><span style="color: #000000"> </span><span style="color: #098658">24</span>
 <span style="color: #000000">  }).</span><span style="color: #795E26">then</span><span style="color: #000000">(</span><span style="color: #001080">track</span><span style="color: #000000"> </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">blurBackground</span><span style="color: #000000">);</span>
+<span style="color: #000000">    </span><span style="color: #001080">track</span><span style="color: #000000">.</span><span style="color: #795E26">addProcessor</span><span style="color: #000000">(</span><span style="color: #001080">blurBackground</span><span style="color: #000000">, {</span>
+<span style="color: #000000">      </span><span style="color: #001080">inputFrameBufferType:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;video&#039;</span><span style="color: #000000">,</span>
+<span style="color: #000000">      </span><span style="color: #001080">outputFrameBufferContextType:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;webgl2&#039;</span><span style="color: #000000">,</span>
+<span style="color: #000000">    });</span>
 <span style="color: #000000">  });</span>
 <span style="color: #000000">});</span>
 </code></pre>
@@ -269,7 +277,7 @@
 					<a name="processframe" class="tsd-anchor"></a>
 					<h3>process<wbr>Frame</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">process<wbr>Frame<span class="tsd-signature-symbol">(</span>inputFrameBuffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">OffscreenCanvas</span>, outputFrameBuffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">process<wbr>Frame<span class="tsd-signature-symbol">(</span>inputFrameBuffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">OffscreenCanvas</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span>, outputFrameBuffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
@@ -285,9 +293,22 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>inputFrameBuffer: <span class="tsd-signature-type">OffscreenCanvas</span></h5>
+									<h5>inputFrameBuffer: <span class="tsd-signature-type">OffscreenCanvas</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span></h5>
 									<div class="tsd-comment tsd-typography">
-										<p>The source of the input frame to process.</p>
+										<p>The source of the input frame to process.
+											<br/>
+											<br/>
+											<a href="https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas">OffscreenCanvas</a> - Good for canvas-related processing
+											that can be rendered off screen. Only works when using <a href="../enums/pipeline.html#canvas2d">Pipeline.Canvas2D</a>.
+											<br/>
+											<br/>
+											<a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement">HTMLCanvasElement</a> - This is recommended on browsers
+											that doesn&#39;t support <code>OffscreenCanvas</code>, or if you need to render the frame on the screen. Only works when using <a href="../enums/pipeline.html#canvas2d">Pipeline.Canvas2D</a>.
+											<br/>
+											<br/>
+											<a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement">HTMLVideoElement</a> - Recommended when using <a href="../enums/pipeline.html#webgl2">Pipeline.WebGL2</a> but
+											works for both <a href="../enums/pipeline.html#canvas2d">Pipeline.Canvas2D</a> and <a href="../enums/pipeline.html#webgl2">Pipeline.WebGL2</a>.
+										<br/></p>
 									</div>
 								</li>
 								<li>
@@ -315,6 +336,9 @@
 				<ul class="before-current">
 					<li class=" tsd-kind-enum">
 						<a href="../enums/imagefit.html" class="tsd-kind-icon">Image<wbr>Fit</a>
+					</li>
+					<li class=" tsd-kind-enum">
+						<a href="../enums/pipeline.html" class="tsd-kind-icon">Pipeline</a>
 					</li>
 				</ul>
 				<ul class="current">
