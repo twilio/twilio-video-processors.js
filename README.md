@@ -57,7 +57,7 @@ In order to achieve the best performance, the VideoProcessors use WebAssembly to
 
 ## Usage
 
-These processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landscape Model](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) and requires [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. We recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.24.0/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.
+These processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landscape Model](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) and requires [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. We recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.23.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.
 
 ## Best Practice
 
