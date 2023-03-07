@@ -1,7 +1,7 @@
-2.0.0 (In Progress)
-==================
+2.0.0 (March 8, 2023)
+=====================
 
-The VideoProcessors now works on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.23.1](https://www.npmjs.com/package/twilio-video/v/2.23.1), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.23.1/docs/VideoTrack.html#addProcessor__anchor) for details.
+The VideoProcessors now works on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.27.0](https://www.npmjs.com/package/twilio-video/v/2.27.0), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.23.1/docs/VideoTrack.html#addProcessor__anchor) for details.
 
 #### API Changes
 
@@ -13,7 +13,10 @@ The VideoProcessors now works on browsers that do not support `OffscreenCanvas`.
   - [VirtualBackgroundProcessorOptions.debounce](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#debounce)
   - [VirtualBackgroundProcessorOptions.pipeline](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#pipeline)
 
-*NOTE: Currently, desktop Safari and iOS browsers do not support [WebAssembly SIMD](https://v8.dev/features/simd). It is recommended to use camera input dimensions of 640x480 or lower to maintain an acceptable frame rate for these browsers.*
+*NOTES:*
+
+* Although iOS and Android browsers (Safari and Chrome) are supported, the performance of the VideoProcessors is not optimized. We will do that in a separate release.
+* Since desktop Safari and iOS browsers do not support [WebAssembly SIMD](https://v8.dev/features/simd), it is recommended to use camera input dimensions of 640x480 or lower to maintain an acceptable frame rate for these browsers.
 
 #### Example
 
