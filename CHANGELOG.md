@@ -15,7 +15,7 @@ The VideoProcessors now works on browsers that do not support `OffscreenCanvas`.
 
 *NOTES:*
 
-* Although iOS and Android browsers (Safari and Chrome) are supported, the performance of the VideoProcessors is not optimized. We will do that in a separate release.
+* Although iOS and Android browsers (Safari and Chrome) are supported, the performance of the VideoProcessors is not optimized for mobile browsers at this time. Using the VideoProcessors on a mobile browser may overpower the CPU resulting in poor quality video experiences.
 * Since desktop Safari and iOS browsers do not support [WebAssembly SIMD](https://v8.dev/features/simd), it is recommended to use camera input dimensions of 640x480 or lower to maintain an acceptable frame rate for these browsers.
 
 #### Example

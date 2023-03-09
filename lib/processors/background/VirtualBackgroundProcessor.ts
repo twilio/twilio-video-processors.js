@@ -57,6 +57,8 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *       // such as desktop Safari and iOS browsers
  *       width: 640,
  *       height: 480,
+ *       // Any frame rate above 24 fps on desktop browsers increase CPU
+ *       // usage without noticeable increase in quality.
  *       frameRate: 24
  *     }).then(track => {
  *       track.addProcessor(virtualBackground, {
