@@ -1,7 +1,8 @@
 2.0.0 (March 8, 2023)
 =====================
 
-The VideoProcessors now works on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.27.0](https://www.npmjs.com/package/twilio-video/v/2.27.0), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.23.1/docs/VideoTrack.html#addProcessor__anchor) for details.
+* The VideoProcessors now work on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.27.0](https://www.npmjs.com/package/twilio-video/v/2.27.0), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.27.0/docs/VideoTrack.html#addProcessor__anchor) for details.
+* The VideoProcessors now support the WebGL pipeline in addition to the Canvas2D pipeline. On Chrome, our tests show up to 30% reduction in CPU usage if WebGL is used as opposed to Canvas2D.
 
 #### API Changes
 
