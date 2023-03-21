@@ -1,5 +1,5 @@
-2.0.0 (March 8, 2023)
-=====================
+2.0.0 (March 21, 2023)
+======================
 
 * The VideoProcessors now work on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.27.0](https://www.npmjs.com/package/twilio-video/v/2.27.0), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.27.0/docs/VideoTrack.html#addProcessor__anchor) for details.
 * On Chrome, our tests show up to 30% reduction in CPU usage if WebGL2 is used as opposed to Canvas2D.
