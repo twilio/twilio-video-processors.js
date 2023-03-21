@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 2.0.0-rc1
+/*! twilio-video-processors.js 2.0.0
 
 The following license applies to all parts of this software except as
 documented below.
@@ -546,6 +546,8 @@ var types_1 = require("../../types");
  *     // such as desktop Safari and iOS browsers
  *     width: 640,
  *     height: 480,
+ *     // Any frame rate above 24 fps on desktop browsers increase CPU
+ *     // usage without noticeable increase in quality.
  *     frameRate: 24
  *   }).then(track => {
  *     track.addProcessor(blurBackground, {
@@ -659,6 +661,8 @@ var types_1 = require("../../types");
  *       // such as desktop Safari and iOS browsers
  *       width: 640,
  *       height: 480,
+ *       // Any frame rate above 24 fps on desktop browsers increase CPU
+ *       // usage without noticeable increase in quality.
  *       frameRate: 24
  *     }).then(track => {
  *       track.addProcessor(virtualBackground, {
@@ -1713,6 +1717,6 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '2.0.0-rc1';
+exports.version = '2.0.0';
 
 },{}]},{},[2]);
