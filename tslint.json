@@ -1,6 +1,9 @@
 {
   "defaultSeverity": "error",
   "extends": ["tslint:recommended"],
+  "linterOptions": {
+    "exclude": ["lib/processors/webgl2/**/*"]
+  },
   "rules": {
     "arrow-parens": false,
     "ban-types": false,

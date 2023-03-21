@@ -6,11 +6,12 @@
     "lib/**/*.ts"
   ],
   "exclude": [
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "lib/processors/webgl2/**/*"
   ],
   "reporter": [
     "html",
-    "lcov",
     "text"
-  ]
+  ],
+  "report-dir": "./coverage/unit"
 }

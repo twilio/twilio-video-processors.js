@@ -57,11 +57,11 @@ In order to achieve the best performance, the VideoProcessors use WebAssembly to
 
 ## Usage
 
-These processors are only supported on chromium-based desktop browsers at this moment and will not work on other browsers. For best performance and accuracy, we recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.13.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.
+These processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landscape Model](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) and requires [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. We recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.23.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.
 
-Additionally, these processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landscape Model](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) and requires Chrome's [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. WebAssembly SIMD can be turned on by visiting `chrome://flags` on versions 84 through 90. This will be enabled by default on Chrome 91+. You can also enable this on versions 84-90 for your users without turning on the flag by [registering](https://developer.chrome.com/origintrials/#/trials/active) for a [Chrome Origin Trial](http://googlechrome.github.io/OriginTrials/developer-guide.html#:~:text=You%20can%20opt%20any%20page,a%20token%20for%20your%20origin.&text=NOTE%3A,tokens%20for%20a%20given%20page.) for your website.
+## Best Practice
 
-Please check out the following pages for example usage. For more information, please refer to the [API Docs](https://twilio.github.io/twilio-video-processors.js/).
+Please check out the following pages for best practice.
 
 * [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
 * [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)

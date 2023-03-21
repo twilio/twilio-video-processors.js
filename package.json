@@ -2,7 +2,7 @@
   "name": "@twilio/video-processors",
   "title": "Twilio Video Processors",
   "description": "Twilio Video Processors JavaScript Library",
-  "version": "1.0.3-dev",
+  "version": "2.0.0-dev",
   "homepage": "https://github.com/twilio/twilio-video-processors.js#readme",
   "author": "Charlie Santos <csantos@twilio.com>",
   "contributors": [
@@ -39,17 +39,10 @@
     "clean": "rimraf ./dist ./es5 ./coverage ./.nyc_output lib/utils/version.ts",
     "lint": "tslint -c ./tslint.json --project ./tsconfig.json -t stylish",
     "test": "npm-run-all lint build test:unit test:integration",
-    "test:unit": "npm run build:version && rimraf ./coverage ./.nyc_output && nyc mocha -r ts-node/register ./tests/unit/index.ts",
-    "test:integration": "npm run build:version && karma start",
+    "test:unit": "npm run build:version && rimraf ./coverage/unit ./.nyc_output && nyc mocha -r ts-node/register ./tests/unit/index.ts",
+    "test:integration": "npm run build:version && rimraf ./coverage/integration && karma start",
     "release": "release",
     "watch": "npm run build:version && nodemon"
-  },
-  "dependencies": {
-    "@tensorflow-models/body-pix": "^2.1.0",
-    "@tensorflow/tfjs-backend-cpu": "^3.3.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.2.0",
-    "@tensorflow/tfjs-converter": "^3.2.0",
-    "@tensorflow/tfjs-core": "^3.2.0"
   },
   "devDependencies": {
     "@types/mocha": "^8.2.1",

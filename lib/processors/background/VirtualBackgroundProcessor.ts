@@ -1,5 +1,5 @@
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
-import { ImageFit } from '../../types';
+import { ImageFit, WebGL2PipelineType } from '../../types';
 
 /**
  * Options passed to [[VirtualBackgroundProcessor]] constructor.
@@ -34,7 +34,7 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
+ * import { Pipeline, VirtualBackgroundProcessor } from '@twilio/video-processors';
  *
  * let virtualBackground;
  * const img = new Image();
@@ -43,15 +43,28 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *   virtualBackground = new VirtualBackgroundProcessor({
  *     assetsPath: 'https://my-server-path/assets',
  *     backgroundImage: img,
+ *     pipeline: Pipeline.WebGL2,
+ *
+ *     // Desktop Safari and iOS browsers do not support SIMD.
+ *     // Set debounce to true to achieve an acceptable performance.
+ *     debounce: isSafari(),
  *   });
  *
  *   virtualBackground.loadModel().then(() => {
  *     createLocalVideoTrack({
+ *       // Increasing the capture resolution decreases the output FPS
+ *       // especially on browsers that do not support SIMD
+ *       // such as desktop Safari and iOS browsers
  *       width: 640,
  *       height: 480,
+ *       // Any frame rate above 24 fps on desktop browsers increase CPU
+ *       // usage without noticeable increase in quality.
  *       frameRate: 24
  *     }).then(track => {
- *       track.addProcessor(virtualBackground);
+ *       track.addProcessor(virtualBackground, {
+ *         inputFrameBufferType: 'video',
+ *         outputFrameBufferContextType: 'webgl2',
+ *       });
  *     });
  *   });
  * };
@@ -60,7 +73,6 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  */
 export class VirtualBackgroundProcessor extends BackgroundProcessor {
 
-  private _backgroundImage!: HTMLImageElement;
   private _fitType!: ImageFit;
   // tslint:disable-next-line no-unused-variable
   private readonly _name: string = 'VirtualBackgroundProcessor';
@@ -80,7 +92,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
    * The HTMLImageElement representing the current background image.
    */
   get backgroundImage(): HTMLImageElement {
-    return this._backgroundImage;
+    return this._backgroundImage!;
   }
 
   /**
@@ -94,6 +106,10 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
     }
     this._backgroundImage = image;
+
+    // Triggers recreation of the pipeline in the next processFrame call
+    this._webgl2Pipeline?.cleanUp();
+    this._webgl2Pipeline = null;
   }
 
   /**
@@ -115,23 +131,31 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     this._fitType = fitType;
   }
 
+  protected _getWebGL2PipelineType(): WebGL2PipelineType {
+    return WebGL2PipelineType.Image;
+  }
+
   protected _setBackground(): void {
-    const img = this._backgroundImage;
+    if (!this._outputContext || !this._outputCanvas) {
+      return;
+    }
+    const img = this._backgroundImage!;
     const imageWidth = img.naturalWidth;
     const imageHeight = img.naturalHeight;
     const canvasWidth = this._outputCanvas.width;
     const canvasHeight = this._outputCanvas.height;
+    const ctx = this._outputContext as CanvasRenderingContext2D;
 
     if (this._fitType === ImageFit.Fill) {
-      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight, 0, 0, canvasWidth, canvasHeight);
+      ctx.drawImage(img, 0, 0, imageWidth, imageHeight, 0, 0, canvasWidth, canvasHeight);
     } else if (this._fitType === ImageFit.None) {
-      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight);
+      ctx.drawImage(img, 0, 0, imageWidth, imageHeight);
     } else if (this._fitType === ImageFit.Contain) {
       const { x, y, w, h } = this._getFitPosition(imageWidth, imageHeight, canvasWidth, canvasHeight, ImageFit.Contain);
-      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
+      ctx.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
     } else if (this._fitType === ImageFit.Cover) {
       const { x, y, w, h } = this._getFitPosition(imageWidth, imageHeight, canvasWidth, canvasHeight, ImageFit.Cover);
-      this._outputContext.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
+      ctx.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
     }
   }
 

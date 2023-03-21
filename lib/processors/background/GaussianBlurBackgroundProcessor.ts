@@ -1,5 +1,6 @@
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { BLUR_FILTER_RADIUS } from '../../constants';
+import { WebGL2PipelineType } from '../../types';
 
 /**
  * Options passed to [[GaussianBlurBackgroundProcessor]] constructor.
@@ -26,19 +27,29 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+ * import { Pipeline, GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
  *
  * const blurBackground = new GaussianBlurBackgroundProcessor({
- *   assetsPath: 'https://my-server-path/assets'
+ *   assetsPath: 'https://my-server-path/assets',
+ *   pipeline: Pipeline.WebGL2,
+ *   debounce: true,
  * });
  *
  * blurBackground.loadModel().then(() => {
  *   createLocalVideoTrack({
+ *     // Increasing the capture resolution decreases the output FPS
+ *     // especially on browsers that do not support SIMD
+ *     // such as desktop Safari and iOS browsers
  *     width: 640,
  *     height: 480,
+ *     // Any frame rate above 24 fps on desktop browsers increase CPU
+ *     // usage without noticeable increase in quality.
  *     frameRate: 24
  *   }).then(track => {
- *     track.addProcessor(blurBackground);
+ *     track.addProcessor(blurBackground, {
+ *       inputFrameBufferType: 'video',
+ *       outputFrameBufferContextType: 'webgl2',
+ *     });
  *   });
  * });
  * ```
@@ -77,8 +88,16 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
     this._blurFilterRadius = radius;
   }
 
-  protected _setBackground(inputFrame: OffscreenCanvas): void {
-    this._outputContext.filter = `blur(${this._blurFilterRadius}px)`;
-    this._outputContext.drawImage(inputFrame, 0, 0);
+  protected _getWebGL2PipelineType(): WebGL2PipelineType {
+    return WebGL2PipelineType.Blur;
+  }
+
+  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): void {
+    if (!this._outputContext) {
+      return;
+    }
+    const ctx = this._outputContext as CanvasRenderingContext2D;
+    ctx.filter = `blur(${this._blurFilterRadius}px)`;
+    ctx.drawImage(inputFrame, 0, 0);
   }
 }

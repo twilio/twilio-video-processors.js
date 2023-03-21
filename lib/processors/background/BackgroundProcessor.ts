@@ -1,19 +1,13 @@
-import '@tensorflow/tfjs-backend-webgl';
-import '@tensorflow/tfjs-backend-cpu';
-import { ModelConfig, PersonInferenceConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
-import { BodyPix, load as loadModel } from '@tensorflow-models/body-pix';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { version } from '../../utils/version';
-import { Dimensions } from '../../types';
+import { Dimensions, Pipeline, WebGL2PipelineType } from '../../types';
+import { buildWebGL2Pipeline } from '../webgl2';
 
 import {
-  BODYPIX_INFERENCE_DIMENSIONS,
-  DEBOUNCE,
-  HISTORY_COUNT,
-  INFERENCE_CONFIG,
+  DEBOUNCE_COUNT,
+  HISTORY_COUNT_MULTIPLIER,
   MASK_BLUR_RADIUS,
-  MODEL_CONFIG,
   MODEL_NAME,
   PERSON_PROBABILITY_THRESHOLD,
   TFLITE_LOADER_NAME,
@@ -57,19 +51,13 @@ export interface BackgroundProcessorOptions {
   assetsPath: string;
 
   /**
-   * @private
+   * Whether to skip processing every other frame to improve the output frame rate, but reducing accuracy in the process.
+   * @default
+   * ```html
+   * true
+   * ```
    */
-  debounce?: number;
-
-  /**
-   * @private
-   */
-  historyCount?: number;
-
-  /**
-   * @private
-   */
-  inferenceConfig?: PersonInferenceConfig;
+  debounce?: boolean;
 
   /**
    * @private
@@ -91,30 +79,33 @@ export interface BackgroundProcessorOptions {
   personProbabilityThreshold?: number;
 
   /**
-   * @private
+   * Specifies which pipeline to use when processing video frames.
+   * @default
+   * ```html
+   * 'WebGL2'
+   * ```
    */
-   useWasm?: boolean;
+  pipeline?: Pipeline;
 }
 
 /**
  * @private
  */
 export abstract class BackgroundProcessor extends Processor {
-  private static _model: BodyPix | null = null;
-  private static async _loadModel(config: ModelConfig = MODEL_CONFIG): Promise<void> {
-    BackgroundProcessor._model = await loadModel(config)
-      .catch((error: any) => console.error('Unable to load model.', error)) || null;
-  }
-  protected _outputCanvas: HTMLCanvasElement;
-  protected _outputContext: CanvasRenderingContext2D;
+  private static _loadedScripts: string[] = [];
+
+  protected _backgroundImage: HTMLImageElement | null = null;
+  protected _outputCanvas: HTMLCanvasElement | null = null;
+  protected _outputContext: CanvasRenderingContext2D | WebGL2RenderingContext | null = null;
+  protected _webgl2Pipeline: ReturnType<typeof buildWebGL2Pipeline> | null = null;
 
   private _assetsPath: string;
   private _benchmark: Benchmark;
   private _currentMask: Uint8ClampedArray | Uint8Array = new Uint8ClampedArray();
-  private _debounce: number = DEBOUNCE;
+  private _debounce: boolean = true;
+  private _debounceCount: number = DEBOUNCE_COUNT;
   private _dummyImageData: ImageData = new ImageData(1, 1);
-  private _historyCount: number = HISTORY_COUNT;
-  private _inferenceConfig: PersonInferenceConfig = INFERENCE_CONFIG;
+  private _historyCount: number;
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
@@ -122,14 +113,14 @@ export abstract class BackgroundProcessor extends Processor {
   // tslint:disable-next-line no-unused-variable
   private _isSimdEnabled: boolean | null = null;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
-  private _maskCanvas: OffscreenCanvas;
-  private _maskContext: OffscreenCanvasRenderingContext2D;
+  private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
+  private _maskContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
   private _masks: (Uint8ClampedArray | Uint8Array)[];
   private _maskUsageCounter: number = 0;
   private _outputMemoryOffset: number = 0;
   private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
+  private _pipeline: Pipeline = Pipeline.WebGL2;
   private _tflite: any;
-  private _useWasm: boolean;
   // tslint:disable-next-line no-unused-variable
   private readonly _version: string = version;
 
@@ -146,21 +137,18 @@ export abstract class BackgroundProcessor extends Processor {
 
     this.maskBlurRadius = options.maskBlurRadius!;
     this._assetsPath = assetsPath;
-    this._debounce = options.debounce! || DEBOUNCE;
-    this._historyCount = options.historyCount! || HISTORY_COUNT;
-    this._inferenceConfig = options.inferenceConfig! || INFERENCE_CONFIG;
-    this._personProbabilityThreshold = options.personProbabilityThreshold! || PERSON_PROBABILITY_THRESHOLD;
-    this._useWasm = typeof options.useWasm === 'boolean' ? options.useWasm : true;
-    this._inferenceDimensions = options.inferenceDimensions! ||
-      (this._useWasm ? WASM_INFERENCE_DIMENSIONS : BODYPIX_INFERENCE_DIMENSIONS);
+    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : this._debounce;
+    this._debounceCount = this._debounce ? this._debounceCount : 1;
+    this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
+    this._historyCount = HISTORY_COUNT_MULTIPLIER * this._debounceCount;
+    this._personProbabilityThreshold = options.personProbabilityThreshold! || this._personProbabilityThreshold;
+    this._pipeline = options.pipeline! || this._pipeline;
 
     this._benchmark = new Benchmark();
     this._inputCanvas = document.createElement('canvas');
     this._inputContext = this._inputCanvas.getContext('2d') as CanvasRenderingContext2D;
-    this._maskCanvas = new OffscreenCanvas(1, 1);
+    this._maskCanvas =  typeof window.OffscreenCanvas !== 'undefined' ? new window.OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-    this._outputCanvas = document.createElement('canvas');
-    this._outputContext = this._outputCanvas.getContext('2d') as CanvasRenderingContext2D;
     this._masks = [];
   }
 
@@ -188,8 +176,7 @@ export abstract class BackgroundProcessor extends Processor {
    * video frames are processed correctly.
    */
    async loadModel() {
-    const [, tflite, modelResponse ] = await Promise.all([
-      BackgroundProcessor._loadModel(),
+    const [tflite, modelResponse ] = await Promise.all([
       this._loadTwilioTfLite(),
       fetch(this._assetsPath + MODEL_NAME),
     ]);
@@ -210,10 +197,26 @@ export abstract class BackgroundProcessor extends Processor {
    * the foreground (person(s)) untouched. Any exception detected will
    * result in the frame being dropped.
    * @param inputFrameBuffer - The source of the input frame to process.
+   * <br/>
+   * <br/>
+   * [OffscreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas) - Good for canvas-related processing
+   * that can be rendered off screen. Only works when using [[Pipeline.Canvas2D]].
+   * <br/>
+   * <br/>
+   * [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement) - This is recommended on browsers
+   * that doesn't support `OffscreenCanvas`, or if you need to render the frame on the screen. Only works when using [[Pipeline.Canvas2D]].
+   * <br/>
+   * <br/>
+   * [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement) - Recommended when using [[Pipeline.WebGL2]] but
+   * works for both [[Pipeline.Canvas2D]] and [[Pipeline.WebGL2]].
+   * <br/>
    * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
    */
-  async processFrame(inputFrameBuffer: OffscreenCanvas, outputFrameBuffer: HTMLCanvasElement): Promise<void> {
-    if (!BackgroundProcessor._model || !this._tflite) {
+  async processFrame(
+    inputFrameBuffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement,
+    outputFrameBuffer: HTMLCanvasElement
+  ): Promise<void> {
+    if (!this._tflite) {
       return;
     }
     if (!inputFrameBuffer || !outputFrameBuffer) {
@@ -222,49 +225,65 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.end('captureFrameDelay');
     this._benchmark.start('processFrameDelay');
 
-    const inputFrame = inputFrameBuffer;
-    const { width: captureWidth, height: captureHeight } = inputFrame;
     const { width: inferenceWidth, height: inferenceHeight } = this._inferenceDimensions;
-
+    let inputFrame = inputFrameBuffer;
+    let { width: captureWidth, height: captureHeight } = inputFrame;
+    if ((inputFrame as HTMLVideoElement).videoWidth) {
+      inputFrame = inputFrame as HTMLVideoElement;
+      captureWidth = inputFrame.videoWidth;
+      captureHeight = inputFrame.videoHeight;
+    }
     if (this._outputCanvas !== outputFrameBuffer) {
       this._outputCanvas = outputFrameBuffer;
-      this._outputContext = outputFrameBuffer.getContext('2d') as CanvasRenderingContext2D;
+      this._outputContext = this._outputCanvas
+        .getContext(this._pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2') as
+        CanvasRenderingContext2D | WebGL2RenderingContext;
+      this._webgl2Pipeline?.cleanUp();
+      this._webgl2Pipeline = null;
     }
 
-    // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
-    let reInitDummyImage = false;
-    if (this._inputCanvas.width !== inferenceWidth) {
-      this._inputCanvas.width = inferenceWidth;
-      this._maskCanvas.width = inferenceWidth;
-      reInitDummyImage = true;
-    }
-    if (this._inputCanvas.height !== inferenceHeight) {
-      this._inputCanvas.height = inferenceHeight;
-      this._maskCanvas.height = inferenceHeight;
-      reInitDummyImage = true;
-    }
-    if (reInitDummyImage) {
-      this._dummyImageData = new ImageData(
-        new Uint8ClampedArray(inferenceWidth * inferenceHeight * 4),
-        inferenceWidth, inferenceHeight);
+    if (!this._webgl2Pipeline && this._pipeline === Pipeline.WebGL2) {
+      this._createWebGL2Pipeline(inputFrame as HTMLVideoElement, captureWidth, captureHeight, inferenceWidth, inferenceHeight);
     }
 
-    const personMask = await this._createPersonMask(inputFrame);
+    if (this._pipeline === Pipeline.WebGL2) {
+      await this._webgl2Pipeline?.render();
+    } else {
+      // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
+      let reInitDummyImage = false;
+      if (this._inputCanvas.width !== inferenceWidth) {
+        this._inputCanvas.width = inferenceWidth;
+        this._maskCanvas.width = inferenceWidth;
+        reInitDummyImage = true;
+      }
+      if (this._inputCanvas.height !== inferenceHeight) {
+        this._inputCanvas.height = inferenceHeight;
+        this._maskCanvas.height = inferenceHeight;
+        reInitDummyImage = true;
+      }
+      if (reInitDummyImage) {
+        this._dummyImageData = new ImageData(
+          new Uint8ClampedArray(inferenceWidth * inferenceHeight * 4),
+          inferenceWidth, inferenceHeight);
+      }
 
-    this._benchmark.start('imageCompositionDelay');
-    this._maskContext.putImageData(personMask, 0, 0);
-    this._outputContext.save();
-    this._outputContext.filter = `blur(${this._maskBlurRadius}px)`;
-    this._outputContext.globalCompositeOperation = 'copy';
-    this._outputContext.drawImage(this._maskCanvas, 0, 0, captureWidth, captureHeight);
-    this._outputContext.filter = 'none';
-    this._outputContext.globalCompositeOperation = 'source-in';
-    this._outputContext.drawImage(inputFrame, 0, 0, captureWidth, captureHeight);
-    this._outputContext.globalCompositeOperation = 'destination-over';
-    this._setBackground(inputFrame);
-    this._outputContext.restore();
+      const personMask = await this._createPersonMask(inputFrame);
+      const ctx = this._outputContext as CanvasRenderingContext2D;
+      this._benchmark.start('imageCompositionDelay');
+      this._maskContext.putImageData(personMask, 0, 0);
+      ctx.save();
+      ctx.filter = `blur(${this._maskBlurRadius}px)`;
+      ctx.globalCompositeOperation = 'copy';
+      ctx.drawImage(this._maskCanvas, 0, 0, captureWidth, captureHeight);
+      ctx.filter = 'none';
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.drawImage(inputFrame, 0, 0, captureWidth, captureHeight);
+      ctx.globalCompositeOperation = 'destination-over';
+      this._setBackground(inputFrame);
+      ctx.restore();
+      this._benchmark.end('imageCompositionDelay');
+    }
 
-    this._benchmark.end('imageCompositionDelay');
     this._benchmark.end('processFrameDelay');
     this._benchmark.end('totalProcessingDelay');
 
@@ -274,7 +293,9 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.start('captureFrameDelay');
   }
 
-  protected abstract _setBackground(inputFrame: OffscreenCanvas): void;
+  protected abstract _getWebGL2PipelineType(): WebGL2PipelineType;
+
+  protected abstract _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): void;
 
   private _addMask(mask: Uint8ClampedArray | Uint8Array) {
     if (this._masks.length >= this._historyCount) {
@@ -292,7 +313,7 @@ export abstract class BackgroundProcessor extends Processor {
     }
   }
 
-  private async _createPersonMask(inputFrame: OffscreenCanvas): Promise<ImageData> {
+  private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): Promise<ImageData> {
     let imageData = this._dummyImageData;
     const shouldRunInference = this._maskUsageCounter < 1;
 
@@ -304,10 +325,8 @@ export abstract class BackgroundProcessor extends Processor {
 
     this._benchmark.start('segmentationDelay');
     if (shouldRunInference) {
-      this._currentMask = this._useWasm
-        ? this._runTwilioTfLiteInference(imageData)
-        : await this._runBodyPixInference(imageData);
-      this._maskUsageCounter = this._debounce;
+      this._currentMask = this._runTwilioTfLiteInference(imageData);
+      this._maskUsageCounter = this._debounceCount;
     }
     this._addMask(this._currentMask);
     this._applyAlpha(imageData);
@@ -317,7 +336,43 @@ export abstract class BackgroundProcessor extends Processor {
     return imageData;
   }
 
-  private _getResizedInputImageData(inputFrame: OffscreenCanvas): ImageData {
+  private _createWebGL2Pipeline(
+    inputFrame: HTMLVideoElement,
+    captureWidth: number,
+    captureHeight: number,
+    inferenceWidth: number,
+    inferenceHeight: number,
+  ): void {
+    this._webgl2Pipeline = buildWebGL2Pipeline(
+      {
+        htmlElement: inputFrame,
+        width: captureWidth,
+        height: captureHeight,
+      },
+      this._backgroundImage,
+      { type: this._getWebGL2PipelineType() },
+      { inputResolution: `${inferenceWidth}x${inferenceHeight}` },
+      this._outputCanvas!,
+      this._tflite,
+      this._benchmark,
+      this._debounce,
+    );
+    this._webgl2Pipeline.updatePostProcessingConfig({
+      smoothSegmentationMask: true,
+      jointBilateralFilter: {
+        sigmaSpace: 10,
+        sigmaColor: 0.12
+      },
+      coverage: [
+        0,
+        0.99
+      ],
+      lightWrapping: 0,
+      blendMode: 'screen'
+    });
+  }
+
+  private _getResizedInputImageData(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): ImageData {
     const { width, height } = this._inputCanvas;
     this._inputContext.drawImage(inputFrame, 0, 0, width, height);
     const imageData = this._inputContext.getImageData(0, 0, width, height);
@@ -325,9 +380,15 @@ export abstract class BackgroundProcessor extends Processor {
   }
 
   private _loadJs(url: string): Promise<void> {
+    if (BackgroundProcessor._loadedScripts.includes(url)) {
+      return Promise.resolve();
+    }
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.onload = () => resolve();
+      script.onload = () => {
+        BackgroundProcessor._loadedScripts.push(url);
+        resolve();
+      };
       script.onerror = reject;
       document.head.append(script);
       script.src = url;
@@ -348,11 +409,6 @@ export abstract class BackgroundProcessor extends Processor {
       this._isSimdEnabled = false;
     }
     return tflite;
-  }
-
-  private async _runBodyPixInference(inputImage: ImageData): Promise<Uint8Array> {
-    const segment = await BackgroundProcessor._model!.segmentPerson(inputImage, this._inferenceConfig);
-    return segment.data;
   }
 
   private _runTwilioTfLiteInference(inputImage: ImageData): Uint8ClampedArray {

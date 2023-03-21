@@ -8,6 +8,35 @@ body {
   height: 100%;
 }
 
+#stats {
+  display: none;
+  position: fixed;
+  background-color: white;
+  top: 42px;
+  left: 22px;
+  padding: 10px;
+}
+
+div.img-btn {
+  cursor: pointer;
+  height: 65px;
+  width: 65px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 10px;
+  opacity: 0.6;
+  display: inline-block;
+  border: 1px solid gray;
+  margin: 37px 0px 0px 5px;
+}
+
+div.img-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  border: 2px solid black;
+}
+
 .align {
   align-content: flex-start;
 }
@@ -62,17 +91,7 @@ video {
   height: auto   !important;
 }
 
-@media (max-width: 900px) {
-  div.col-sm-8, div.col-sm-4 {
-    max-width: 100%;
-    flex: 100%;
-  }
-
-  div.col-sm-8 {
-    height: 40%;
-  }
-
-  div.col-sm-4 {
-    height: 60%;
-  }
+div.col-sm-8, div.col-sm-4 {
+  max-width: 100%;
+  flex: 100%;
 }
