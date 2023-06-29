@@ -39,7 +39,8 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *   createLocalVideoTrack({
  *     // Increasing the capture resolution decreases the output FPS
  *     // especially on browsers that do not support SIMD
- *     // such as desktop Safari and iOS browsers
+ *     // such as desktop Safari and iOS browsers, or on Chrome
+ *     // with capture resolutions above 640x480 for webgl2.
  *     width: 640,
  *     height: 480,
  *     // Any frame rate above 24 fps on desktop browsers increase CPU
