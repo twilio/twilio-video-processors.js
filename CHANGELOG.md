@@ -2,7 +2,7 @@
 ======================
 
 * The VideoProcessors now work on browsers that do not support `OffscreenCanvas`. With this release, when used with [twilio-video v2.27.0](https://www.npmjs.com/package/twilio-video/v/2.27.0), the Virtual Background feature will work on browsers that supports [WebGL2](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext). See [VideoTrack.addProcessor](https://sdk.twilio.com/js/video/releases/2.27.0/docs/VideoTrack.html#addProcessor__anchor) for details.
-* On Chrome, our tests with 640x480 VideoTracks show up to 30% reduction in CPU usage if WebGL2 is used as opposed to Canvas2D. Higher resolutions degrade the performance as compared to Canvas2D. While we work to support higher resolutions in future releases, we strongly recommend that you set the maximum resolution to 640x480 for WebGL2.
+* On Chrome, our tests with 640x480 VideoTracks show up to 30% reduction in CPU usage if WebGL2 is used as opposed to Canvas2D. Higher resolutions degrade the performance as compared to Canvas2D. While we work to support higher resolutions in future releases, we strongly recommend that you set the maximum resolution to 640x480 for WebGL2, or use Canvas2D instead.
 
 #### API Changes
 
