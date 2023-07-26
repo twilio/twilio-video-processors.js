@@ -14,7 +14,8 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
   backgroundImage: HTMLImageElement;
 
   /**
-   * The [[ImageFit]] to use for positioning of the background image in the viewport.
+   * The [[ImageFit]] to use for positioning of the background image in the viewport. Only the Canvas2D [[Pipeline]]
+   * supports this option. WebGL2 ignores this option and falls back to Cover.
    * @default
    * ```html
    * 'Fill'
