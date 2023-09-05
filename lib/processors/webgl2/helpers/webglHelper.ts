@@ -67,8 +67,8 @@ export function createTexture(
   internalformat: number,
   width: number,
   height: number,
-  minFilter = gl.NEAREST,
-  magFilter = gl.NEAREST
+  minFilter: GLint = gl.NEAREST,
+  magFilter: GLint = gl.NEAREST
 ) {
   const texture = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -94,7 +94,7 @@ export async function readPixelsAsync(
   gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buf)
   gl.bufferData(gl.PIXEL_PACK_BUFFER, dest.byteLength, gl.STREAM_READ)
   gl.readPixels(x, y, width, height, format, type, 0)
-  gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null)
+  gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null!)
 
   await getBufferSubDataAsync(gl, gl.PIXEL_PACK_BUFFER, buf, 0, dest)
 
@@ -108,7 +108,7 @@ async function getBufferSubDataAsync(
   buffer: WebGLBuffer,
   srcByteOffset: number,
   dstBuffer: ArrayBufferView,
-  dstOffset?: number,
+  dstOffset?: GLuint,
   length?: number
 ) {
   const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)!
@@ -119,7 +119,7 @@ async function getBufferSubDataAsync(
   if (res !== gl.WAIT_FAILED) {
     gl.bindBuffer(target, buffer)
     gl.getBufferSubData(target, srcByteOffset, dstBuffer, dstOffset, length)
-    gl.bindBuffer(target, null)
+    gl.bindBuffer(target, null!)
   }
 }
 
