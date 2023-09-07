@@ -1,0 +1,1 @@
+{"version":3,"file":"backgroundHelper.js","sourceRoot":"","sources":["../../../../lib/processors/webgl2/helpers/backgroundHelper.ts"],"names":[],"mappings":"","sourcesContent":["export type BackgroundConfig = {\n  type: 'none' | 'blur' | 'image'\n  url?: string\n}\n"]}
