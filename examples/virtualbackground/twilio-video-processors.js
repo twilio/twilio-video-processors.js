@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 2.0.0
+/*! twilio-video-processors.js 2.1.0-rc1
 
 The following license applies to all parts of this software except as
 documented below.
@@ -80,12 +80,7 @@ var version_1 = require("./utils/version");
 Object.defineProperty(exports, "version", { enumerable: true, get: function () { return version_1.version; } });
 if (typeof window !== 'undefined') {
     window.Twilio = window.Twilio || {};
-    window.Twilio.VideoProcessors = __assign(__assign({}, window.Twilio.VideoProcessors), { GaussianBlurBackgroundProcessor: GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor,
-        ImageFit: types_1.ImageFit,
-        Pipeline: types_1.Pipeline,
-        isSupported: support_1.isSupported,
-        version: version_1.version,
-        VirtualBackgroundProcessor: VirtualBackgroundProcessor_1.VirtualBackgroundProcessor });
+    window.Twilio.VideoProcessors = __assign(__assign({}, window.Twilio.VideoProcessors), { GaussianBlurBackgroundProcessor: GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor, ImageFit: types_1.ImageFit, Pipeline: types_1.Pipeline, isSupported: support_1.isSupported, version: version_1.version, VirtualBackgroundProcessor: VirtualBackgroundProcessor_1.VirtualBackgroundProcessor });
 }
 
 },{"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./types":16,"./utils/support":18,"./utils/version":19}],3:[function(require,module,exports){
@@ -113,6 +108,8 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -133,7 +130,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -223,7 +220,7 @@ var BackgroundProcessor = /** @class */ (function (_super) {
          */
         set: function (radius) {
             if (typeof radius !== 'number' || radius < 0) {
-                console.warn("Valid mask blur radius not found. Using " + constants_1.MASK_BLUR_RADIUS + " as default.");
+                console.warn("Valid mask blur radius not found. Using ".concat(constants_1.MASK_BLUR_RADIUS, " as default."));
                 radius = constants_1.MASK_BLUR_RADIUS;
             }
             this._maskBlurRadius = radius;
@@ -341,7 +338,7 @@ var BackgroundProcessor = /** @class */ (function (_super) {
                         this._benchmark.start('imageCompositionDelay');
                         this._maskContext.putImageData(personMask, 0, 0);
                         ctx.save();
-                        ctx.filter = "blur(" + this._maskBlurRadius + "px)";
+                        ctx.filter = "blur(".concat(this._maskBlurRadius, "px)");
                         ctx.globalCompositeOperation = 'copy';
                         ctx.drawImage(this._maskCanvas, 0, 0, captureWidth, captureHeight);
                         ctx.filter = 'none';
@@ -407,11 +404,11 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         });
     };
     BackgroundProcessor.prototype._createWebGL2Pipeline = function (inputFrame, captureWidth, captureHeight, inferenceWidth, inferenceHeight) {
-        this._webgl2Pipeline = webgl2_1.buildWebGL2Pipeline({
+        this._webgl2Pipeline = (0, webgl2_1.buildWebGL2Pipeline)({
             htmlElement: inputFrame,
             width: captureWidth,
             height: captureHeight,
-        }, this._backgroundImage, { type: this._getWebGL2PipelineType() }, { inputResolution: inferenceWidth + "x" + inferenceHeight }, this._outputCanvas, this._tflite, this._benchmark, this._debounce);
+        }, this._backgroundImage, { type: this._getWebGL2PipelineType() }, { inputResolution: "".concat(inferenceWidth, "x").concat(inferenceHeight) }, this._outputCanvas, this._tflite, this._benchmark, this._debounce);
         this._webgl2Pipeline.updatePostProcessingConfig({
             smoothSegmentationMask: true,
             jointBilateralFilter: {
@@ -510,6 +507,8 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -543,7 +542,8 @@ var types_1 = require("../../types");
  *   createLocalVideoTrack({
  *     // Increasing the capture resolution decreases the output FPS
  *     // especially on browsers that do not support SIMD
- *     // such as desktop Safari and iOS browsers
+ *     // such as desktop Safari and iOS browsers, or on Chrome
+ *     // with capture resolutions above 640x480 for webgl2.
  *     width: 640,
  *     height: 480,
  *     // Any frame rate above 24 fps on desktop browsers increase CPU
@@ -585,7 +585,7 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
          */
         set: function (radius) {
             if (!radius) {
-                console.warn("Valid blur filter radius not found. Using " + constants_1.BLUR_FILTER_RADIUS + " as default.");
+                console.warn("Valid blur filter radius not found. Using ".concat(constants_1.BLUR_FILTER_RADIUS, " as default."));
                 radius = constants_1.BLUR_FILTER_RADIUS;
             }
             this._blurFilterRadius = radius;
@@ -601,7 +601,7 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
             return;
         }
         var ctx = this._outputContext;
-        ctx.filter = "blur(" + this._blurFilterRadius + "px)";
+        ctx.filter = "blur(".concat(this._blurFilterRadius, "px)");
         ctx.drawImage(inputFrame, 0, 0);
     };
     return GaussianBlurBackgroundProcessor;
@@ -618,6 +618,8 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -658,7 +660,8 @@ var types_1 = require("../../types");
  *     createLocalVideoTrack({
  *       // Increasing the capture resolution decreases the output FPS
  *       // especially on browsers that do not support SIMD
- *       // such as desktop Safari and iOS browsers
+ *       // such as desktop Safari and iOS browsers, or on Chrome
+ *       // with capture resolutions above 640x480 for webgl2.
  *       width: 640,
  *       height: 480,
  *       // Any frame rate above 24 fps on desktop browsers increase CPU
@@ -729,7 +732,7 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
         set: function (fitType) {
             var validTypes = Object.keys(types_1.ImageFit);
             if (!validTypes.includes(fitType)) {
-                console.warn("Valid fitType not found. Using '" + types_1.ImageFit.Fill + "' as default.");
+                console.warn("Valid fitType not found. Using '".concat(types_1.ImageFit.Fill, "' as default."));
                 fitType = types_1.ImageFit.Fill;
             }
             this._fitType = fitType;
@@ -782,7 +785,8 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
         var x = (viewportWidth - newContentWidth) / 2;
         var y = (viewportHeight - newContentHeight) / 2;
         return {
-            x: x, y: y,
+            x: x,
+            y: y,
             w: newContentWidth,
             h: newContentHeight,
         };
@@ -819,7 +823,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -871,7 +875,7 @@ function createProgram(gl, vertexShader, fragmentShader) {
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        throw new Error("Could not link WebGL program: " + gl.getProgramInfoLog(program));
+        throw new Error("Could not link WebGL program: ".concat(gl.getProgramInfoLog(program)));
     }
     return program;
 }
@@ -881,7 +885,7 @@ function compileShader(gl, shaderType, shaderSource) {
     gl.shaderSource(shader, shaderSource);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        throw new Error("Could not compile shader: " + gl.getShaderInfoLog(shader));
+        throw new Error("Could not compile shader: ".concat(gl.getShaderInfoLog(shader)));
     }
     return shader;
 }
@@ -1004,19 +1008,19 @@ function buildBackgroundBlurStage(gl, vertexShader, positionBuffer, texCoordBuff
 }
 exports.buildBackgroundBlurStage = buildBackgroundBlurStage;
 function buildBlurPass(gl, vertexShader, positionBuffer, texCoordBuffer, personMaskTexture, canvas) {
-    var fragmentShaderSource = webglHelper_1.glsl(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform vec2 u_texelSize;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    const float offset[5] = float[](0.0, 1.0, 2.0, 3.0, 4.0);\n    const float weight[5] = float[](0.2270270270, 0.1945945946, 0.1216216216,\n      0.0540540541, 0.0162162162);\n\n    void main() {\n      vec4 centerColor = texture(u_inputFrame, v_texCoord);\n      float personMask = texture(u_personMask, v_texCoord).a;\n\n      vec4 frameColor = centerColor * weight[0] * (1.0 - personMask);\n\n      for (int i = 1; i < 5; i++) {\n        vec2 offset = vec2(offset[i]) * u_texelSize;\n\n        vec2 texCoord = v_texCoord + offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n\n        texCoord = v_texCoord - offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n      }\n      outColor = vec4(frameColor.rgb + (1.0 - frameColor.a) * centerColor.rgb, 1.0);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform vec2 u_texelSize;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    const float offset[5] = float[](0.0, 1.0, 2.0, 3.0, 4.0);\n    const float weight[5] = float[](0.2270270270, 0.1945945946, 0.1216216216,\n      0.0540540541, 0.0162162162);\n\n    void main() {\n      vec4 centerColor = texture(u_inputFrame, v_texCoord);\n      float personMask = texture(u_personMask, v_texCoord).a;\n\n      vec4 frameColor = centerColor * weight[0] * (1.0 - personMask);\n\n      for (int i = 1; i < 5; i++) {\n        vec2 offset = vec2(offset[i]) * u_texelSize;\n\n        vec2 texCoord = v_texCoord + offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n\n        texCoord = v_texCoord - offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n      }\n      outColor = vec4(frameColor.rgb + (1.0 - frameColor.a) * centerColor.rgb, 1.0);\n    }\n  "])));
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform vec2 u_texelSize;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    const float offset[5] = float[](0.0, 1.0, 2.0, 3.0, 4.0);\n    const float weight[5] = float[](0.2270270270, 0.1945945946, 0.1216216216,\n      0.0540540541, 0.0162162162);\n\n    void main() {\n      vec4 centerColor = texture(u_inputFrame, v_texCoord);\n      float personMask = texture(u_personMask, v_texCoord).a;\n\n      vec4 frameColor = centerColor * weight[0] * (1.0 - personMask);\n\n      for (int i = 1; i < 5; i++) {\n        vec2 offset = vec2(offset[i]) * u_texelSize;\n\n        vec2 texCoord = v_texCoord + offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n\n        texCoord = v_texCoord - offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n      }\n      outColor = vec4(frameColor.rgb + (1.0 - frameColor.a) * centerColor.rgb, 1.0);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform vec2 u_texelSize;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    const float offset[5] = float[](0.0, 1.0, 2.0, 3.0, 4.0);\n    const float weight[5] = float[](0.2270270270, 0.1945945946, 0.1216216216,\n      0.0540540541, 0.0162162162);\n\n    void main() {\n      vec4 centerColor = texture(u_inputFrame, v_texCoord);\n      float personMask = texture(u_personMask, v_texCoord).a;\n\n      vec4 frameColor = centerColor * weight[0] * (1.0 - personMask);\n\n      for (int i = 1; i < 5; i++) {\n        vec2 offset = vec2(offset[i]) * u_texelSize;\n\n        vec2 texCoord = v_texCoord + offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n\n        texCoord = v_texCoord - offset;\n        frameColor += texture(u_inputFrame, texCoord) * weight[i] *\n          (1.0 - texture(u_personMask, texCoord).a);\n      }\n      outColor = vec4(frameColor.rgb + (1.0 - frameColor.a) * centerColor.rgb, 1.0);\n    }\n  "])));
     var scale = 0.5;
     var outputWidth = canvas.width * scale;
     var outputHeight = canvas.height * scale;
     var texelWidth = 1 / outputWidth;
     var texelHeight = 1 / outputHeight;
-    var fragmentShader = webglHelper_1.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = webglHelper_1.createPiplelineStageProgram(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
+    var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
     var inputFrameLocation = gl.getUniformLocation(program, 'u_inputFrame');
     var personMaskLocation = gl.getUniformLocation(program, 'u_personMask');
     var texelSizeLocation = gl.getUniformLocation(program, 'u_texelSize');
-    var texture1 = webglHelper_1.createTexture(gl, gl.RGBA8, outputWidth, outputHeight, gl.NEAREST, gl.LINEAR);
-    var texture2 = webglHelper_1.createTexture(gl, gl.RGBA8, outputWidth, outputHeight, gl.NEAREST, gl.LINEAR);
+    var texture1 = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, outputWidth, outputHeight, gl.NEAREST, gl.LINEAR);
+    var texture2 = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, outputWidth, outputHeight, gl.NEAREST, gl.LINEAR);
     var frameBuffer1 = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer1);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture1, 0);
@@ -1058,12 +1062,12 @@ function buildBlurPass(gl, vertexShader, positionBuffer, texCoordBuffer, personM
     };
 }
 function buildBlendPass(gl, positionBuffer, texCoordBuffer, canvas) {
-    var vertexShaderSource = webglHelper_1.glsl(templateObject_2 || (templateObject_2 = __makeTemplateObject(["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "], ["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "])));
-    var fragmentShaderSource = webglHelper_1.glsl(templateObject_3 || (templateObject_3 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_blurredInputFrame;\n    uniform vec2 u_coverage;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      vec3 color = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 blurredColor = texture(u_blurredInputFrame, v_texCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(mix(blurredColor, color, personMask), 1.0);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_blurredInputFrame;\n    uniform vec2 u_coverage;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      vec3 color = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 blurredColor = texture(u_blurredInputFrame, v_texCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(mix(blurredColor, color, personMask), 1.0);\n    }\n  "])));
+    var vertexShaderSource = (0, webglHelper_1.glsl)(templateObject_2 || (templateObject_2 = __makeTemplateObject(["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "], ["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "])));
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_3 || (templateObject_3 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_blurredInputFrame;\n    uniform vec2 u_coverage;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      vec3 color = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 blurredColor = texture(u_blurredInputFrame, v_texCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(mix(blurredColor, color, personMask), 1.0);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_blurredInputFrame;\n    uniform vec2 u_coverage;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      vec3 color = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 blurredColor = texture(u_blurredInputFrame, v_texCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(mix(blurredColor, color, personMask), 1.0);\n    }\n  "])));
     var outputWidth = canvas.width, outputHeight = canvas.height;
-    var vertexShader = webglHelper_1.compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = webglHelper_1.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = webglHelper_1.createPiplelineStageProgram(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
+    var vertexShader = (0, webglHelper_1.compileShader)(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
     var inputFrameLocation = gl.getUniformLocation(program, 'u_inputFrame');
     var personMaskLocation = gl.getUniformLocation(program, 'u_personMask');
     var blurredInputFrame = gl.getUniformLocation(program, 'u_blurredInputFrame');
@@ -1106,13 +1110,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildBackgroundImageStage = void 0;
 var webglHelper_1 = require("../helpers/webglHelper");
 function buildBackgroundImageStage(gl, positionBuffer, texCoordBuffer, personMaskTexture, backgroundImage, canvas) {
-    var vertexShaderSource = webglHelper_1.glsl(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    uniform vec2 u_backgroundScale;\n    uniform vec2 u_backgroundOffset;\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n    out vec2 v_backgroundCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n      v_backgroundCoord = a_texCoord * u_backgroundScale + u_backgroundOffset;\n    }\n  "], ["#version 300 es\n\n    uniform vec2 u_backgroundScale;\n    uniform vec2 u_backgroundOffset;\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n    out vec2 v_backgroundCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n      v_backgroundCoord = a_texCoord * u_backgroundScale + u_backgroundOffset;\n    }\n  "])));
-    var fragmentShaderSource = webglHelper_1.glsl(templateObject_2 || (templateObject_2 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_background;\n    uniform vec2 u_coverage;\n    uniform float u_lightWrapping;\n    uniform float u_blendMode;\n\n    in vec2 v_texCoord;\n    in vec2 v_backgroundCoord;\n\n    out vec4 outColor;\n\n    vec3 screen(vec3 a, vec3 b) {\n      return 1.0 - (1.0 - a) * (1.0 - b);\n    }\n\n    vec3 linearDodge(vec3 a, vec3 b) {\n      return a + b;\n    }\n\n    void main() {\n      vec3 frameColor = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 backgroundColor = texture(u_background, v_backgroundCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      float lightWrapMask = 1.0 - max(0.0, personMask - u_coverage.y) / (1.0 - u_coverage.y);\n      vec3 lightWrap = u_lightWrapping * lightWrapMask * backgroundColor;\n      frameColor = u_blendMode * linearDodge(frameColor, lightWrap) +\n        (1.0 - u_blendMode) * screen(frameColor, lightWrap);\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(frameColor * personMask + backgroundColor * (1.0 - personMask), 1.0);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_background;\n    uniform vec2 u_coverage;\n    uniform float u_lightWrapping;\n    uniform float u_blendMode;\n\n    in vec2 v_texCoord;\n    in vec2 v_backgroundCoord;\n\n    out vec4 outColor;\n\n    vec3 screen(vec3 a, vec3 b) {\n      return 1.0 - (1.0 - a) * (1.0 - b);\n    }\n\n    vec3 linearDodge(vec3 a, vec3 b) {\n      return a + b;\n    }\n\n    void main() {\n      vec3 frameColor = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 backgroundColor = texture(u_background, v_backgroundCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      float lightWrapMask = 1.0 - max(0.0, personMask - u_coverage.y) / (1.0 - u_coverage.y);\n      vec3 lightWrap = u_lightWrapping * lightWrapMask * backgroundColor;\n      frameColor = u_blendMode * linearDodge(frameColor, lightWrap) +\n        (1.0 - u_blendMode) * screen(frameColor, lightWrap);\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(frameColor * personMask + backgroundColor * (1.0 - personMask), 1.0);\n    }\n  "])));
+    var vertexShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    uniform vec2 u_backgroundScale;\n    uniform vec2 u_backgroundOffset;\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n    out vec2 v_backgroundCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n      v_backgroundCoord = a_texCoord * u_backgroundScale + u_backgroundOffset;\n    }\n  "], ["#version 300 es\n\n    uniform vec2 u_backgroundScale;\n    uniform vec2 u_backgroundOffset;\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n    out vec2 v_backgroundCoord;\n\n    void main() {\n      // Flipping Y is required when rendering to canvas\n      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);\n      v_texCoord = a_texCoord;\n      v_backgroundCoord = a_texCoord * u_backgroundScale + u_backgroundOffset;\n    }\n  "])));
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_2 || (templateObject_2 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_background;\n    uniform vec2 u_coverage;\n    uniform float u_lightWrapping;\n    uniform float u_blendMode;\n\n    in vec2 v_texCoord;\n    in vec2 v_backgroundCoord;\n\n    out vec4 outColor;\n\n    vec3 screen(vec3 a, vec3 b) {\n      return 1.0 - (1.0 - a) * (1.0 - b);\n    }\n\n    vec3 linearDodge(vec3 a, vec3 b) {\n      return a + b;\n    }\n\n    void main() {\n      vec3 frameColor = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 backgroundColor = texture(u_background, v_backgroundCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      float lightWrapMask = 1.0 - max(0.0, personMask - u_coverage.y) / (1.0 - u_coverage.y);\n      vec3 lightWrap = u_lightWrapping * lightWrapMask * backgroundColor;\n      frameColor = u_blendMode * linearDodge(frameColor, lightWrap) +\n        (1.0 - u_blendMode) * screen(frameColor, lightWrap);\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(frameColor * personMask + backgroundColor * (1.0 - personMask), 1.0);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_personMask;\n    uniform sampler2D u_background;\n    uniform vec2 u_coverage;\n    uniform float u_lightWrapping;\n    uniform float u_blendMode;\n\n    in vec2 v_texCoord;\n    in vec2 v_backgroundCoord;\n\n    out vec4 outColor;\n\n    vec3 screen(vec3 a, vec3 b) {\n      return 1.0 - (1.0 - a) * (1.0 - b);\n    }\n\n    vec3 linearDodge(vec3 a, vec3 b) {\n      return a + b;\n    }\n\n    void main() {\n      vec3 frameColor = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 backgroundColor = texture(u_background, v_backgroundCoord).rgb;\n      float personMask = texture(u_personMask, v_texCoord).a;\n      float lightWrapMask = 1.0 - max(0.0, personMask - u_coverage.y) / (1.0 - u_coverage.y);\n      vec3 lightWrap = u_lightWrapping * lightWrapMask * backgroundColor;\n      frameColor = u_blendMode * linearDodge(frameColor, lightWrap) +\n        (1.0 - u_blendMode) * screen(frameColor, lightWrap);\n      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);\n      outColor = vec4(frameColor * personMask + backgroundColor * (1.0 - personMask), 1.0);\n    }\n  "])));
     var outputWidth = canvas.width, outputHeight = canvas.height;
     var outputRatio = outputWidth / outputHeight;
-    var vertexShader = webglHelper_1.compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = webglHelper_1.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = webglHelper_1.createPiplelineStageProgram(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
+    var vertexShader = (0, webglHelper_1.compileShader)(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
     var backgroundScaleLocation = gl.getUniformLocation(program, 'u_backgroundScale');
     var backgroundOffsetLocation = gl.getUniformLocation(program, 'u_backgroundOffset');
     var inputFrameLocation = gl.getUniformLocation(program, 'u_inputFrame');
@@ -1154,7 +1158,7 @@ function buildBackgroundImageStage(gl, positionBuffer, texCoordBuffer, personMas
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
     function updateBackgroundImage(backgroundImage) {
-        backgroundTexture = webglHelper_1.createTexture(gl, gl.RGBA8, backgroundImage.naturalWidth, backgroundImage.naturalHeight, gl.LINEAR, gl.LINEAR);
+        backgroundTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, backgroundImage.naturalWidth, backgroundImage.naturalHeight, gl.LINEAR, gl.LINEAR);
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, backgroundImage.naturalWidth, backgroundImage.naturalHeight, gl.RGBA, gl.UNSIGNED_BYTE, backgroundImage);
         var xOffset = 0;
         var yOffset = 0;
@@ -1216,13 +1220,13 @@ exports.buildJointBilateralFilterStage = void 0;
 var segmentationHelper_1 = require("../helpers/segmentationHelper");
 var webglHelper_1 = require("../helpers/webglHelper");
 function buildJointBilateralFilterStage(gl, vertexShader, positionBuffer, texCoordBuffer, inputTexture, segmentationConfig, outputTexture, canvas) {
-    var fragmentShaderSource = webglHelper_1.glsl(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      float coeff = -0.5 / (sigma * sigma * 4.0 + 1.0e-6);\n      return exp((x * x) * coeff);\n    }\n\n    void main() {\n      vec2 centerCoord = v_texCoord;\n      vec3 centerColor = texture(u_inputFrame, centerCoord).rgb;\n      float newVal = 0.0;\n\n      float spaceWeight = 0.0;\n      float colorWeight = 0.0;\n      float totalWeight = 0.0;\n\n      // Subsample kernel space.\n      for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {\n        for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {\n          vec2 shift = vec2(j, i) * u_texelSize;\n          vec2 coord = vec2(centerCoord + shift);\n          vec3 frameColor = texture(u_inputFrame, coord).rgb;\n          float outVal = texture(u_segmentationMask, coord).a;\n\n          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);\n          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);\n          totalWeight += spaceWeight * colorWeight;\n\n          newVal += spaceWeight * colorWeight * outVal;\n        }\n      }\n      newVal /= totalWeight;\n\n      outColor = vec4(vec3(0.0), newVal);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      float coeff = -0.5 / (sigma * sigma * 4.0 + 1.0e-6);\n      return exp((x * x) * coeff);\n    }\n\n    void main() {\n      vec2 centerCoord = v_texCoord;\n      vec3 centerColor = texture(u_inputFrame, centerCoord).rgb;\n      float newVal = 0.0;\n\n      float spaceWeight = 0.0;\n      float colorWeight = 0.0;\n      float totalWeight = 0.0;\n\n      // Subsample kernel space.\n      for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {\n        for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {\n          vec2 shift = vec2(j, i) * u_texelSize;\n          vec2 coord = vec2(centerCoord + shift);\n          vec3 frameColor = texture(u_inputFrame, coord).rgb;\n          float outVal = texture(u_segmentationMask, coord).a;\n\n          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);\n          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);\n          totalWeight += spaceWeight * colorWeight;\n\n          newVal += spaceWeight * colorWeight * outVal;\n        }\n      }\n      newVal /= totalWeight;\n\n      outColor = vec4(vec3(0.0), newVal);\n    }\n  "])));
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      float coeff = -0.5 / (sigma * sigma * 4.0 + 1.0e-6);\n      return exp((x * x) * coeff);\n    }\n\n    void main() {\n      vec2 centerCoord = v_texCoord;\n      vec3 centerColor = texture(u_inputFrame, centerCoord).rgb;\n      float newVal = 0.0;\n\n      float spaceWeight = 0.0;\n      float colorWeight = 0.0;\n      float totalWeight = 0.0;\n\n      // Subsample kernel space.\n      for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {\n        for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {\n          vec2 shift = vec2(j, i) * u_texelSize;\n          vec2 coord = vec2(centerCoord + shift);\n          vec3 frameColor = texture(u_inputFrame, coord).rgb;\n          float outVal = texture(u_segmentationMask, coord).a;\n\n          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);\n          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);\n          totalWeight += spaceWeight * colorWeight;\n\n          newVal += spaceWeight * colorWeight * outVal;\n        }\n      }\n      newVal /= totalWeight;\n\n      outColor = vec4(vec3(0.0), newVal);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      float coeff = -0.5 / (sigma * sigma * 4.0 + 1.0e-6);\n      return exp((x * x) * coeff);\n    }\n\n    void main() {\n      vec2 centerCoord = v_texCoord;\n      vec3 centerColor = texture(u_inputFrame, centerCoord).rgb;\n      float newVal = 0.0;\n\n      float spaceWeight = 0.0;\n      float colorWeight = 0.0;\n      float totalWeight = 0.0;\n\n      // Subsample kernel space.\n      for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {\n        for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {\n          vec2 shift = vec2(j, i) * u_texelSize;\n          vec2 coord = vec2(centerCoord + shift);\n          vec3 frameColor = texture(u_inputFrame, coord).rgb;\n          float outVal = texture(u_segmentationMask, coord).a;\n\n          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);\n          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);\n          totalWeight += spaceWeight * colorWeight;\n\n          newVal += spaceWeight * colorWeight * outVal;\n        }\n      }\n      newVal /= totalWeight;\n\n      outColor = vec4(vec3(0.0), newVal);\n    }\n  "])));
     var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], segmentationWidth = _a[0], segmentationHeight = _a[1];
     var outputWidth = canvas.width, outputHeight = canvas.height;
     var texelWidth = 1 / outputWidth;
     var texelHeight = 1 / outputHeight;
-    var fragmentShader = webglHelper_1.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = webglHelper_1.createPiplelineStageProgram(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
+    var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
     var inputFrameLocation = gl.getUniformLocation(program, 'u_inputFrame');
     var segmentationMaskLocation = gl.getUniformLocation(program, 'u_segmentationMask');
     var texelSizeLocation = gl.getUniformLocation(program, 'u_texelSize');
@@ -1289,16 +1293,16 @@ exports.buildLoadSegmentationStage = void 0;
 var segmentationHelper_1 = require("../helpers/segmentationHelper");
 var webglHelper_1 = require("../helpers/webglHelper");
 function buildLoadSegmentationStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite, outputTexture) {
-    var fragmentShaderSource = webglHelper_1.glsl(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).r;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).r;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).r;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).r;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "
         // TFLite memory will be accessed as float32
     ])));
     // TFLite memory will be accessed as float32
     var tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
     var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], segmentationWidth = _a[0], segmentationHeight = _a[1];
-    var fragmentShader = webglHelper_1.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = webglHelper_1.createPiplelineStageProgram(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
+    var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
     var inputLocation = gl.getUniformLocation(program, 'u_inputSegmentation');
-    var inputTexture = webglHelper_1.createTexture(gl, gl.R32F, segmentationWidth, segmentationHeight);
+    var inputTexture = (0, webglHelper_1.createTexture)(gl, gl.R32F, segmentationWidth, segmentationHeight);
     var frameBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, outputTexture, 0);
@@ -1335,17 +1339,17 @@ exports.buildResizingStage = void 0;
 var segmentationHelper_1 = require("../helpers/segmentationHelper");
 var webglHelper_1 = require("../helpers/webglHelper");
 function buildResizingStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite) {
-    var fragmentShaderSource = webglHelper_1.glsl(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      outColor = texture(u_inputFrame, v_texCoord);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      outColor = texture(u_inputFrame, v_texCoord);\n    }\n  "
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      outColor = texture(u_inputFrame, v_texCoord);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      outColor = texture(u_inputFrame, v_texCoord);\n    }\n  "
         // TFLite memory will be accessed as float32
     ])));
     // TFLite memory will be accessed as float32
     var tfliteInputMemoryOffset = tflite._getInputMemoryOffset() / 4;
     var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], outputWidth = _a[0], outputHeight = _a[1];
     var outputPixelCount = outputWidth * outputHeight;
-    var fragmentShader = webglHelper_1.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = webglHelper_1.createPiplelineStageProgram(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
+    var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
     var inputFrameLocation = gl.getUniformLocation(program, 'u_inputFrame');
-    var outputTexture = webglHelper_1.createTexture(gl, gl.RGBA8, outputWidth, outputHeight);
+    var outputTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, outputWidth, outputHeight);
     var frameBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, outputTexture, 0);
@@ -1358,7 +1362,7 @@ function buildResizingStage(gl, vertexShader, positionBuffer, texCoordBuffer, se
         gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         // Downloads pixels asynchronously from GPU while rendering the current frame
-        webglHelper_1.readPixelsAsync(gl, 0, 0, outputWidth, outputHeight, gl.RGBA, gl.UNSIGNED_BYTE, outputPixels);
+        (0, webglHelper_1.readPixelsAsync)(gl, 0, 0, outputWidth, outputHeight, gl.RGBA, gl.UNSIGNED_BYTE, outputPixels);
         for (var i = 0; i < outputPixelCount; i++) {
             var tfliteIndex = tfliteInputMemoryOffset + i * 3;
             var outputIndex = i * 4;
@@ -1399,7 +1403,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -1431,11 +1435,11 @@ var loadSegmentationStage_1 = require("./loadSegmentationStage");
 var resizingStage_1 = require("./resizingStage");
 function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, segmentationConfig, canvas, tflite, benchmark, debounce) {
     var shouldRunInference = true;
-    var vertexShaderSource = webglHelper_1.glsl(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      gl_Position = vec4(a_position, 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "], ["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      gl_Position = vec4(a_position, 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "])));
+    var vertexShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      gl_Position = vec4(a_position, 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "], ["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      gl_Position = vec4(a_position, 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "])));
     var frameWidth = sourcePlayback.width, frameHeight = sourcePlayback.height;
     var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], segmentationWidth = _a[0], segmentationHeight = _a[1];
     var gl = canvas.getContext('webgl2');
-    var vertexShader = webglHelper_1.compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var vertexShader = (0, webglHelper_1.compileShader)(gl, gl.VERTEX_SHADER, vertexShaderSource);
     var vertexArray = gl.createVertexArray();
     gl.bindVertexArray(vertexArray);
     var positionBuffer = gl.createBuffer();
@@ -1455,14 +1459,14 @@ function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     // TODO Rename segmentation and person mask to be more specific
-    var segmentationTexture = webglHelper_1.createTexture(gl, gl.RGBA8, segmentationWidth, segmentationHeight);
-    var personMaskTexture = webglHelper_1.createTexture(gl, gl.RGBA8, frameWidth, frameHeight);
-    var resizingStage = resizingStage_1.buildResizingStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite);
-    var loadSegmentationStage = loadSegmentationStage_1.buildLoadSegmentationStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite, segmentationTexture);
-    var jointBilateralFilterStage = jointBilateralFilterStage_1.buildJointBilateralFilterStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationTexture, segmentationConfig, personMaskTexture, canvas);
+    var segmentationTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, segmentationWidth, segmentationHeight);
+    var personMaskTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, frameWidth, frameHeight);
+    var resizingStage = (0, resizingStage_1.buildResizingStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite);
+    var loadSegmentationStage = (0, loadSegmentationStage_1.buildLoadSegmentationStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite, segmentationTexture);
+    var jointBilateralFilterStage = (0, jointBilateralFilterStage_1.buildJointBilateralFilterStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationTexture, segmentationConfig, personMaskTexture, canvas);
     var backgroundStage = backgroundConfig.type === 'blur'
-        ? backgroundBlurStage_1.buildBackgroundBlurStage(gl, vertexShader, positionBuffer, texCoordBuffer, personMaskTexture, canvas)
-        : backgroundImageStage_1.buildBackgroundImageStage(gl, positionBuffer, texCoordBuffer, personMaskTexture, backgroundImage, canvas);
+        ? (0, backgroundBlurStage_1.buildBackgroundBlurStage)(gl, vertexShader, positionBuffer, texCoordBuffer, personMaskTexture, canvas)
+        : (0, backgroundImageStage_1.buildBackgroundImageStage)(gl, positionBuffer, texCoordBuffer, personMaskTexture, backgroundImage, canvas);
     function render() {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -1543,7 +1547,7 @@ var WebGL2PipelineType;
 (function (WebGL2PipelineType) {
     WebGL2PipelineType["Blur"] = "blur";
     WebGL2PipelineType["Image"] = "image";
-})(WebGL2PipelineType = exports.WebGL2PipelineType || (exports.WebGL2PipelineType = {}));
+})(WebGL2PipelineType || (exports.WebGL2PipelineType = WebGL2PipelineType = {}));
 /**
  * ImageFit specifies the positioning of an image inside a viewport.
  */
@@ -1568,7 +1572,7 @@ var ImageFit;
      * Ignore height and width and use the original size.
      */
     ImageFit["None"] = "None";
-})(ImageFit = exports.ImageFit || (exports.ImageFit = {}));
+})(ImageFit || (exports.ImageFit = ImageFit = {}));
 /**
  * Specifies which pipeline to use when processing video frames.
  */
@@ -1588,7 +1592,7 @@ var Pipeline;
      * for reference.
      */
     Pipeline["WebGL2"] = "WebGL2";
-})(Pipeline = exports.Pipeline || (exports.Pipeline = {}));
+})(Pipeline || (exports.Pipeline = Pipeline = {}));
 
 },{}],17:[function(require,module,exports){
 "use strict";
@@ -1717,6 +1721,6 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '2.0.0';
+exports.version = '2.1.0-rc1';
 
 },{}]},{},[2]);
