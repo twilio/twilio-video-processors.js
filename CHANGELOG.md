@@ -1,3 +1,8 @@
+2.1.0 (in progress)
+===================
+
+* Previously, the VideoProcessors SDK failed to compile with TypeScript 5.x. This release contains changes to support TypeScript 5.x.
+
 2.0.0 (March 21, 2023)
 ======================
 
