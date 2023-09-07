@@ -1,7 +1,6 @@
 {
   "entryPoints": ["lib/index.ts"],
   "exclude": [
-    "lib/index.ts",
     "tests/**/*"
   ],
   "out": "dist/docs"
