@@ -8,8 +8,8 @@ Twilio Video Processors is a collection of video processing tools which can be u
 
 The following Video Processors are provided to apply transformations and filters to a person's background. You can also use them as a reference for creating your own Video Processors that can be used with [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js).
 
-- [Virtual Background](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
-- [Background Blur](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)
+- [Virtual Background](https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html)
+- [Background Blur](https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html)
 
 ## Prerequisites
 
@@ -53,15 +53,15 @@ You can also copy `twilio-video-processors.js` from the `dist/build` folder and 
 
 ### Assets
 
-In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so they can be loaded properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
+In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so they can be loaded properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/VirtualBackgroundProcessorOptions.html#assetsPath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
 
 ## Usage
 
-These processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landscape Model](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) and requires [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. We recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.23.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.
+These processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landscape Model](https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview) and requires [WebAssembly SIMD](https://v8.dev/features/simd) support in order to achieve the best performance. We recommend that, when calling [Video.createLocalVideoTrack](https://sdk.twilio.com/js/video/releases/2.28.0/docs/module-twilio-video.html#.createLocalVideoTrack__anchor), the video capture constraints be set to `24 fps` frame rate with `640x480` capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.
 
 ## Best Practice
 
 Please check out the following pages for best practice.
 
-* [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html)
-* [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html)
+* [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html)
+* [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html)
