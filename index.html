@@ -16,8 +16,8 @@
 <p>&nbsp;&nbsp; <a href="https://twilio.github.io/twilio-video-processors.js/examples/virtualbackground/">See it live here!</a></p>
 <a id="md:features" class="tsd-anchor"></a><h2><a href="#md:features">Features</a></h2><p>The following Video Processors are provided to apply transformations and filters to a person&#39;s background. You can also use them as a reference for creating your own Video Processors that can be used with <a href="https://github.com/twilio/twilio-video.js">Twilio Video JavaScript SDK</a>.</p>
 <ul>
-<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html">Virtual Background</a></li>
-<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html">Background Blur</a></li>
+<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html">Virtual Background</a></li>
+<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html">Background Blur</a></li>
 </ul>
 <a id="md:prerequisites" class="tsd-anchor"></a><h2><a href="#md:prerequisites">Prerequisites</a></h2><ul>
 <li><a href="https://github.com/twilio/twilio-video.js">Twilio Video JavaScript SDK</a> (v2.15+)</li>
@@ -37,12 +37,12 @@
 <p> Using this method, <code>twilio-video-processors.js</code> will set a browser global:</p>
 <pre><code class="language-ts"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">VideoProcessors</span><span class="hl-1"> = </span><span class="hl-0">Twilio</span><span class="hl-1">.</span><span class="hl-0">VideoProcessors</span><span class="hl-1">;</span>
 </code><button>Copy</button></pre>
-<a id="md:assets" class="tsd-anchor"></a><h3><a href="#md:assets">Assets</a></h3><p>In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so they can be loaded properly. These files can be downloaded from the <code>dist/build</code> folder. Check the <a href="https://twilio.github.io/twilio-video-processors.js/interfaces/virtualbackgroundprocessoroptions.html#assetspath">API docs</a> for details and the <a href="https://github.com/twilio/twilio-video-processors.js/tree/master/examples">examples</a> folder for reference.</p>
-<a id="md:usage" class="tsd-anchor"></a><h2><a href="#md:usage">Usage</a></h2><p>These processors run TensorFlow Lite using <a href="https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview">MediaPipe Selfie Segmentation Landscape Model</a> and requires <a href="https://v8.dev/features/simd">WebAssembly SIMD</a> support in order to achieve the best performance. We recommend that, when calling <a href="https://sdk.twilio.com/js/video/releases/2.23.1/docs/module-twilio-video.html#.createLocalVideoTrack__anchor">Video.createLocalVideoTrack</a>, the video capture constraints be set to <code>24 fps</code> frame rate with <code>640x480</code> capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.</p>
+<a id="md:assets" class="tsd-anchor"></a><h3><a href="#md:assets">Assets</a></h3><p>In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so they can be loaded properly. These files can be downloaded from the <code>dist/build</code> folder. Check the <a href="https://twilio.github.io/twilio-video-processors.js/interfaces/VirtualBackgroundProcessorOptions.html#assetsPath">API docs</a> for details and the <a href="https://github.com/twilio/twilio-video-processors.js/tree/master/examples">examples</a> folder for reference.</p>
+<a id="md:usage" class="tsd-anchor"></a><h2><a href="#md:usage">Usage</a></h2><p>These processors run TensorFlow Lite using <a href="https://drive.google.com/file/d/1dCfozqknMa068vVsO2j_1FgZkW_e3VWv/preview">MediaPipe Selfie Segmentation Landscape Model</a> and requires <a href="https://v8.dev/features/simd">WebAssembly SIMD</a> support in order to achieve the best performance. We recommend that, when calling <a href="https://sdk.twilio.com/js/video/releases/2.28.0/docs/module-twilio-video.html#.createLocalVideoTrack__anchor">Video.createLocalVideoTrack</a>, the video capture constraints be set to <code>24 fps</code> frame rate with <code>640x480</code> capture dimensions. Higher resolutions can still be used for increased accuracy, but may degrade performance, resulting in a lower output frame rate on low powered devices.</p>
 <a id="md:best-practice" class="tsd-anchor"></a><h2><a href="#md:best-practice">Best Practice</a></h2><p>Please check out the following pages for best practice.</p>
 <ul>
-<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/virtualbackgroundprocessor.html">VirtualBackgroundProcessor</a></li>
-<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/gaussianblurbackgroundprocessor.html">GaussianBlurBackgroundProcessor</a></li>
+<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html">VirtualBackgroundProcessor</a></li>
+<li><a href="https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html">GaussianBlurBackgroundProcessor</a></li>
 </ul>
 </div></div>
 <div class="col-sidebar">
