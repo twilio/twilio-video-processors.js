@@ -50,15 +50,12 @@ export function buildJointBilateralFilterStage(
       float colorWeight = 0.0;
       float totalWeight = 0.0;
 
-      if (centerSegAlpha <= 0.0) {
-        vec2 rightCoord = vec2(centerCoord + vec2(u_radius, 0) * u_texelSize);
-        vec2 bottomCoord = vec2(centerCoord + vec2(0, u_radius) * u_texelSize);
-        float rightSegAlpha = texture(u_segmentationMask, rightCoord).a;
-        float bottomSegAlpha = texture(u_segmentationMask, bottomCoord).a;
-        centerSegAlpha = rightSegAlpha + bottomSegAlpha;
-      }
-      
-      if (centerSegAlpha <= 0.0) {
+      vec2 rightCoord = vec2(centerCoord + vec2(u_radius, 0) * u_texelSize);
+      vec2 bottomCoord = vec2(centerCoord + vec2(0, u_radius) * u_texelSize);
+      float rightSegAlpha = texture(u_segmentationMask, rightCoord).a;
+      float bottomSegAlpha = texture(u_segmentationMask, bottomCoord).a;
+
+      if (centerSegAlpha == rightSegAlpha && centerSegAlpha == bottomSegAlpha) {
         outColor = vec4(vec3(0.0), centerSegAlpha);
       } else {
         for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {
