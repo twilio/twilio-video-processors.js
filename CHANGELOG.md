@@ -1,5 +1,5 @@
-2.1.0 (in progress)
-===================
+2.1.0 (December 12, 2023)
+=========================
 
 * Previously, the VideoProcessors SDK failed to compile with TypeScript 5.x. This release contains changes to support TypeScript 5.x.
 * Fixed a bug where WebGL2-based VideoProcessors sometimes generated very low output fps, especially on low-powered Intel graphics cards. 
