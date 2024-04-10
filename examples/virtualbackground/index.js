@@ -1,42 +1,67 @@
 'use strict';
 
-const Video = Twilio.Video;
-const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported, Pipeline } = Twilio.VideoProcessors;
-const bootstrap = window.bootstrap;
+const {
+  Twilio: {
+    Video,
+    VideoProcessors: {
+      GaussianBlurBackgroundProcessor,
+      Pipeline: { WebGL2 },
+      VirtualBackgroundProcessor,
+      isSupported,
+    },
+  },
+  bootstrap,
+} = window;
 
-const videoInput = document.querySelector('video#video-input');
-const errorMessage = document.querySelector('div.modal-body');
-const errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
-const stats = document.querySelector('#stats');
+const $errorMessage = document.querySelector('div.modal-body');
+const $errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
+const $stats = document.querySelector('#stats');
+const $videoInput = document.querySelector('video#video-input');
 
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-const params = Object.fromEntries(new URLSearchParams(location.search).entries());
-const showStats = params.stats === 'true';
+const params = {
+  capFramerate: '24',
+  capResolution: '640x480',
+  debounce: 'no',
+  pipeline: WebGL2,
+  stats: 'show',
+  ...Object.fromEntries(new URLSearchParams(location.search).entries())
+};
 
 const assetsPath = '';
-const pipeline = Pipeline.WebGL2;
-// debounce will set to true if safari and on blur.
-// See GaussianBlurBackgroundProcessor initialization below
-const debounce = isSafari;
+const {
+  capFramerate,
+  capResolution,
+  debounce,
+  pipeline,
+  stats,
+} = params;
+
 const addProcessorOptions = {
   inputFrameBufferType: 'video',
-  outputFrameBufferContextType: 'webgl2',
-};
-const captureConfig = {
-  width: isSafari ? 640 : 1280,
-  height: isSafari ? 480 : 720,
-  frameRate: 24,
+  outputFrameBufferContextType: pipeline === WebGL2 ? 'webgl2' : '2d',
 };
 
-videoInput.style.maxWidth = `${captureConfig.width}px`;
+const processorOptions = {
+  assetsPath,
+  debounce: debounce === 'yes',
+  pipeline,
+};
+
+const capDimensions = capResolution.split('x').map(Number);
+
+const captureConfig = {
+  frameRate: Number(capFramerate),
+  height: capDimensions[1],
+  width: capDimensions[0],
+};
 
 let videoTrack;
 let gaussianBlurProcessor;
 let virtualBackgroundProcessor;
 
 if(!isSupported){
-  errorMessage.textContent = 'This browser is not supported.';
-  errorModal.show();
+  $errorMessage.textContent = 'This browser is not supported.';
+  $errorModal.show();
 }
 
 const loadImage = (name) =>
@@ -47,7 +72,7 @@ const loadImage = (name) =>
   });
 
 Video.createLocalVideoTrack(captureConfig).then((track) => {
-  track.attach(videoInput);
+  track.attach($videoInput);
   return videoTrack = track;
 });
 
@@ -60,22 +85,16 @@ const setProcessor = (processor, track) => {
   }
 };
 
-const handleButtonClick = async bg => {
+const handleButtonClick = async (bg) => {
   if (!gaussianBlurProcessor) {
-    gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
-      assetsPath,
-      pipeline,
-      debounce: true,
-    });
+    gaussianBlurProcessor = new GaussianBlurBackgroundProcessor(processorOptions);
     await gaussianBlurProcessor.loadModel();
   }
   if (!virtualBackgroundProcessor) {
     const backgroundImage = await loadImage('living_room');
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
-      assetsPath,
       backgroundImage,
-      pipeline,
-      debounce,
+      ...processorOptions,
     });
     await virtualBackgroundProcessor.loadModel();
   }
@@ -89,24 +108,37 @@ const handleButtonClick = async bg => {
   }
 };
 
-document.querySelectorAll('.img-btn').forEach(btn => btn.onclick = () => handleButtonClick(btn.id));
+document.querySelectorAll('.img-btn').forEach(btn =>
+  btn.onclick = () => handleButtonClick(btn.id));
 
-setInterval(() => {
-  if (!videoTrack || !videoTrack.processor) {
-    stats.style.display = 'none';
-    return;
-  }
-  if (showStats) {
-    stats.style.display = 'block';
-  }
-  const b = videoTrack.processor._benchmark;
-  stats.innerText = `input fps: ${videoTrack.mediaStreamTrack.getSettings().frameRate}`;
-  stats.innerText += `\noutput fps: ${b.getRate('totalProcessingDelay').toFixed(2)}`;
-  ['segmentationDelay', 'inputImageResizeDelay', 'imageCompositionDelay', 'processFrameDelay', 'captureFrameDelay'].forEach(stat => {
-    try {
-      stats.innerText += `\n${stat}: ${b.getAverageDelay(stat).toFixed(2)}`;
-    } catch {
-
+if (stats === 'show') {
+  $stats.style.display = 'block';
+  setInterval(() => {
+    if (!videoTrack) {
+      return;
     }
-  });
-}, 1000);
+    const { frameRate, height, width } = videoTrack.mediaStreamTrack.getSettings();
+    $stats.innerText = `Capture dimensions (in): ${width} x ${height}`;
+    $stats.innerText += `\nFrame rate (in): ${frameRate.toFixed(2)} fps`;
+
+    if (!videoTrack.processor) {
+      return;
+    }
+    const { processor: { _benchmark: b } } = videoTrack;    
+    [
+      ['Frame rate (out)', 'totalProcessingDelay', 'fps', 'getRate'],
+      ['Capture delay', 'captureFrameDelay'],
+      ['Resize delay', 'inputImageResizeDelay'],
+      ['Segmentation delay ', 'segmentationDelay'],
+      ['Composition delay', 'imageCompositionDelay'],
+      ['Frame processing delay', 'processFrameDelay'],
+      ['Total processing delay', 'totalProcessingDelay']
+    ].forEach(([name, stat, unit = 'ms', getStat = 'getAverageDelay']) => {
+      try {
+        $stats.innerText += `\n${name}: ${b[getStat](stat).toFixed(2)} ${unit}`;
+      } catch (e) {
+        /* console.error(e); */
+      }
+    });
+  }, 1000);
+}

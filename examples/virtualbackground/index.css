@@ -10,11 +10,12 @@ body {
 
 #stats {
   display: none;
-  position: fixed;
-  background-color: white;
-  top: 42px;
-  left: 22px;
+  position: absolute;
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.5);
+  top: calc(1.775rem + .3vw);
   padding: 10px;
+  font-size: 0.7em;
 }
 
 div.img-btn {
@@ -87,8 +88,11 @@ div.video-container {
 }
 
 video {
-  width: 100%    !important;
-  height: auto   !important;
+  border-radius: 5px;
+  max-width: 1280px !important;
+  min-width: 640px !important;
+  height: auto !important;
+  object-fit: cover;
 }
 
 div.col-sm-8, div.col-sm-4 {
