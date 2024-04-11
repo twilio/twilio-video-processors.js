@@ -16,7 +16,7 @@ export function buildResizingStage(
   positionBuffer: WebGLBuffer,
   texCoordBuffer: WebGLBuffer,
   segmentationConfig: SegmentationConfig,
-  tflite: any
+  tflite: any,
 ) {
   const fragmentShaderSource = glsl`#version 300 es
 
@@ -65,12 +65,12 @@ export function buildResizingStage(
     outputTexture,
     0
   )
-  const outputPixels = new Uint8Array(outputPixelCount * 4)
+  const outputPixels = new Uint8ClampedArray(outputPixelCount * 4)
 
   gl.useProgram(program)
   gl.uniform1i(inputFrameLocation, 0)
 
-  function render() {
+  function render(): Uint8ClampedArray {
     gl.viewport(0, 0, outputWidth, outputHeight)
     gl.useProgram(program)
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer)
@@ -95,6 +95,8 @@ export function buildResizingStage(
       tflite.HEAPF32[tfliteIndex + 1] = outputPixels[outputIndex + 1] / 255
       tflite.HEAPF32[tfliteIndex + 2] = outputPixels[outputIndex + 2] / 255
     }
+
+    return outputPixels;
   }
 
   function cleanUp() {

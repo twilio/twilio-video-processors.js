@@ -20,7 +20,7 @@ const $videoInput = document.querySelector('video#video-input');
 
 const params = {
   capFramerate: '24',
-  capResolution: '640x480',
+  capResolution: '1280x720',
   debounce: 'no',
   pipeline: WebGL2,
   stats: 'show',

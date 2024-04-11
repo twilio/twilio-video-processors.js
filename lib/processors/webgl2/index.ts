@@ -5,5 +5,9 @@
  * Twilio's Video Processor
  */
 import { buildWebGL2Pipeline } from './pipelines/webgl2Pipeline'
+import { buildWebGL2ResizePipeline } from './pipelines/webgl2ResizePipeline'
 
-export { buildWebGL2Pipeline };
+export {
+  buildWebGL2Pipeline,
+  buildWebGL2ResizePipeline,
+};
