@@ -1,16 +1,32 @@
-import { SegmentationConfig } from '../helpers/segmentationHelper'
+import { Dimensions } from '../../../types'
 import { SourcePlayback } from '../helpers/sourceHelper'
-import { compileShader, glsl } from '../helpers/webglHelper'
-import { buildResizingStage } from './resizingStage'
 
-export function buildWebGL2ResizePipeline(
+import {
+  compileShader,
+  createTexture,
+  glsl,
+} from '../helpers/webglHelper'
+
+import { buildResizingStageCanvas2D } from './resizingStageCanvas2D'
+
+export function buildWebGL2PipelineCanvas2D (
   sourcePlayback: SourcePlayback,
-  segmentationConfig: SegmentationConfig,
+  outputDimensions: Dimensions,
   canvas: HTMLCanvasElement,
-  tflite: any,
-  benchmark: any,
+  shouldUpscale: boolean
 ) {
-  const vertexShaderSource = glsl`#version 300 es
+  const vertexShaderSource = shouldUpscale ? glsl`#version 300 es
+
+    in vec2 a_position;
+    in vec2 a_texCoord;
+
+    out vec2 v_texCoord;
+
+    void main() {
+      gl_Position = vec4(a_position, 0.0, 1.0);
+      v_texCoord = vec2(a_texCoord.s, 1.0 - a_texCoord.t);
+    }
+  ` : glsl`#version 300 es
 
     in vec2 a_position;
     in vec2 a_texCoord;
@@ -22,7 +38,6 @@ export function buildWebGL2ResizePipeline(
       v_texCoord = a_texCoord;
     }
   `
-
   const gl = canvas.getContext('webgl2')!
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
   const vertexArray = gl.createVertexArray()
@@ -55,17 +70,24 @@ export function buildWebGL2ResizePipeline(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 
-  const resizingStage = buildResizingStage(
+  const { height, width } = outputDimensions
+  const resizedImageTexture = createTexture(
+    gl,
+    gl.RGBA8,
+    width,
+    height
+  )
+  const resizingStage = buildResizingStageCanvas2D(
     gl,
     vertexShader,
     positionBuffer,
     texCoordBuffer,
-    segmentationConfig,
-    tflite
+    outputDimensions,
+    resizedImageTexture,
+    shouldUpscale
   )
 
   function render(): Uint8ClampedArray {
-    benchmark.start('inputImageResizeDelay')
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
@@ -84,10 +106,7 @@ export function buildWebGL2ResizePipeline(
     )
 
     gl.bindVertexArray(vertexArray)
-
-    const outputPixels = resizingStage.render()
-    benchmark.end('inputImageResizeDelay')
-    return outputPixels;
+    return resizingStage.render()
   }
 
   function cleanUp() {

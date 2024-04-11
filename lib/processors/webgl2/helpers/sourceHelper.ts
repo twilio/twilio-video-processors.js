@@ -4,7 +4,7 @@ export type SourceConfig = {
 }
 
 export type SourcePlayback = {
-  htmlElement: HTMLImageElement | HTMLVideoElement
+  htmlElement: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement
   width: number
   height: number
 }
