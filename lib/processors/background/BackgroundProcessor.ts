@@ -352,6 +352,7 @@ export abstract class BackgroundProcessor extends Processor {
       this._backgroundImage,
       { type: this._getWebGL2PipelineType() },
       { inputResolution: `${inferenceWidth}x${inferenceHeight}` },
+      this._maskContext as CanvasRenderingContext2D,
       this._outputCanvas!,
       this._tflite,
       this._benchmark,

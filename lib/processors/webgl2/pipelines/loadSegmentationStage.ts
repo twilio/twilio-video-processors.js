@@ -15,6 +15,7 @@ export function buildLoadSegmentationStage(
   positionBuffer: WebGLBuffer,
   texCoordBuffer: WebGLBuffer,
   segmentationConfig: SegmentationConfig,
+  maskContext: CanvasRenderingContext2D,
   tflite: any,
   outputTexture: WebGLTexture
 ) {
@@ -29,7 +30,7 @@ export function buildLoadSegmentationStage(
     out vec4 outColor;
 
     void main() {
-      float segmentation = texture(u_inputSegmentation, v_texCoord).r;
+      float segmentation = texture(u_inputSegmentation, v_texCoord).a;
       outColor = vec4(vec3(0.0), segmentation);
     }
   `
@@ -56,7 +57,7 @@ export function buildLoadSegmentationStage(
   const inputLocation = gl.getUniformLocation(program, 'u_inputSegmentation')
   const inputTexture = createTexture(
     gl,
-    gl.R32F,
+    gl.RGBA8,
     segmentationWidth,
     segmentationHeight
   )
@@ -74,7 +75,23 @@ export function buildLoadSegmentationStage(
   gl.useProgram(program)
   gl.uniform1i(inputLocation, 1)
 
+  const segmentationMaskPixels = segmentationWidth * segmentationHeight
+  const segmentationMaskData = new ImageData(
+    new Uint8ClampedArray(segmentationMaskPixels * 4),
+    segmentationWidth,
+    segmentationHeight
+  )
+
+  function loadSegmentationMask() {
+    for (let i = 0; i < segmentationMaskPixels; i++) {
+      const p = tflite.HEAPF32[tfliteOutputMemoryOffset + i]
+      segmentationMaskData.data[i * 4 + 3] = Math.round(p * 255)
+    }
+    maskContext.putImageData(segmentationMaskData, 0, 0)
+  }
+
   function render() {
+    loadSegmentationMask()
     gl.viewport(0, 0, segmentationWidth, segmentationHeight)
     gl.useProgram(program)
     gl.activeTexture(gl.TEXTURE1)
@@ -86,10 +103,9 @@ export function buildLoadSegmentationStage(
       0,
       segmentationWidth,
       segmentationHeight,
-      gl.RED,
-      gl.FLOAT,
-      tflite.HEAPF32,
-      tfliteOutputMemoryOffset
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      maskContext.canvas
     )
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)

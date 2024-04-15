@@ -17,13 +17,13 @@ import {
 import { buildJointBilateralFilterStage } from './jointBilateralFilterStage'
 import { buildLoadSegmentationStage } from './loadSegmentationStage'
 import { buildResizingStage } from './resizingStage'
-import { buildSoftmaxStage } from './softmaxStage'
 
 export function buildWebGL2Pipeline(
   sourcePlayback: SourcePlayback,
   backgroundImage: HTMLImageElement | null,
   backgroundConfig: BackgroundConfig,
   segmentationConfig: SegmentationConfig,
+  maskContext: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   tflite: any,
   benchmark: any,
@@ -48,6 +48,9 @@ export function buildWebGL2Pipeline(
   const [segmentationWidth, segmentationHeight] = inputResolutions[
     segmentationConfig.inputResolution
   ]
+
+  maskContext.canvas.height = segmentationHeight
+  maskContext.canvas.width = segmentationWidth
 
   const gl = canvas.getContext('webgl2')!
 
@@ -111,6 +114,7 @@ export function buildWebGL2Pipeline(
     positionBuffer,
     texCoordBuffer,
     segmentationConfig,
+    maskContext,
     tflite,
     segmentationTexture
   );
