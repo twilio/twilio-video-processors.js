@@ -96,7 +96,6 @@ export abstract class BackgroundProcessor extends Processor {
   private _benchmark: Benchmark;
   private _debounce: boolean = true;
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
-  private _inputCanvas: HTMLCanvasElement;
   private _inputMemoryOffset: number = 0;
   // tslint:disable-next-line no-unused-variable
   private _isSimdEnabled: boolean | null = null;
@@ -129,7 +128,6 @@ export abstract class BackgroundProcessor extends Processor {
     this._pipeline = options.pipeline! || this._pipeline;
 
     this._benchmark = new Benchmark();
-    this._inputCanvas = document.createElement('canvas');
     this._maskCanvas =  typeof window.OffscreenCanvas !== 'undefined' ? new window.OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
 
@@ -268,13 +266,10 @@ export abstract class BackgroundProcessor extends Processor {
     if (this._pipeline === Pipeline.WebGL2) {
       this._webgl2Pipeline?.render();
     } else {
-      // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
-      if (this._inputCanvas.width !== inferenceWidth) {
-        this._inputCanvas.width = inferenceWidth;
+      if (this._maskCanvas.width !== inferenceWidth) {
         this._maskCanvas.width = inferenceWidth;
       }
-      if (this._inputCanvas.height !== inferenceHeight) {
-        this._inputCanvas.height = inferenceHeight;
+      if (this._maskCanvas.height !== inferenceHeight) {
         this._maskCanvas.height = inferenceHeight;
       }
 
