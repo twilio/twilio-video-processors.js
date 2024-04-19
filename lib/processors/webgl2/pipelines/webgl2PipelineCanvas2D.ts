@@ -14,8 +14,8 @@ import { buildResizingStageCanvas2D } from './resizingStageCanvas2D'
 export function buildWebGL2PipelineCanvas2D(
   sourcePlayback: SourcePlayback,
   downscaleDimensions: Dimensions,
-  downscaleCanvas: HTMLCanvasElement,
-  upscaleCanvas: HTMLCanvasElement
+  upscaleCanvas: HTMLCanvasElement,
+  downscaleCanvas?: HTMLCanvasElement,
 ) {
   const vertexShaderSources = {
     downscale: glsl`#version 300 es
@@ -190,7 +190,7 @@ export function buildWebGL2PipelineCanvas2D(
     downscaledImageTexture
   )
 
-  const upscaledResizingStage = buildJointBilateralFilterStageCanvas2D(
+  const upscaledResizingStage = downscaleCanvas && buildJointBilateralFilterStageCanvas2D(
     gl,
     vertexShaders.upscale,
     fragmentShaders.upscale,
@@ -233,16 +233,16 @@ export function buildWebGL2PipelineCanvas2D(
       0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      downscaleCanvas
+      downscaleCanvas!
     )
 
     gl.bindVertexArray(vertexArray)
-    upscaledResizingStage.render()
+    upscaledResizingStage!.render()
   }
 
   function cleanUp() {
     downscaledResizingStage.cleanUp()
-    upscaledResizingStage.cleanUp()
+    upscaledResizingStage?.cleanUp()
     gl.deleteTexture(inputFrameTexture)
     gl.deleteTexture(downscaledImageTexture)
     gl.deleteTexture(downscaledMaskImageTexture)
@@ -261,12 +261,19 @@ export function buildWebGL2PipelineCanvas2D(
     const { jointBilateralFilter = {} } = postProcessingConfig
     const { sigmaColor, sigmaSpace } = jointBilateralFilter
     if (typeof sigmaColor === 'number') {
-      upscaledResizingStage.updateSigmaColor(sigmaColor)
+      upscaledResizingStage!.updateSigmaColor(sigmaColor)
     }
     if (typeof sigmaSpace === 'number') {
-      upscaledResizingStage.updateSigmaSpace(sigmaSpace)
+      upscaledResizingStage!.updateSigmaSpace(sigmaSpace)
     }
   }
 
-  return { renderDownscale, renderUpscale, cleanUp, updatePostProcessingConfig }
+  return {
+    renderDownscale,
+    cleanUp,
+    ...(downscaleCanvas && {
+      renderUpscale,
+      updatePostProcessingConfig,
+    })
+  }
 }

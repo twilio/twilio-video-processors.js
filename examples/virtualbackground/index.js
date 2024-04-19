@@ -22,6 +22,7 @@ const params = {
   capFramerate: '24',
   capResolution: '1280x720',
   debounce: 'no',
+  maskUpdatePipeline: 'WebGL2',
   pipeline: WebGL2,
   stats: 'show',
   ...Object.fromEntries(new URLSearchParams(location.search).entries())
@@ -32,6 +33,7 @@ const {
   capFramerate,
   capResolution,
   debounce,
+  maskUpscalePipeline,
   pipeline,
   stats,
 } = params;
@@ -44,6 +46,7 @@ const addProcessorOptions = {
 const processorOptions = {
   assetsPath,
   debounce: debounce === 'yes',
+  maskUpscalePipeline,
   pipeline,
 };
 
