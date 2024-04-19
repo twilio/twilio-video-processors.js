@@ -185,24 +185,38 @@ export function buildWebGL2Pipeline(
   function updatePostProcessingConfig(
     postProcessingConfig: PostProcessingConfig
   ) {
-    jointBilateralFilterStage.updateSigmaSpace(
-      postProcessingConfig.jointBilateralFilter.sigmaSpace
-    )
-    jointBilateralFilterStage.updateSigmaColor(
-      postProcessingConfig.jointBilateralFilter.sigmaColor
-    )
+    const {
+      blendMode,
+      coverage,
+      lightWrapping,
+      jointBilateralFilter = {}
+    } = postProcessingConfig
 
+    const {
+      sigmaColor,
+      sigmaSpace
+    } = jointBilateralFilter
+
+    if (typeof sigmaColor === 'number') {
+      jointBilateralFilterStage.updateSigmaColor(sigmaColor)
+    }
+    if (typeof sigmaSpace === 'number') {
+      jointBilateralFilterStage.updateSigmaSpace(sigmaSpace)
+    }
+    if (Array.isArray(coverage)) {
+      if (backgroundConfig.type === 'blur' || backgroundConfig.type === 'image') {
+        backgroundStage.updateCoverage(coverage)
+      }
+    }
     if (backgroundConfig.type === 'image') {
       const backgroundImageStage = backgroundStage as BackgroundImageStage
-      backgroundImageStage.updateCoverage(postProcessingConfig.coverage)
-      backgroundImageStage.updateLightWrapping(
-        postProcessingConfig.lightWrapping
-      )
-      backgroundImageStage.updateBlendMode(postProcessingConfig.blendMode)
-    } else if (backgroundConfig.type === 'blur') {
-      const backgroundBlurStage = backgroundStage as BackgroundBlurStage
-      backgroundBlurStage.updateCoverage(postProcessingConfig.coverage)
-    } else {
+      if (typeof lightWrapping === 'number') {
+        backgroundImageStage.updateLightWrapping(lightWrapping)
+      }
+      if (typeof blendMode === 'string') {
+        backgroundImageStage.updateBlendMode(blendMode)
+      }
+    } else if (backgroundConfig.type !== 'blur') {
       // TODO Handle no background in a separate pipeline path
       const backgroundImageStage = backgroundStage as BackgroundImageStage
       backgroundImageStage.updateCoverage([0, 0.9999])
