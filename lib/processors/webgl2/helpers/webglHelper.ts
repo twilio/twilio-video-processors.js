@@ -9,7 +9,7 @@
  */
 export const glsl = String.raw
 
-export function createPiplelineStageProgram(
+export function createPipelineStageProgram(
   gl: WebGL2RenderingContext,
   vertexShader: WebGLShader,
   fragmentShader: WebGLShader,
@@ -68,7 +68,8 @@ export function createTexture(
   width: number,
   height: number,
   minFilter: GLint = gl.NEAREST,
-  magFilter: GLint = gl.NEAREST
+  magFilter: GLint = gl.NEAREST,
+  preallocateStorage: boolean = true
 ) {
   const texture = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -76,8 +77,24 @@ export function createTexture(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter)
-  gl.texStorage2D(gl.TEXTURE_2D, 1, internalformat, width, height)
+  if (preallocateStorage) {
+    gl.texStorage2D(gl.TEXTURE_2D, 1, internalformat, width, height)
+  }
   return texture
+}
+
+export function initBuffer(
+  gl: WebGL2RenderingContext,
+  data: number[],
+) {
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(data),
+    gl.STATIC_DRAW,
+  );
+  return buffer;
 }
 
 export async function readPixelsAsync(

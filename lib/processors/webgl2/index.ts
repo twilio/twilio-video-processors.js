@@ -4,6 +4,6 @@
  * It was modified and converted into a module to work with
  * Twilio's Video Processor
  */
-import { buildWebGL2Pipeline } from './pipelines/webgl2Pipeline'
+import { buildWebGL2Pipeline } from './pipelines/webgl2backgroundpipeline'
 
 export { buildWebGL2Pipeline };

@@ -1,6 +1,6 @@
 import {
   compileShader,
-  createPiplelineStageProgram,
+  createPipelineStageProgram,
   createTexture,
   glsl,
 } from '../helpers/webglHelper'
@@ -106,7 +106,7 @@ function buildBlurPass(
     gl.FRAGMENT_SHADER,
     fragmentShaderSource
   )
-  const program = createPiplelineStageProgram(
+  const program = createPipelineStageProgram(
     gl,
     vertexShader,
     fragmentShader,
@@ -245,7 +245,7 @@ function buildBlendPass(
     gl.FRAGMENT_SHADER,
     fragmentShaderSource
   )
-  const program = createPiplelineStageProgram(
+  const program = createPipelineStageProgram(
     gl,
     vertexShader,
     fragmentShader,

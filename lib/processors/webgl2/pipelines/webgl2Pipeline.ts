@@ -1,230 +1,345 @@
-import { BackgroundConfig } from '../helpers/backgroundHelper'
-import { PostProcessingConfig } from '../helpers/postProcessingHelper'
+import { Dimensions } from '../../../types'
 import {
-  inputResolutions,
-  SegmentationConfig,
-} from '../helpers/segmentationHelper'
-import { SourcePlayback } from '../helpers/sourceHelper'
-import { compileShader, createTexture, glsl } from '../helpers/webglHelper'
-import {
-  BackgroundBlurStage,
-  buildBackgroundBlurStage,
-} from './backgroundBlurStage'
-import {
-  BackgroundImageStage,
-  buildBackgroundImageStage,
-} from './backgroundImageStage'
-import { buildJointBilateralFilterStage } from './jointBilateralFilterStage'
-import { buildLoadSegmentationStage } from './loadSegmentationStage'
-import { buildResizingStage } from './resizingStage'
-import { buildSoftmaxStage } from './softmaxStage'
+  createPipelineStageProgram,
+  createTexture,
+  compileShader,
+  initBuffer,
+  readPixelsAsync
+} from '../helpers/webglHelper'
+import { Pipeline } from './pipeline'
 
-export function buildWebGL2Pipeline(
-  sourcePlayback: SourcePlayback,
-  backgroundImage: HTMLImageElement | null,
-  backgroundConfig: BackgroundConfig,
-  segmentationConfig: SegmentationConfig,
-  canvas: HTMLCanvasElement,
-  tflite: any,
-  benchmark: any,
-  debounce: boolean,
-) {
-  let shouldRunInference = true;
+class WebGL2PipelineInputStage implements Pipeline.Stage {
+  private _glOut: WebGL2RenderingContext
+  private _outputTexture: WebGLTexture
+  private _videoIn: HTMLVideoElement
 
-  const vertexShaderSource = glsl`#version 300 es
-
-    in vec2 a_position;
-    in vec2 a_texCoord;
-
-    out vec2 v_texCoord;
-
-    void main() {
-      gl_Position = vec4(a_position, 0.0, 1.0);
-      v_texCoord = a_texCoord;
-    }
-  `
-
-  const { width: frameWidth, height: frameHeight } = sourcePlayback
-  const [segmentationWidth, segmentationHeight] = inputResolutions[
-    segmentationConfig.inputResolution
-  ]
-
-  const gl = canvas.getContext('webgl2')!
-
-  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
-
-  const vertexArray = gl.createVertexArray()
-  gl.bindVertexArray(vertexArray)
-
-  const positionBuffer = gl.createBuffer()!
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0]),
-    gl.STATIC_DRAW
-  )
-
-  const texCoordBuffer = gl.createBuffer()!
-  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer)
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]),
-    gl.STATIC_DRAW
-  )
-
-  // We don't use texStorage2D here because texImage2D seems faster
-  // to upload video texture than texSubImage2D even though the latter
-  // is supposed to be the recommended way:
-  // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#use_texstorage_to_create_textures
-  const inputFrameTexture = gl.createTexture()
-  gl.bindTexture(gl.TEXTURE_2D, inputFrameTexture)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-
-  // TODO Rename segmentation and person mask to be more specific
-  const segmentationTexture = createTexture(
-    gl,
-    gl.RGBA8,
-    segmentationWidth,
-    segmentationHeight
-  )!
-  const personMaskTexture = createTexture(
-    gl,
-    gl.RGBA8,
-    frameWidth,
-    frameHeight
-  )!
-
-  const resizingStage = buildResizingStage(
-    gl,
-    vertexShader,
-    positionBuffer,
-    texCoordBuffer,
-    segmentationConfig,
-    tflite
-  )
-  const loadSegmentationStage = buildLoadSegmentationStage(
-    gl,
-    vertexShader,
-    positionBuffer,
-    texCoordBuffer,
-    segmentationConfig,
-    tflite,
-    segmentationTexture
-  );
-  const jointBilateralFilterStage = buildJointBilateralFilterStage(
-    gl,
-    vertexShader,
-    positionBuffer,
-    texCoordBuffer,
-    segmentationTexture,
-    segmentationConfig,
-    personMaskTexture,
-    canvas
-  )
-  const backgroundStage =
-    backgroundConfig.type === 'blur'
-      ? buildBackgroundBlurStage(
-          gl,
-          vertexShader,
-          positionBuffer,
-          texCoordBuffer,
-          personMaskTexture,
-          canvas
-        )
-      : buildBackgroundImageStage(
-          gl,
-          positionBuffer,
-          texCoordBuffer,
-          personMaskTexture,
-          backgroundImage,
-          canvas
-        )
-
-  async function render() {
-    benchmark.start('inputImageResizeDelay')
-    gl.clearColor(0, 0, 0, 0)
-    gl.clear(gl.COLOR_BUFFER_BIT)
-
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, inputFrameTexture)
-
-    // texImage2D seems faster than texSubImage2D to upload
-    // video texture
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      sourcePlayback.htmlElement
-    )
-
-    gl.bindVertexArray(vertexArray)
-
-    resizingStage.render()
-    benchmark.end('inputImageResizeDelay')
-
-    benchmark.start('segmentationDelay')
-    if (shouldRunInference) {
-      tflite._runInference()
-    }
-    if (debounce) {
-      shouldRunInference = !shouldRunInference;
-    }
-    benchmark.end('segmentationDelay')
-
-    benchmark.start('imageCompositionDelay')
-    loadSegmentationStage.render()
-    jointBilateralFilterStage.render()
-    backgroundStage.render()
-    benchmark.end('imageCompositionDelay')
-  }
-
-  function updatePostProcessingConfig(
-    postProcessingConfig: PostProcessingConfig
+  constructor(
+    videoIn: HTMLVideoElement,
+    glOut: WebGL2RenderingContext
   ) {
-    jointBilateralFilterStage.updateSigmaSpace(
-      postProcessingConfig.jointBilateralFilter.sigmaSpace
+    const {
+      videoHeight,
+      videoWidth
+    } = videoIn
+
+    this._glOut = glOut
+    this._outputTexture = createTexture(
+      glOut,
+      glOut.RGBA8,
+      videoWidth,
+      videoHeight,
+      glOut.NEAREST,
+      glOut.NEAREST,
+      false
+    )!
+    this._videoIn = videoIn
+  }
+
+  cleanup(): void {
+    const {
+      _glOut,
+      _outputTexture
+    } = this
+    _glOut.deleteTexture(_outputTexture)
+  }
+
+  render(): void {
+    const {
+      _glOut,
+      _outputTexture,
+      _videoIn
+    } = this
+
+    const {
+      videoHeight,
+      videoWidth
+    } = _videoIn
+
+    _glOut.viewport(0, 0, videoWidth, videoHeight)
+    _glOut.clearColor(0, 0, 0, 0)
+    _glOut.clear(_glOut.COLOR_BUFFER_BIT)
+    _glOut.activeTexture(_glOut.TEXTURE0)
+
+    _glOut.bindTexture(
+      _glOut.TEXTURE_2D,
+      _outputTexture
     )
-    jointBilateralFilterStage.updateSigmaColor(
-      postProcessingConfig.jointBilateralFilter.sigmaColor
+    _glOut.texImage2D(
+      _glOut.TEXTURE_2D,
+      0,
+      _glOut.RGBA,
+      _glOut.RGBA,
+      _glOut.UNSIGNED_BYTE,
+      _videoIn
+    )
+  }
+}
+
+class WebGL2PipelineProcessingStage implements Pipeline.Stage {
+  private _fragmentShader: WebGLSampler
+  private _glOut: WebGL2RenderingContext
+  private _inputTextureUnit: number
+  private _outputDimensions: Dimensions
+  private _outputFramebuffer: WebGLBuffer | null = null
+  private _outputTexture: WebGLTexture | null = null
+  private _outputTextureData: ImageData | null = null
+  private _outputTextureTransform: ((textureData: ImageData) => void) | null = null
+  private _positionBuffer: WebGLBuffer
+  private _program: WebGLProgram
+  private _texCoordBuffer: WebGLBuffer
+  private _vertexShader: WebGLShader
+
+  constructor(
+    inputConfig: {
+      textureName: string
+      textureUnit: number
+    },
+    outputConfig: {
+      fragmentShaderSource: string
+      glOut: WebGL2RenderingContext
+      height?: number
+      textureTransform?: (textureData: ImageData) => void
+      type: 'canvas' | 'texture'
+      uniformVars?: {
+        name: string
+        type: 'float' | 'int' | 'uint'
+        values: number[]
+      }[]
+      width?: number
+    }
+  ) {
+    const {
+      textureName,
+      textureUnit,
+    } = inputConfig
+
+    this._inputTextureUnit = textureUnit
+
+    const { glOut } = outputConfig
+    this._glOut = glOut
+
+    const {
+      fragmentShaderSource,
+      height = glOut.canvas.height,
+      textureTransform = null,
+      type: outputType,
+      uniformVars = [],
+      width = glOut.canvas.width
+    } = outputConfig
+
+    this._outputDimensions = {
+      height,
+      width
+    }
+    this._outputTextureTransform = textureTransform
+    if (textureTransform) {
+      this._outputTextureData = new ImageData(
+        width,
+        height
+      )
+    }
+
+    this._fragmentShader = compileShader(
+      glOut,
+      glOut.FRAGMENT_SHADER,
+      fragmentShaderSource
+    )
+    this._outputTextureTransform = textureTransform
+
+    const vertexShaderSource = `#version 300 es
+      in vec2 a_position;
+      in vec2 a_texCoord;
+
+      out vec2 v_texCoord;
+
+      void main() {
+        gl_Position = vec4(a_position${
+          outputType === 'canvas'
+            ? ' * vec2(1.0, -1.0)'
+            : ''
+        }, 0.0, 1.0);
+        v_texCoord = a_texCoord;
+      }
+    `
+
+    this._vertexShader = compileShader(
+      glOut,
+      glOut.VERTEX_SHADER,
+      vertexShaderSource
     )
 
-    if (backgroundConfig.type === 'image') {
-      const backgroundImageStage = backgroundStage as BackgroundImageStage
-      backgroundImageStage.updateCoverage(postProcessingConfig.coverage)
-      backgroundImageStage.updateLightWrapping(
-        postProcessingConfig.lightWrapping
+    this._positionBuffer = initBuffer(
+      glOut,
+      [
+        -1.0, -1.0,
+        1.0, -1.0,
+        -1.0, 1.0,
+        1.0, 1.0,
+      ]
+    )!
+
+    this._texCoordBuffer = initBuffer(
+      glOut,
+      [
+        0.0, 0.0,
+        1.0, 0.0,
+        0.0, 1.0,
+        1.0, 1.0,
+      ]
+    )!
+
+    if (outputType === 'texture') {
+      this._outputTexture = createTexture(
+        glOut,
+        glOut.RGBA8,
+        width,
+        height
       )
-      backgroundImageStage.updateBlendMode(postProcessingConfig.blendMode)
-    } else if (backgroundConfig.type === 'blur') {
-      const backgroundBlurStage = backgroundStage as BackgroundBlurStage
-      backgroundBlurStage.updateCoverage(postProcessingConfig.coverage)
-    } else {
-      // TODO Handle no background in a separate pipeline path
-      const backgroundImageStage = backgroundStage as BackgroundImageStage
-      backgroundImageStage.updateCoverage([0, 0.9999])
-      backgroundImageStage.updateLightWrapping(0)
+      this._outputFramebuffer = glOut.createFramebuffer()
+      glOut.bindFramebuffer(
+        glOut.FRAMEBUFFER,
+        this._outputFramebuffer
+      )
+      glOut.framebufferTexture2D(
+        glOut.FRAMEBUFFER,
+        glOut.COLOR_ATTACHMENT0,
+        glOut.TEXTURE_2D,
+        this._outputTexture,
+        0
+      )
+    }
+
+    const program = createPipelineStageProgram(
+      glOut,
+      this._vertexShader,
+      this._fragmentShader,
+      this._positionBuffer,
+      this._texCoordBuffer
+    )
+    this._program = program
+
+    const inputTextureLocation = glOut
+      .getUniformLocation(
+        program,
+        textureName
+      )
+
+    glOut.useProgram(program)
+    glOut.uniform1i(
+      inputTextureLocation,
+      textureUnit
+    )
+
+    uniformVars.forEach(({
+      name,
+      type,
+      values
+    }) => {
+      const uniformVarLocation = glOut
+        .getUniformLocation(
+          program,
+          name
+        )
+
+      // @ts-ignore
+      glOut[`uniform${values.length}${type[0]}`](
+        uniformVarLocation,
+        ...values
+      )
+    })
+  }
+
+  cleanup(): void {
+    const {
+      _fragmentShader,
+      _glOut,
+      _positionBuffer,
+      _program,
+      _texCoordBuffer,
+      _vertexShader
+    } = this
+    _glOut.deleteProgram(_program)
+    _glOut.deleteBuffer(_texCoordBuffer)
+    _glOut.deleteBuffer(_positionBuffer)
+    _glOut.deleteShader(_vertexShader)
+    _glOut.deleteShader(_fragmentShader)
+  }
+
+  render(): void {
+    const {
+      _glOut,
+      _inputTextureUnit,
+      _outputDimensions: {
+        height,
+        width
+      },
+      _outputFramebuffer,
+      _outputTexture,
+      _outputTextureData,
+      _outputTextureTransform,
+      _program
+    } = this
+
+    _glOut.viewport(0, 0, width, height)
+    _glOut.useProgram(_program)
+    
+    if (_outputTexture) {
+      _glOut.activeTexture(
+        _glOut.TEXTURE0
+        + _inputTextureUnit
+        + 1
+      )
+      _glOut.bindTexture(
+        _glOut.TEXTURE_2D,
+        _outputTexture
+      )
+    }
+    _glOut.bindFramebuffer(
+      _glOut.FRAMEBUFFER,
+      _outputFramebuffer
+    )
+    _glOut.drawArrays(
+      _glOut.TRIANGLE_STRIP,
+      0,
+      4
+    )
+    if (_outputTextureTransform) {
+      readPixelsAsync(
+        _glOut,
+        0,
+        0,
+        width,
+        height,
+        _glOut.RGBA,
+        _glOut.UNSIGNED_BYTE,
+        _outputTextureData!.data
+      )
+      _outputTextureTransform(
+        _outputTextureData!
+      )
+      _glOut.texSubImage2D(
+        _glOut.TEXTURE_2D,
+        0,
+        0,
+        0,
+        width,
+        height,
+        _glOut.RGBA,
+        _glOut.UNSIGNED_BYTE,
+        _outputTextureData!.data
+      )
     }
   }
+}
 
-  function cleanUp() {
-    backgroundStage.cleanUp()
-    jointBilateralFilterStage.cleanUp()
-    loadSegmentationStage.cleanUp()
-    resizingStage.cleanUp()
+export class WebGL2Pipeline extends Pipeline {
+  static InputStage = WebGL2PipelineInputStage
+  static ProcessingStage = WebGL2PipelineProcessingStage
+  protected _stages: (WebGL2PipelineInputStage | WebGL2PipelineProcessingStage)[] = []
 
-    gl.deleteTexture(personMaskTexture)
-    gl.deleteTexture(segmentationTexture)
-    gl.deleteTexture(inputFrameTexture)
-    gl.deleteBuffer(texCoordBuffer)
-    gl.deleteBuffer(positionBuffer)
-    gl.deleteVertexArray(vertexArray)
-    gl.deleteShader(vertexShader)
+  cleanUp(): void {
+    this._stages.forEach((stage) => {
+      stage.cleanup()
+    })
   }
-
-  return { render, updatePostProcessingConfig, cleanUp }
 }
