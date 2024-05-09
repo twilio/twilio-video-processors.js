@@ -1,221 +1,242 @@
 import { BlendMode } from '../helpers/postProcessingHelper'
-import {
-  compileShader,
-  createPipelineStageProgram,
-  createTexture,
-  glsl,
-} from '../helpers/webglHelper'
+import { createTexture } from '../helpers/webglHelper'
+import { WebGL2Pipeline } from './webgl2pipeline'
 
-export type BackgroundImageStage = {
-  render(): void
-  updateCoverage(coverage: [number, number]): void
-  updateLightWrapping(lightWrapping: number): void
-  updateBlendMode(blendMode: BlendMode): void
-  cleanUp(): void
-}
+export class BackgroundImageStage extends WebGL2Pipeline.ProcessingStage {
+  private _backgroundTexture: WebGLTexture
+  private _benchmark: any
+  private _cleanupBackgroundTexture: () => void
 
-export function buildBackgroundImageStage(
-  gl: WebGL2RenderingContext,
-  positionBuffer: WebGLBuffer,
-  texCoordBuffer: WebGLBuffer,
-  personMaskTexture: WebGLTexture,
-  backgroundImage: HTMLImageElement | null,
-  canvas: HTMLCanvasElement
-): BackgroundImageStage {
-  const vertexShaderSource = glsl`#version 300 es
+  constructor(
+    glOut: WebGL2RenderingContext,
+    backgroundImage: HTMLImageElement,
+    benchmark: any
+  ) {
+    super(
+      {
+        textureName: 'u_personMask',
+        textureUnit: 2
+      },
+      {
+        fragmentShaderSource: `#version 300 es
+          precision highp float;
 
-    uniform vec2 u_backgroundScale;
-    uniform vec2 u_backgroundOffset;
+          uniform sampler2D u_inputFrame;
+          uniform sampler2D u_personMask;
+          uniform sampler2D u_background;
+          uniform vec2 u_coverage;
+          uniform float u_lightWrapping;
+          uniform float u_blendMode;
 
-    in vec2 a_position;
-    in vec2 a_texCoord;
+          in vec2 v_texCoord;
+          in vec2 v_backgroundCoord;
 
-    out vec2 v_texCoord;
-    out vec2 v_backgroundCoord;
+          out vec4 outColor;
 
-    void main() {
-      // Flipping Y is required when rendering to canvas
-      gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);
-      v_texCoord = a_texCoord;
-      v_backgroundCoord = a_texCoord * u_backgroundScale + u_backgroundOffset;
-    }
-  `
+          vec3 screen(vec3 a, vec3 b) {
+            return 1.0 - (1.0 - a) * (1.0 - b);
+          }
 
-  const fragmentShaderSource = glsl`#version 300 es
+          vec3 linearDodge(vec3 a, vec3 b) {
+            return a + b;
+          }
 
-    precision highp float;
+          void main() {
+            vec3 frameColor = texture(u_inputFrame, v_texCoord).rgb;
+            vec3 backgroundColor = texture(u_background, v_backgroundCoord).rgb;
+            float personMask = texture(u_personMask, v_texCoord).a;
+            float lightWrapMask = 1.0 - max(0.0, personMask - u_coverage.y) / (1.0 - u_coverage.y);
+            vec3 lightWrap = u_lightWrapping * lightWrapMask * backgroundColor;
+            frameColor = u_blendMode * linearDodge(frameColor, lightWrap) +
+              (1.0 - u_blendMode) * screen(frameColor, lightWrap);
+            personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);
+            outColor = vec4(frameColor * personMask + backgroundColor * (1.0 - personMask), 1.0);
+          }
+        `,
+        glOut,
+        type: 'canvas',
+        vertexShaderSource: `#version 300 es
+          uniform vec2 u_backgroundScale;
+          uniform vec2 u_backgroundOffset;
 
-    uniform sampler2D u_inputFrame;
-    uniform sampler2D u_personMask;
-    uniform sampler2D u_background;
-    uniform vec2 u_coverage;
-    uniform float u_lightWrapping;
-    uniform float u_blendMode;
+          in vec2 a_position;
+          in vec2 a_texCoord;
 
-    in vec2 v_texCoord;
-    in vec2 v_backgroundCoord;
+          out vec2 v_texCoord;
+          out vec2 v_backgroundCoord;
 
-    out vec4 outColor;
-
-    vec3 screen(vec3 a, vec3 b) {
-      return 1.0 - (1.0 - a) * (1.0 - b);
-    }
-
-    vec3 linearDodge(vec3 a, vec3 b) {
-      return a + b;
-    }
-
-    void main() {
-      vec3 frameColor = texture(u_inputFrame, v_texCoord).rgb;
-      vec3 backgroundColor = texture(u_background, v_backgroundCoord).rgb;
-      float personMask = texture(u_personMask, v_texCoord).a;
-      float lightWrapMask = 1.0 - max(0.0, personMask - u_coverage.y) / (1.0 - u_coverage.y);
-      vec3 lightWrap = u_lightWrapping * lightWrapMask * backgroundColor;
-      frameColor = u_blendMode * linearDodge(frameColor, lightWrap) +
-        (1.0 - u_blendMode) * screen(frameColor, lightWrap);
-      personMask = smoothstep(u_coverage.x, u_coverage.y, personMask);
-      outColor = vec4(frameColor * personMask + backgroundColor * (1.0 - personMask), 1.0);
-    }
-  `
-
-  const { width: outputWidth, height: outputHeight } = canvas
-  const outputRatio = outputWidth / outputHeight
-
-  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
-  const fragmentShader = compileShader(
-    gl,
-    gl.FRAGMENT_SHADER,
-    fragmentShaderSource
-  )
-  const program = createPipelineStageProgram(
-    gl,
-    vertexShader,
-    fragmentShader,
-    positionBuffer,
-    texCoordBuffer
-  )
-  const backgroundScaleLocation = gl.getUniformLocation(
-    program,
-    'u_backgroundScale'
-  )
-  const backgroundOffsetLocation = gl.getUniformLocation(
-    program,
-    'u_backgroundOffset'
-  )
-  const inputFrameLocation = gl.getUniformLocation(program, 'u_inputFrame')
-  const personMaskLocation = gl.getUniformLocation(program, 'u_personMask')
-  const backgroundLocation = gl.getUniformLocation(program, 'u_background')
-  const coverageLocation = gl.getUniformLocation(program, 'u_coverage')
-  const lightWrappingLocation = gl.getUniformLocation(
-    program,
-    'u_lightWrapping'
-  )
-  const blendModeLocation = gl.getUniformLocation(program, 'u_blendMode')
-
-  gl.useProgram(program)
-  gl.uniform2f(backgroundScaleLocation, 1, 1)
-  gl.uniform2f(backgroundOffsetLocation, 0, 0)
-  gl.uniform1i(inputFrameLocation, 0)
-  gl.uniform1i(personMaskLocation, 1)
-  gl.uniform2f(coverageLocation, 0, 1)
-  gl.uniform1f(lightWrappingLocation, 0)
-  gl.uniform1f(blendModeLocation, 0)
-
-  let backgroundTexture: WebGLTexture | null = null
-  // TODO Find a better to handle background being loaded
-  if (backgroundImage?.complete) {
-    updateBackgroundImage(backgroundImage)
-  } else if (backgroundImage) {
-    backgroundImage.onload = () => {
-      updateBackgroundImage(backgroundImage)
-    }
-  }
-
-  function render() {
-    gl.viewport(0, 0, outputWidth, outputHeight)
-    gl.useProgram(program)
-    gl.activeTexture(gl.TEXTURE1)
-    gl.bindTexture(gl.TEXTURE_2D, personMaskTexture)
-    if (backgroundTexture !== null) {
-      gl.activeTexture(gl.TEXTURE2)
-      gl.bindTexture(gl.TEXTURE_2D, backgroundTexture)
-      // TODO Handle correctly the background not loaded yet
-      gl.uniform1i(backgroundLocation, 2)
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-  }
-
-  function updateBackgroundImage(backgroundImage: HTMLImageElement) {
-    backgroundTexture = createTexture(
-      gl,
-      gl.RGBA8,
-      backgroundImage.naturalWidth,
-      backgroundImage.naturalHeight,
-      gl.LINEAR,
-      gl.LINEAR
-    )
-    gl.texSubImage2D(
-      gl.TEXTURE_2D,
-      0,
-      0,
-      0,
-      backgroundImage.naturalWidth,
-      backgroundImage.naturalHeight,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      backgroundImage
+          void main() {
+            // Flipping Y is required when rendering to canvas
+            gl_Position = vec4(a_position * vec2(1.0, -1.0), 0.0, 1.0);
+            v_texCoord = a_texCoord;
+            v_backgroundCoord = a_texCoord * u_backgroundScale + u_backgroundOffset;
+          }
+        `
+      }
     )
 
-    let xOffset = 0
-    let yOffset = 0
-    let backgroundWidth = backgroundImage.naturalWidth
-    let backgroundHeight = backgroundImage.naturalHeight
-    const backgroundRatio = backgroundWidth / backgroundHeight
-    if (backgroundRatio < outputRatio) {
-      backgroundHeight = backgroundWidth / outputRatio
-      yOffset = (backgroundImage.naturalHeight - backgroundHeight) / 2
+    this._benchmark = benchmark
+
+    const {
+      naturalHeight,
+      naturalWidth
+    } = backgroundImage
+
+    this._backgroundTexture = createTexture(
+      glOut,
+      glOut.RGBA8,
+      naturalWidth,
+      naturalHeight,
+      glOut.LINEAR,
+      glOut.LINEAR
+    )!
+
+    this._cleanupBackgroundTexture = () =>
+      glOut.deleteTexture(this._backgroundTexture)
+
+    this._setUniformVars([
+      {
+        name: 'u_inputFrame',
+        type: 'int',
+        values: [0]
+      },
+      {
+        name: 'u_background',
+        type: 'int',
+        values: [4]
+      },
+      {
+        name: 'u_backgroundScale',
+        type: 'float',
+        values: [1, 1]
+      },
+      {
+        name: 'u_backgroundOffset',
+        type: 'float',
+        values: [0, 0]
+      },
+      {
+        name: 'u_coverage',
+        type: 'float',
+        values: [0, 1]
+      },
+      {
+        name: 'u_lightWrapping',
+        type: 'float',
+        values: [0]
+      },
+      {
+        name: 'u_blendMode',
+        type: 'float',
+        values: [0]
+      }
+    ])
+
+    const updateBackgroundTexture = () => {
+      const { _backgroundTexture } = this
+      glOut.activeTexture(
+        glOut.TEXTURE0 + 4
+      )
+      glOut.bindTexture(
+        glOut.TEXTURE_2D,
+        _backgroundTexture
+      )
+      glOut.texSubImage2D(
+        glOut.TEXTURE_2D,
+        0,
+        0,
+        0,
+        naturalWidth,
+        naturalHeight,
+        glOut.RGBA,
+        glOut.UNSIGNED_BYTE,
+        backgroundImage
+      )
+
+      const { height, width } = glOut.canvas
+      const outputRatio = width / height
+      let xOffset = 0
+      let yOffset = 0
+      let backgroundWidth = naturalWidth
+      let backgroundHeight = naturalHeight
+      const backgroundRatio = backgroundWidth / backgroundHeight
+
+      if (backgroundRatio < outputRatio) {
+        backgroundHeight = backgroundWidth / outputRatio
+        yOffset = (naturalHeight - backgroundHeight) / 2
+      } else {
+        backgroundWidth = backgroundHeight * outputRatio
+        xOffset = (naturalWidth - backgroundWidth) / 2
+      }
+
+      const xScale = backgroundWidth / naturalWidth
+      const yScale = backgroundHeight / naturalHeight
+      xOffset /= naturalWidth
+      yOffset /= naturalHeight
+
+      this._setUniformVars([
+        {
+          name: 'u_backgroundScale',
+          type: 'float',
+          values: [xScale, yScale]
+        },
+        {
+          name: 'u_backgroundOffset',
+          type: 'float',
+          values: [xOffset, yOffset]
+        }
+      ])
+    }
+
+    if (backgroundImage.complete) {
+      updateBackgroundTexture()
     } else {
-      backgroundWidth = backgroundHeight * outputRatio
-      xOffset = (backgroundImage.naturalWidth - backgroundWidth) / 2
+      backgroundImage.onload = updateBackgroundTexture
     }
-
-    const xScale = backgroundWidth / backgroundImage.naturalWidth
-    const yScale = backgroundHeight / backgroundImage.naturalHeight
-    xOffset /= backgroundImage.naturalWidth
-    yOffset /= backgroundImage.naturalHeight
-
-    gl.uniform2f(backgroundScaleLocation, xScale, yScale)
-    gl.uniform2f(backgroundOffsetLocation, xOffset, yOffset)
   }
 
-  function updateCoverage(coverage: [number, number]) {
-    gl.useProgram(program)
-    gl.uniform2f(coverageLocation, coverage[0], coverage[1])
+  cleanUp(): void {
+    super.cleanUp()
+    this._cleanupBackgroundTexture()
   }
 
-  function updateLightWrapping(lightWrapping: number) {
-    gl.useProgram(program)
-    gl.uniform1f(lightWrappingLocation, lightWrapping)
+  render(): void {
+    const { _benchmark } = this
+    super.render()
+    _benchmark.end('imageCompositionDelay')
   }
 
-  function updateBlendMode(blendMode: BlendMode) {
-    gl.useProgram(program)
-    gl.uniform1f(blendModeLocation, blendMode === 'screen' ? 0 : 1)
+  updateCoverage(coverage: [number, number]): void {
+    this._setUniformVars([
+      {
+        name: 'u_coverage',
+        type: 'float',
+        values: coverage
+      }
+    ])
   }
 
-  function cleanUp() {
-    gl.deleteTexture(backgroundTexture)
-    gl.deleteProgram(program)
-    gl.deleteShader(fragmentShader)
-    gl.deleteShader(vertexShader)
+  updateLightWrapping(lightWrapping: number): void {
+    this._setUniformVars([
+      {
+        name: 'u_lightWrapping',
+        type: 'float',
+        values: [lightWrapping]
+      }
+    ])
   }
 
-  return {
-    render,
-    updateCoverage,
-    updateLightWrapping,
-    updateBlendMode,
-    cleanUp,
+  updateBlendMode(blendMode: BlendMode): void {
+    this._setUniformVars([
+      {
+        name: 'u_blendMode',
+        type: 'float',
+        values: [
+          blendMode === 'screen'
+            ? 0
+            : 1
+        ]
+      }
+    ])
   }
 }

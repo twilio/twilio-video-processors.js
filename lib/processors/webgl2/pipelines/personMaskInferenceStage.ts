@@ -1,14 +1,23 @@
+import { Dimensions } from '../../../types';
 import { WebGL2Pipeline } from './webgl2pipeline';
 
-export class ResizeInferenceStage extends WebGL2Pipeline.ProcessingStage {
+export class PersonMaskInferenceStage extends WebGL2Pipeline.ProcessingStage {
+  private _benchmark: any
+
   constructor(
     glOut: WebGL2RenderingContext,
-    width: number,
-    height: number,
-    tflite: any
+    outputDimensions: Dimensions,
+    tflite: any,
+    benchmark: any
   ) {
     const tfliteInputMemoryOffset = tflite._getInputMemoryOffset() / 4
     const tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4
+
+    const {
+      height,
+      width
+    } = outputDimensions
+
     super(
       {
         textureName: 'u_inputFrame',
@@ -32,6 +41,8 @@ export class ResizeInferenceStage extends WebGL2Pipeline.ProcessingStage {
         height,
         textureTransform: ({ data }) => {
           const nPixels = width * height;
+          benchmark.end('inputImageResizeDelay')
+          benchmark.start('segmentationDelay')
 
           for (let i = 0; i < nPixels; i++) {
             const tfliteIndex = tfliteInputMemoryOffset + i * 3
@@ -48,10 +59,20 @@ export class ResizeInferenceStage extends WebGL2Pipeline.ProcessingStage {
             const outputIndex = i * 4
             data[outputIndex + 3] = Math.round(tflite.HEAPF32[tfliteIndex] * 255)
           }
+
+          benchmark.end('segmentationDelay')
         },
         type: 'texture',
         width
       }
     )
+
+    this._benchmark = benchmark
+  }
+
+  render(): void {
+    const { _benchmark } = this
+    _benchmark.start('inputImageResizeDelay')
+    super.render()
   }
 }

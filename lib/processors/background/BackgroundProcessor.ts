@@ -346,10 +346,25 @@ export abstract class BackgroundProcessor extends Processor {
     this._webgl2Pipeline = buildWebGL2Pipeline(
       inputFrame,
       { inputResolution: `${inferenceWidth}x${inferenceHeight}` },
+      this._backgroundImage,
       this._outputCanvas!,
       this._tflite,
-      this._benchmark
+      this._benchmark,
+      this._debounce
     );
+    this._webgl2Pipeline.updatePostProcessingConfig({
+      smoothSegmentationMask: true,
+      jointBilateralFilter: {
+        sigmaSpace: 10,
+        sigmaColor: 0.12
+      },
+      coverage: [
+        0,
+        0.99
+      ],
+      lightWrapping: 0,
+      blendMode: 'screen'
+    })
   }
 
   private _getResizedInputImageData(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): ImageData {

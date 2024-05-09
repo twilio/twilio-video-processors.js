@@ -1,11 +1,21 @@
+import { Dimensions } from '../../../types'
 import { WebGL2Pipeline } from './webgl2pipeline'
 
-export class BackgroundReplacementStage extends WebGL2Pipeline.ProcessingStage {
+export class PersonMaskUpscaleStage extends WebGL2Pipeline.ProcessingStage {
+  private _benchmark: any
+  private _inputDimensions: Dimensions
+
   constructor(
     glOut: WebGL2RenderingContext,
-    width: number,
-    height: number
+    inputDimensions: Dimensions,
+    outputDimensions: Dimensions,
+    benchmark: any
   ) {
+    const {
+      height,
+      width
+    } = outputDimensions
+
     super(
       {
         textureName: 'u_segmentationMask',
@@ -54,9 +64,9 @@ export class BackgroundReplacementStage extends WebGL2Pipeline.ProcessingStage {
             float totalSegAlpha = leftTopSegAlpha + rightTopSegAlpha + leftBottomSegAlpha + rightBottomSegAlpha;
 
             if (totalSegAlpha <= 0.0) {
-              outColor = vec4(centerColor, 0.0);
+              outColor = vec4(vec3(0.0), 0.0);
             } else if (totalSegAlpha >= 4.0) {
-              outColor = vec4(centerColor, 1.0);
+              outColor = vec4(vec3(0.0), 1.0);
             } else {
               for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {
                 for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {
@@ -73,14 +83,13 @@ export class BackgroundReplacementStage extends WebGL2Pipeline.ProcessingStage {
                 }
               }
               newVal /= totalWeight;
-
-              outColor = vec4(centerColor, newVal);
+              outColor = vec4(vec3(0.0), newVal);
             }
           }
         `,
         glOut,
         height,
-        type: 'canvas',
+        type: 'texture',
         width,
         uniformVars: [
           {
@@ -89,32 +98,6 @@ export class BackgroundReplacementStage extends WebGL2Pipeline.ProcessingStage {
             values: [0]
           },
           {
-            name: 'u_offset',
-            type: 'float',
-            values: [0]
-          },
-          {
-            name: 'u_radius',
-            type: 'float',
-            values: [0]
-          },
-          {
-            name: 'u_sigmaColor',
-            type: 'float',
-            values: [0]
-          },
-          {
-            name: 'u_sigmaTexel',
-            type: 'float',
-            values: [0]
-          },
-          {
-            name: 'u_step',
-            type: 'float',
-            values: [1]
-          },
-
-          {
             name: 'u_texelSize',
             type: 'float',
             values: [1 / width, 1 / height]
@@ -122,5 +105,80 @@ export class BackgroundReplacementStage extends WebGL2Pipeline.ProcessingStage {
         ]
       }
     )
+
+    this._benchmark = benchmark
+    this._inputDimensions = inputDimensions
+    this.updateSigmaColor(0)
+    this.updateSigmaSpace(0)
+  }
+
+  render(): void {
+    const { _benchmark } = this
+    _benchmark.start('imageCompositionDelay')
+    super.render()
+  }
+
+  updateSigmaColor(sigmaColor: number): void {
+    this._setUniformVars([
+      {
+        name: 'u_sigmaColor',
+        type: 'float',
+        values: [sigmaColor]
+      }
+    ])
+  }
+
+  updateSigmaSpace(sigmaSpace: number): void {
+    const {
+      height: inputHeight,
+      width: inputWidth
+    } = this._inputDimensions
+
+    const {
+      height: outputHeight,
+      width: outputWidth
+    } = this._outputDimensions
+
+    sigmaSpace *= Math.max(
+      outputWidth / inputWidth,
+      outputHeight / inputHeight
+    )
+
+    const kSparsityFactor = 0.66
+    const sparsity = Math.max(
+      1,
+      Math.sqrt(sigmaSpace)
+      * kSparsityFactor
+    )
+    const step = sparsity
+    const radius = sigmaSpace
+    const offset = step > 1 ? step * 0.5 : 0
+    const sigmaTexel = Math.max(
+      1 / outputWidth,
+      1 / outputHeight
+    ) * sigmaSpace
+
+    this._setUniformVars([
+      {
+        name: 'u_offset',
+        type: 'float',
+        values: [offset]
+      },
+      {
+        name: 'u_radius',
+        type: 'float',
+        values: [radius]
+      },
+      {
+        name: 'u_sigmaTexel',
+        type: 'float',
+        values: [sigmaTexel]
+      },
+      {
+        name: 'u_step',
+        type: 'float',
+        values: [step]
+      },
+    ])
   }
 }

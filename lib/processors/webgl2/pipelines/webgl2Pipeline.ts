@@ -8,6 +8,12 @@ import {
 } from '../helpers/webglHelper'
 import { Pipeline } from './pipeline'
 
+interface UniformVarInfo {
+  name: string
+  type: 'float' | 'int' | 'uint'
+  values: number[]
+}
+
 class WebGL2PipelineInputStage implements Pipeline.Stage {
   private _glOut: WebGL2RenderingContext
   private _outputTexture: WebGLTexture
@@ -76,10 +82,10 @@ class WebGL2PipelineInputStage implements Pipeline.Stage {
 }
 
 class WebGL2PipelineProcessingStage implements Pipeline.Stage {
+  protected _outputDimensions: Dimensions
   private _fragmentShader: WebGLSampler
   private _glOut: WebGL2RenderingContext
   private _inputTextureUnit: number
-  private _outputDimensions: Dimensions
   private _outputFramebuffer: WebGLBuffer | null = null
   private _outputTexture: WebGLTexture | null = null
   private _outputTextureData: ImageData | null = null
@@ -100,11 +106,8 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
       height?: number
       textureTransform?: (textureData: ImageData) => void
       type: 'canvas' | 'texture'
-      uniformVars?: {
-        name: string
-        type: 'float' | 'int' | 'uint'
-        values: number[]
-      }[]
+      uniformVars?: UniformVarInfo[]
+      vertexShaderSource?: string
       width?: number
     }
   ) {
@@ -124,6 +127,21 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
       textureTransform = null,
       type: outputType,
       uniformVars = [],
+      vertexShaderSource = `#version 300 es
+        in vec2 a_position;
+        in vec2 a_texCoord;
+
+        out vec2 v_texCoord;
+
+        void main() {
+          gl_Position = vec4(a_position${
+            outputType === 'canvas'
+              ? ' * vec2(1.0, -1.0)'
+              : ''
+          }, 0.0, 1.0);
+          v_texCoord = a_texCoord;
+        }
+      `,
       width = glOut.canvas.width
     } = outputConfig
 
@@ -145,22 +163,6 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
       fragmentShaderSource
     )
     this._outputTextureTransform = textureTransform
-
-    const vertexShaderSource = `#version 300 es
-      in vec2 a_position;
-      in vec2 a_texCoord;
-
-      out vec2 v_texCoord;
-
-      void main() {
-        gl_Position = vec4(a_position${
-          outputType === 'canvas'
-            ? ' * vec2(1.0, -1.0)'
-            : ''
-        }, 0.0, 1.0);
-        v_texCoord = a_texCoord;
-      }
-    `
 
     this._vertexShader = compileShader(
       glOut,
@@ -218,38 +220,17 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
     )
     this._program = program
 
-    const inputTextureLocation = glOut
-      .getUniformLocation(
-        program,
-        textureName
-      )
-
-    glOut.useProgram(program)
-    glOut.uniform1i(
-      inputTextureLocation,
-      textureUnit
-    )
-
-    uniformVars.forEach(({
-      name,
-      type,
-      values
-    }) => {
-      const uniformVarLocation = glOut
-        .getUniformLocation(
-          program,
-          name
-        )
-
-      // @ts-ignore
-      glOut[`uniform${values.length}${type[0]}`](
-        uniformVarLocation,
-        ...values
-      )
-    })
+    this._setUniformVars([
+      {
+        name: textureName,
+        type: 'int',
+        values: [textureUnit]
+      },
+      ...uniformVars
+    ])
   }
 
-  cleanup(): void {
+  cleanUp(): void {
     const {
       _fragmentShader,
       _glOut,
@@ -330,6 +311,33 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
       )
     }
   }
+
+  protected _setUniformVars(uniformVars: UniformVarInfo[]) {
+    const {
+      _glOut,
+      _program
+    } = this
+
+    _glOut.useProgram(_program)
+
+    uniformVars.forEach(({
+      name,
+      type,
+      values
+    }) => {
+      const uniformVarLocation = _glOut
+        .getUniformLocation(
+          _program,
+          name
+        )
+
+      // @ts-ignore
+      _glOut[`uniform${values.length}${type[0]}`](
+        uniformVarLocation,
+        ...values
+      )
+    })
+  }
 }
 
 export class WebGL2Pipeline extends Pipeline {
@@ -339,7 +347,9 @@ export class WebGL2Pipeline extends Pipeline {
 
   cleanUp(): void {
     this._stages.forEach((stage) => {
-      stage.cleanup()
+      if (stage instanceof WebGL2PipelineProcessingStage) {
+        stage.cleanUp()
+      }
     })
   }
 }
