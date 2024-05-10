@@ -41,7 +41,7 @@ class WebGL2PipelineInputStage implements Pipeline.Stage {
     this._videoIn = videoIn
   }
 
-  cleanup(): void {
+  cleanUp(): void {
     const {
       _glOut,
       _outputTexture
@@ -346,10 +346,8 @@ export class WebGL2Pipeline extends Pipeline {
   protected _stages: (WebGL2PipelineInputStage | WebGL2PipelineProcessingStage)[] = []
 
   cleanUp(): void {
-    this._stages.forEach((stage) => {
-      if (stage instanceof WebGL2PipelineProcessingStage) {
-        stage.cleanUp()
-      }
-    })
+    this._stages.forEach(
+      (stage) => stage.cleanUp()
+    )
   }
 }
