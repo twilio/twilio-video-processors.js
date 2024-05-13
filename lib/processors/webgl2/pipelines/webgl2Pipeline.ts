@@ -8,6 +8,22 @@ import {
 } from '../helpers/webglHelper'
 import { Pipeline } from './pipeline'
 
+interface InputConfig {
+  textureName: string
+  textureUnit: number
+}
+
+interface OutputConfig {
+  fragmentShaderSource: string
+  glOut: WebGL2RenderingContext
+  height?: number
+  textureTransform?: (textureData: ImageData) => void
+  type: 'canvas' | 'texture'
+  uniformVars?: UniformVarInfo[]
+  vertexShaderSource?: string
+  width?: number
+}
+
 interface UniformVarInfo {
   name: string
   type: 'float' | 'int' | 'uint'
@@ -96,20 +112,8 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
   private _vertexShader: WebGLShader
 
   constructor(
-    inputConfig: {
-      textureName: string
-      textureUnit: number
-    },
-    outputConfig: {
-      fragmentShaderSource: string
-      glOut: WebGL2RenderingContext
-      height?: number
-      textureTransform?: (textureData: ImageData) => void
-      type: 'canvas' | 'texture'
-      uniformVars?: UniformVarInfo[]
-      vertexShaderSource?: string
-      width?: number
-    }
+    inputConfig: InputConfig,
+    outputConfig: OutputConfig
   ) {
     const {
       textureName,

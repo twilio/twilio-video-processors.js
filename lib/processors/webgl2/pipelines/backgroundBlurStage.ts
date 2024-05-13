@@ -112,7 +112,6 @@ export class BackgroundBlurStage extends WebGL2Pipeline.ProcessingStage {
         glOut.UNSIGNED_BYTE,
         blurVideoIn
       )
-
     }
 
     this._setUniformVars([
