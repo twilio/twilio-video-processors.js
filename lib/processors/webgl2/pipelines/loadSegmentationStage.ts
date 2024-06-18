@@ -15,7 +15,6 @@ export function buildLoadSegmentationStage(
   positionBuffer: WebGLBuffer,
   texCoordBuffer: WebGLBuffer,
   segmentationConfig: SegmentationConfig,
-  tflite: any,
   outputTexture: WebGLTexture
 ) {
   const fragmentShaderSource = glsl`#version 300 es
@@ -33,14 +32,9 @@ export function buildLoadSegmentationStage(
       outColor = vec4(vec3(0.0), segmentation);
     }
   `
-
-  // TFLite memory will be accessed as float32
-  const tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4
-
   const [segmentationWidth, segmentationHeight] = inputResolutions[
     segmentationConfig.inputResolution
   ]
-
   const fragmentShader = compileShader(
     gl,
     gl.FRAGMENT_SHADER,
@@ -56,7 +50,7 @@ export function buildLoadSegmentationStage(
   const inputLocation = gl.getUniformLocation(program, 'u_inputSegmentation')
   const inputTexture = createTexture(
     gl,
-    gl.R32F,
+    gl.R8,
     segmentationWidth,
     segmentationHeight
   )
@@ -74,7 +68,7 @@ export function buildLoadSegmentationStage(
   gl.useProgram(program)
   gl.uniform1i(inputLocation, 1)
 
-  function render() {
+  function render(segmentationInferenceData: Uint8ClampedArray) {
     gl.viewport(0, 0, segmentationWidth, segmentationHeight)
     gl.useProgram(program)
     gl.activeTexture(gl.TEXTURE1)
@@ -87,9 +81,8 @@ export function buildLoadSegmentationStage(
       segmentationWidth,
       segmentationHeight,
       gl.RED,
-      gl.FLOAT,
-      tflite.HEAPF32,
-      tfliteOutputMemoryOffset
+      gl.UNSIGNED_BYTE,
+      segmentationInferenceData
     )
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)

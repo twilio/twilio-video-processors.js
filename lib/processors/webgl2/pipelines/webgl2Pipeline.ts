@@ -29,7 +29,7 @@ export function buildWebGL2Pipeline(
   benchmark: any,
   debounce: boolean,
 ) {
-  let shouldRunInference = true;
+  let shouldRunInference = true
 
   const vertexShaderSource = glsl`#version 300 es
 
@@ -96,14 +96,18 @@ export function buildWebGL2Pipeline(
     frameWidth,
     frameHeight
   )!
-
+  const segmentationInputPixels = new Uint8ClampedArray(
+    segmentationWidth
+    * segmentationHeight
+    * 4
+  )
   const resizingStage = buildResizingStage(
     gl,
     vertexShader,
     positionBuffer,
     texCoordBuffer,
     segmentationConfig,
-    tflite
+    segmentationInputPixels
   )
   const loadSegmentationStage = buildLoadSegmentationStage(
     gl,
@@ -111,9 +115,8 @@ export function buildWebGL2Pipeline(
     positionBuffer,
     texCoordBuffer,
     segmentationConfig,
-    tflite,
     segmentationTexture
-  );
+  )
   const jointBilateralFilterStage = buildJointBilateralFilterStage(
     gl,
     vertexShader,
@@ -143,6 +146,8 @@ export function buildWebGL2Pipeline(
           canvas
         )
 
+  let segmentationInferenceData: Uint8ClampedArray
+
   async function render() {
     benchmark.start('inputImageResizeDelay')
     gl.clearColor(0, 0, 0, 0)
@@ -169,15 +174,15 @@ export function buildWebGL2Pipeline(
 
     benchmark.start('segmentationDelay')
     if (shouldRunInference) {
-      tflite._runInference()
+      segmentationInferenceData = await tflite._runInference(segmentationInputPixels)
     }
     if (debounce) {
-      shouldRunInference = !shouldRunInference;
+      shouldRunInference = !shouldRunInference
     }
     benchmark.end('segmentationDelay')
 
     benchmark.start('imageCompositionDelay')
-    loadSegmentationStage.render()
+    loadSegmentationStage.render(segmentationInferenceData)
     jointBilateralFilterStage.render()
     backgroundStage.render()
     benchmark.end('imageCompositionDelay')
