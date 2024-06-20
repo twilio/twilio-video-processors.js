@@ -14,18 +14,20 @@ const params = Object.fromEntries(new URLSearchParams(location.search).entries()
 const showStats = params.stats === 'true';
 
 const assetsPath = '';
-const pipeline = Pipeline.WebGL2;
+const pipeline = params.pipeline || Pipeline.WebGL2;
 // debounce will set to true if safari and on blur.
 // See GaussianBlurBackgroundProcessor initialization below
-const debounce = isSafari;
+const debounce = JSON.parse(params.debounce || `${isSafari}`);
 const addProcessorOptions = {
   inputFrameBufferType: 'video',
-  outputFrameBufferContextType: 'webgl2',
+  outputFrameBufferContextType: params.pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',
 };
+const [width, height] = (params.videoRes || `1280x720`).split('x').map(Number);
+const videoFps = Number(params.videoFps || '24');
 const captureConfig = {
-  width: isSafari ? 640 : 1280,
-  height: isSafari ? 480 : 720,
-  frameRate: 24,
+  width,
+  height,
+  frameRate: videoFps,
 };
 
 videoInput.style.maxWidth = `${captureConfig.width}px`;

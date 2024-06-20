@@ -360,8 +360,8 @@ export abstract class BackgroundProcessor extends Processor {
     this._webgl2Pipeline.updatePostProcessingConfig({
       smoothSegmentationMask: true,
       jointBilateralFilter: {
-        sigmaSpace: 10,
-        sigmaColor: 0.12
+        sigmaSpace: 2,
+        sigmaColor: 0.1
       },
       coverage: [
         0,
