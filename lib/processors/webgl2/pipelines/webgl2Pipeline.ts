@@ -169,7 +169,7 @@ export function buildWebGL2Pipeline(
 
     gl.bindVertexArray(vertexArray)
 
-    resizingStage.render()
+    await resizingStage.render()
     benchmark.end('inputImageResizeDelay')
 
     benchmark.start('segmentationDelay')
