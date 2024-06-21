@@ -30,6 +30,9 @@ const captureConfig = {
   frameRate: videoFps,
 };
 
+const asyncInference = JSON.parse(params.asyncInference || 'false');
+const maskBlurRadius = Number(params.maskBlurRadius || '2');
+
 videoInput.style.maxWidth = `${captureConfig.width}px`;
 
 let videoTrack;
@@ -66,8 +69,10 @@ const handleButtonClick = async bg => {
   if (!gaussianBlurProcessor) {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
+      asyncInference,
       pipeline,
-      debounce: true,
+      debounce,
+      maskBlurRadius,
     });
     await gaussianBlurProcessor.loadModel();
   }
@@ -75,9 +80,11 @@ const handleButtonClick = async bg => {
     const backgroundImage = await loadImage('living_room');
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
       assetsPath,
+      asyncInference,
       backgroundImage,
       pipeline,
       debounce,
+      maskBlurRadius,
     });
     await virtualBackgroundProcessor.loadModel();
   }

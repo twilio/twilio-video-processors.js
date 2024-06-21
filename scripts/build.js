@@ -9,7 +9,7 @@ const source = require('vinyl-source-stream');
 const stream = require('stream');
 const vfs = require('vinyl-fs');
 
-const entryPoint = pkg.main;
+const entryPoint = process.argv[4] || pkg.main;
 const license = process.argv[2];
 const dest = process.argv[3];
 const debug = process.env.ENV === 'dev';
@@ -39,7 +39,7 @@ return Promise.all([
 ${license}
 */
 ${bundle.toString()}`;
-  
+
   const passThrough = new stream.PassThrough();
   passThrough.end(rendered);
 

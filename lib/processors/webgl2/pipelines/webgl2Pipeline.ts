@@ -29,7 +29,7 @@ export function buildWebGL2Pipeline(
   benchmark: any,
   debounce: boolean,
 ) {
-  let shouldRunInference = true;
+  let shouldRunInference = true
 
   const vertexShaderSource = glsl`#version 300 es
 
@@ -96,14 +96,18 @@ export function buildWebGL2Pipeline(
     frameWidth,
     frameHeight
   )!
-
+  const segmentationInputBuffer = new Uint8ClampedArray(
+    segmentationWidth
+    * segmentationHeight
+    * 4
+  )
   const resizingStage = buildResizingStage(
     gl,
     vertexShader,
     positionBuffer,
     texCoordBuffer,
     segmentationConfig,
-    tflite
+    segmentationInputBuffer
   )
   const loadSegmentationStage = buildLoadSegmentationStage(
     gl,
@@ -111,9 +115,8 @@ export function buildWebGL2Pipeline(
     positionBuffer,
     texCoordBuffer,
     segmentationConfig,
-    tflite,
     segmentationTexture
-  );
+  )
   const jointBilateralFilterStage = buildJointBilateralFilterStage(
     gl,
     vertexShader,
@@ -143,6 +146,8 @@ export function buildWebGL2Pipeline(
           canvas
         )
 
+  let segmentationData: Uint8ClampedArray
+
   async function render() {
     benchmark.start('inputImageResizeDelay')
     gl.clearColor(0, 0, 0, 0)
@@ -169,15 +174,15 @@ export function buildWebGL2Pipeline(
 
     benchmark.start('segmentationDelay')
     if (shouldRunInference) {
-      tflite._runInference()
+      segmentationData = await tflite.runInference(segmentationInputBuffer)
     }
     if (debounce) {
-      shouldRunInference = !shouldRunInference;
+      shouldRunInference = !shouldRunInference
     }
     benchmark.end('segmentationDelay')
 
     benchmark.start('imageCompositionDelay')
-    loadSegmentationStage.render()
+    loadSegmentationStage.render(segmentationData)
     jointBilateralFilterStage.render()
     backgroundStage.render()
     benchmark.end('imageCompositionDelay')
@@ -186,24 +191,38 @@ export function buildWebGL2Pipeline(
   function updatePostProcessingConfig(
     postProcessingConfig: PostProcessingConfig
   ) {
-    jointBilateralFilterStage.updateSigmaSpace(
-      postProcessingConfig.jointBilateralFilter.sigmaSpace
-    )
-    jointBilateralFilterStage.updateSigmaColor(
-      postProcessingConfig.jointBilateralFilter.sigmaColor
-    )
+    const {
+      blendMode,
+      coverage,
+      lightWrapping,
+      jointBilateralFilter = {}
+    } = postProcessingConfig
 
+    const {
+      sigmaColor,
+      sigmaSpace
+    } = jointBilateralFilter
+
+    if (typeof sigmaColor === 'number') {
+      jointBilateralFilterStage.updateSigmaColor(sigmaColor)
+    }
+    if (typeof sigmaSpace === 'number') {
+      jointBilateralFilterStage.updateSigmaSpace(sigmaSpace)
+    }
+    if (Array.isArray(coverage)) {
+      if (backgroundConfig.type === 'blur' || backgroundConfig.type === 'image') {
+        backgroundStage.updateCoverage(coverage)
+      }
+    }
     if (backgroundConfig.type === 'image') {
       const backgroundImageStage = backgroundStage as BackgroundImageStage
-      backgroundImageStage.updateCoverage(postProcessingConfig.coverage)
-      backgroundImageStage.updateLightWrapping(
-        postProcessingConfig.lightWrapping
-      )
-      backgroundImageStage.updateBlendMode(postProcessingConfig.blendMode)
-    } else if (backgroundConfig.type === 'blur') {
-      const backgroundBlurStage = backgroundStage as BackgroundBlurStage
-      backgroundBlurStage.updateCoverage(postProcessingConfig.coverage)
-    } else {
+      if (typeof lightWrapping === 'number') {
+        backgroundImageStage.updateLightWrapping(lightWrapping)
+      }
+      if (typeof blendMode === 'string') {
+        backgroundImageStage.updateBlendMode(blendMode)
+      }
+    } else if (backgroundConfig.type !== 'blur') {
       // TODO Handle no background in a separate pipeline path
       const backgroundImageStage = backgroundStage as BackgroundImageStage
       backgroundImageStage.updateCoverage([0, 0.9999])

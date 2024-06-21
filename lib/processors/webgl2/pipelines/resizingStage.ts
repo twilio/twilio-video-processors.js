@@ -16,7 +16,7 @@ export function buildResizingStage(
   positionBuffer: WebGLBuffer,
   texCoordBuffer: WebGLBuffer,
   segmentationConfig: SegmentationConfig,
-  tflite: any
+  segmentationInputBuffer: Uint8ClampedArray
 ) {
   const fragmentShaderSource = glsl`#version 300 es
 
@@ -32,15 +32,9 @@ export function buildResizingStage(
       outColor = texture(u_inputFrame, v_texCoord);
     }
   `
-
-  // TFLite memory will be accessed as float32
-  const tfliteInputMemoryOffset = tflite._getInputMemoryOffset() / 4
-
   const [outputWidth, outputHeight] = inputResolutions[
     segmentationConfig.inputResolution
   ]
-  const outputPixelCount = outputWidth * outputHeight
-
   const fragmentShader = compileShader(
     gl,
     gl.FRAGMENT_SHADER,
@@ -65,18 +59,16 @@ export function buildResizingStage(
     outputTexture,
     0
   )
-  const outputPixels = new Uint8Array(outputPixelCount * 4)
 
   gl.useProgram(program)
   gl.uniform1i(inputFrameLocation, 0)
 
-  async function render() {
+  function render() {
     gl.viewport(0, 0, outputWidth, outputHeight)
     gl.useProgram(program)
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-
-    await readPixelsAsync(
+    return readPixelsAsync(
       gl,
       0,
       0,
@@ -84,16 +76,8 @@ export function buildResizingStage(
       outputHeight,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      outputPixels
+      segmentationInputBuffer
     )
-
-    for (let i = 0; i < outputPixelCount; i++) {
-      const tfliteIndex = tfliteInputMemoryOffset + i * 3
-      const outputIndex = i * 4
-      tflite.HEAPF32[tfliteIndex] = outputPixels[outputIndex] / 255
-      tflite.HEAPF32[tfliteIndex + 1] = outputPixels[outputIndex + 1] / 255
-      tflite.HEAPF32[tfliteIndex + 2] = outputPixels[outputIndex + 2] / 255
-    }
   }
 
   function cleanUp() {

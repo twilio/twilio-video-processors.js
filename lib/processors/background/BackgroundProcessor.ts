@@ -1,17 +1,17 @@
+import { Remote, wrap } from 'comlink';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
-import { version } from '../../utils/version';
+import { TwilioTFLite } from '../../utils/TwilioTFLite';
 import { Dimensions, Pipeline, WebGL2PipelineType } from '../../types';
 import { buildWebGL2Pipeline } from '../webgl2';
 
 import {
   DEBOUNCE_COUNT,
-  HISTORY_COUNT_MULTIPLIER,
   MASK_BLUR_RADIUS,
   MODEL_NAME,
-  PERSON_PROBABILITY_THRESHOLD,
   TFLITE_LOADER_NAME,
   TFLITE_SIMD_LOADER_NAME,
+  TFLITE_WORKER_NAME,
   WASM_INFERENCE_DIMENSIONS,
 } from '../../constants';
 
@@ -51,6 +51,11 @@ export interface BackgroundProcessorOptions {
   assetsPath: string;
 
   /**
+   * @private
+   */
+  asyncInference?: boolean;
+
+  /**
    * Whether to skip processing every other frame to improve the output frame rate, but reducing accuracy in the process.
    * @default
    * ```html
@@ -74,11 +79,6 @@ export interface BackgroundProcessorOptions {
   maskBlurRadius?: number;
 
   /**
-   * @private
-   */
-  personProbabilityThreshold?: number;
-
-  /**
    * Specifies which pipeline to use when processing video frames.
    * @default
    * ```html
@@ -92,7 +92,7 @@ export interface BackgroundProcessorOptions {
  * @private
  */
 export abstract class BackgroundProcessor extends Processor {
-  private static _loadedScripts: string[] = [];
+  private static _tflite: TwilioTFLite | Remote<TwilioTFLite> | null = null;
 
   protected _backgroundImage: HTMLImageElement | null = null;
   protected _outputCanvas: HTMLCanvasElement | null = null;
@@ -100,29 +100,20 @@ export abstract class BackgroundProcessor extends Processor {
   protected _webgl2Pipeline: ReturnType<typeof buildWebGL2Pipeline> | null = null;
 
   private _assetsPath: string;
+  private _asyncInference: boolean;
   private _benchmark: Benchmark;
-  private _currentMask: Uint8ClampedArray | Uint8Array = new Uint8ClampedArray();
+  private _currentMask: Uint8ClampedArray = new Uint8ClampedArray(0);
   private _debounce: boolean = true;
   private _debounceCount: number = DEBOUNCE_COUNT;
   private _dummyImageData: ImageData = new ImageData(1, 1);
-  private _historyCount: number;
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
-  private _inputMemoryOffset: number = 0;
-  // tslint:disable-next-line no-unused-variable
-  private _isSimdEnabled: boolean | null = null;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _maskContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
-  private _masks: (Uint8ClampedArray | Uint8Array)[];
   private _maskUsageCounter: number = 0;
-  private _outputMemoryOffset: number = 0;
-  private _personProbabilityThreshold: number = PERSON_PROBABILITY_THRESHOLD;
   private _pipeline: Pipeline = Pipeline.WebGL2;
-  private _tflite: any;
-  // tslint:disable-next-line no-unused-variable
-  private readonly _version: string = version;
 
   constructor(options: BackgroundProcessorOptions) {
     super();
@@ -137,19 +128,17 @@ export abstract class BackgroundProcessor extends Processor {
 
     this.maskBlurRadius = options.maskBlurRadius!;
     this._assetsPath = assetsPath;
+    this._asyncInference = options.asyncInference || false;
     this._debounce = typeof options.debounce === 'boolean' ? options.debounce : this._debounce;
     this._debounceCount = this._debounce ? this._debounceCount : 1;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
-    this._historyCount = HISTORY_COUNT_MULTIPLIER * this._debounceCount;
-    this._personProbabilityThreshold = options.personProbabilityThreshold! || this._personProbabilityThreshold;
     this._pipeline = options.pipeline! || this._pipeline;
 
     this._benchmark = new Benchmark();
     this._inputCanvas = document.createElement('canvas');
-    this._inputContext = this._inputCanvas.getContext('2d') as CanvasRenderingContext2D;
-    this._maskCanvas =  typeof window.OffscreenCanvas !== 'undefined' ? new window.OffscreenCanvas(1, 1) : document.createElement('canvas');
+    this._inputContext = this._inputCanvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+    this._maskCanvas = typeof window.OffscreenCanvas !== 'undefined' ? new window.OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-    this._masks = [];
   }
 
   /**
@@ -167,7 +156,14 @@ export abstract class BackgroundProcessor extends Processor {
       console.warn(`Valid mask blur radius not found. Using ${MASK_BLUR_RADIUS} as default.`);
       radius = MASK_BLUR_RADIUS;
     }
-    this._maskBlurRadius = radius;
+    if (this._maskBlurRadius !== radius) {
+      this._maskBlurRadius = radius;
+      this._webgl2Pipeline?.updatePostProcessingConfig({
+        jointBilateralFilter: {
+          sigmaSpace: this._maskBlurRadius
+        }
+      });
+    }
   }
 
   /**
@@ -175,21 +171,19 @@ export abstract class BackgroundProcessor extends Processor {
    * Call this method before attaching the processor to ensure
    * video frames are processed correctly.
    */
-   async loadModel() {
-    const [tflite, modelResponse ] = await Promise.all([
-      this._loadTwilioTfLite(),
-      fetch(this._assetsPath + MODEL_NAME),
-    ]);
-
-    const model = await modelResponse.arrayBuffer();
-    const modelBufferOffset = tflite._getModelBufferMemoryOffset();
-    tflite.HEAPU8.set(new Uint8Array(model), modelBufferOffset);
-    tflite._loadModel(model.byteLength);
-
-    this._inputMemoryOffset = tflite._getInputMemoryOffset() / 4;
-    this._outputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
-
-    this._tflite = tflite;
+  async loadModel() {
+    if (BackgroundProcessor._tflite) {
+      return;
+    }
+    BackgroundProcessor._tflite = this._asyncInference
+      ? wrap<TwilioTFLite>(new Worker(`${this._assetsPath}${TFLITE_WORKER_NAME}`))
+      : new TwilioTFLite();
+    await BackgroundProcessor._tflite.initialize(
+      this._assetsPath,
+      MODEL_NAME,
+      TFLITE_LOADER_NAME,
+      TFLITE_SIMD_LOADER_NAME,
+    );
   }
 
   /**
@@ -216,7 +210,7 @@ export abstract class BackgroundProcessor extends Processor {
     inputFrameBuffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement,
     outputFrameBuffer: HTMLCanvasElement
   ): Promise<void> {
-    if (!this._tflite) {
+    if (!BackgroundProcessor._tflite) {
       return;
     }
     if (!inputFrameBuffer || !outputFrameBuffer) {
@@ -297,19 +291,11 @@ export abstract class BackgroundProcessor extends Processor {
 
   protected abstract _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): void;
 
-  private _addMask(mask: Uint8ClampedArray | Uint8Array) {
-    if (this._masks.length >= this._historyCount) {
-      this._masks.splice(0, this._masks.length - this._historyCount + 1);
-    }
-    this._masks.push(mask);
-  }
-
   private _applyAlpha(imageData: ImageData) {
-    const weightedSum = this._masks.reduce((sum, mask, j) => sum + (j + 1) * (j + 1), 0);
-    const pixels = imageData.height * imageData.width;
+    const { height, width } = imageData;
+    const pixels = width * height;
     for (let i = 0; i < pixels; i++) {
-      const w = this._masks.reduce((sum, mask, j) => sum + mask[i] * (j + 1) * (j + 1), 0) / weightedSum;
-      imageData.data[i * 4 + 3] = Math.round(w * 255);
+      imageData.data[i * 4 + 3] = this._currentMask[i];
     }
   }
 
@@ -325,10 +311,11 @@ export abstract class BackgroundProcessor extends Processor {
 
     this._benchmark.start('segmentationDelay');
     if (shouldRunInference) {
-      this._currentMask = this._runTwilioTfLiteInference(imageData);
+      this._currentMask = await BackgroundProcessor
+        ._tflite!
+        .runInference(imageData.data);
       this._maskUsageCounter = this._debounceCount;
     }
-    this._addMask(this._currentMask);
     this._applyAlpha(imageData);
     this._maskUsageCounter--;
     this._benchmark.end('segmentationDelay');
@@ -353,14 +340,13 @@ export abstract class BackgroundProcessor extends Processor {
       { type: this._getWebGL2PipelineType() },
       { inputResolution: `${inferenceWidth}x${inferenceHeight}` },
       this._outputCanvas!,
-      this._tflite,
+      BackgroundProcessor._tflite,
       this._benchmark,
       this._debounce,
     );
     this._webgl2Pipeline.updatePostProcessingConfig({
-      smoothSegmentationMask: true,
       jointBilateralFilter: {
-        sigmaSpace: 2,
+        sigmaSpace: this._maskBlurRadius,
         sigmaColor: 0.1
       },
       coverage: [
@@ -375,60 +361,6 @@ export abstract class BackgroundProcessor extends Processor {
   private _getResizedInputImageData(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): ImageData {
     const { width, height } = this._inputCanvas;
     this._inputContext.drawImage(inputFrame, 0, 0, width, height);
-    const imageData = this._inputContext.getImageData(0, 0, width, height);
-    return imageData;
-  }
-
-  private _loadJs(url: string): Promise<void> {
-    if (BackgroundProcessor._loadedScripts.includes(url)) {
-      return Promise.resolve();
-    }
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.onload = () => {
-        BackgroundProcessor._loadedScripts.push(url);
-        resolve();
-      };
-      script.onerror = reject;
-      document.head.append(script);
-      script.src = url;
-    });
-  }
-
-  private async _loadTwilioTfLite(): Promise<any> {
-    let tflite: any;
-    await this._loadJs(this._assetsPath + TFLITE_SIMD_LOADER_NAME);
-
-    try {
-      tflite = await window.createTwilioTFLiteSIMDModule();
-      this._isSimdEnabled = true;
-    } catch {
-      console.warn('SIMD not supported. You may experience poor quality of background replacement.');
-      await this._loadJs(this._assetsPath + TFLITE_LOADER_NAME);
-      tflite = await window.createTwilioTFLiteModule();
-      this._isSimdEnabled = false;
-    }
-    return tflite;
-  }
-
-  private _runTwilioTfLiteInference(inputImage: ImageData): Uint8ClampedArray {
-    const { _inferenceDimensions: { width, height }, _inputMemoryOffset: offset, _tflite: tflite } = this;
-    const pixels = width * height;
-
-    for (let i = 0; i < pixels; i++) {
-      tflite.HEAPF32[offset + i * 3] = inputImage.data[i * 4] / 255;
-      tflite.HEAPF32[offset + i * 3 + 1] = inputImage.data[i * 4 + 1] / 255;
-      tflite.HEAPF32[offset + i * 3 + 2] = inputImage.data[i * 4 + 2] / 255;
-    }
-
-    tflite._runInference();
-    const inferenceData = new Uint8ClampedArray(pixels * 4);
-
-    for (let i = 0; i < pixels; i++) {
-      const personProbability = tflite.HEAPF32[this._outputMemoryOffset + i];
-      inferenceData[i] = Number(personProbability >= this._personProbabilityThreshold) * personProbability;
-    }
-
-    return inferenceData;
+    return this._inputContext.getImageData(0, 0, width, height);
   }
 }
