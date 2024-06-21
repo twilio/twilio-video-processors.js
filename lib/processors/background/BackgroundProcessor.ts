@@ -67,6 +67,11 @@ export interface BackgroundProcessorOptions {
   /**
    * @private
    */
+  deferWebGL2InputResize?: boolean;
+
+  /**
+   * @private
+   */
   inferenceDimensions?: Dimensions;
 
   /**
@@ -105,6 +110,7 @@ export abstract class BackgroundProcessor extends Processor {
   private _currentMask: Uint8ClampedArray = new Uint8ClampedArray(0);
   private _debounce: boolean = true;
   private _debounceCount: number = DEBOUNCE_COUNT;
+  private _deferWebGL2InputResize: boolean;
   private _dummyImageData: ImageData = new ImageData(1, 1);
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
@@ -128,9 +134,10 @@ export abstract class BackgroundProcessor extends Processor {
 
     this.maskBlurRadius = options.maskBlurRadius!;
     this._assetsPath = assetsPath;
-    this._asyncInference = options.asyncInference || false;
+    this._asyncInference = typeof options.asyncInference === 'boolean' ? options.asyncInference : false;
     this._debounce = typeof options.debounce === 'boolean' ? options.debounce : this._debounce;
     this._debounceCount = this._debounce ? this._debounceCount : 1;
+    this._deferWebGL2InputResize = typeof options.deferWebGL2InputResize === 'boolean' ? options.deferWebGL2InputResize : true;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
     this._pipeline = options.pipeline! || this._pipeline;
 
@@ -337,12 +344,17 @@ export abstract class BackgroundProcessor extends Processor {
         height: captureHeight,
       },
       this._backgroundImage,
-      { type: this._getWebGL2PipelineType() },
-      { inputResolution: `${inferenceWidth}x${inferenceHeight}` },
+      {
+        type: this._getWebGL2PipelineType(),
+      },
+      {
+        deferWebGL2InputResize: this._deferWebGL2InputResize,
+        inputResolution: `${inferenceWidth}x${inferenceHeight}`,
+      },
       this._outputCanvas!,
       BackgroundProcessor._tflite,
       this._benchmark,
-      this._debounce,
+      this._debounce
     );
     this._webgl2Pipeline.updatePostProcessingConfig({
       jointBilateralFilter: {

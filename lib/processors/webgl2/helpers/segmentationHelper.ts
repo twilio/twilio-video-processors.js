@@ -10,5 +10,6 @@ export const inputResolutions: {
 }
 
 export type SegmentationConfig = {
+  deferWebGL2InputResize: boolean
   inputResolution: InputResolution
 }

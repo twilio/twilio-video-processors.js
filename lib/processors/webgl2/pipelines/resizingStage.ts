@@ -68,7 +68,7 @@ export function buildResizingStage(
     gl.useProgram(program)
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-    return readPixelsAsync(
+    const promise = readPixelsAsync(
       gl,
       0,
       0,
@@ -78,6 +78,9 @@ export function buildResizingStage(
       gl.UNSIGNED_BYTE,
       segmentationInputBuffer
     )
+    if (!segmentationConfig.deferWebGL2InputResize) {
+      return promise;
+    }
   }
 
   function cleanUp() {

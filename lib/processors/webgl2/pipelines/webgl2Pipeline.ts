@@ -27,7 +27,7 @@ export function buildWebGL2Pipeline(
   canvas: HTMLCanvasElement,
   tflite: any,
   benchmark: any,
-  debounce: boolean,
+  debounce: boolean
 ) {
   let shouldRunInference = true
 
