@@ -1,7 +1,6 @@
 import { Dimensions } from './types';
 
 export const BLUR_FILTER_RADIUS = 15;
-export const DEBOUNCE_COUNT = 2;
 export const MASK_BLUR_RADIUS = 5;
 export const PERSON_PROBABILITY_THRESHOLD = 0.4;
 export const MODEL_NAME = 'selfie_segmentation_landscape.tflite';

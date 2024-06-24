@@ -6,7 +6,6 @@ import { Dimensions, Pipeline, WebGL2PipelineType } from '../../types';
 import { buildWebGL2Pipeline } from '../webgl2';
 
 import {
-  DEBOUNCE_COUNT,
   MASK_BLUR_RADIUS,
   MODEL_NAME,
   TFLITE_LOADER_NAME,
@@ -107,18 +106,15 @@ export abstract class BackgroundProcessor extends Processor {
   private _assetsPath: string;
   private _asyncInference: boolean;
   private _benchmark: Benchmark;
-  private _currentMask: Uint8ClampedArray = new Uint8ClampedArray(0);
+  private _currentMask: ImageData | null = null;
   private _debounce: boolean = true;
-  private _debounceCount: number = DEBOUNCE_COUNT;
   private _deferWebGL2InputResize: boolean;
-  private _dummyImageData: ImageData = new ImageData(1, 1);
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inputCanvas: HTMLCanvasElement;
   private _inputContext: CanvasRenderingContext2D;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _maskContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
-  private _maskUsageCounter: number = 0;
   private _pipeline: Pipeline = Pipeline.WebGL2;
 
   constructor(options: BackgroundProcessorOptions) {
@@ -136,7 +132,6 @@ export abstract class BackgroundProcessor extends Processor {
     this._assetsPath = assetsPath;
     this._asyncInference = typeof options.asyncInference === 'boolean' ? options.asyncInference : false;
     this._debounce = typeof options.debounce === 'boolean' ? options.debounce : this._debounce;
-    this._debounceCount = this._debounce ? this._debounceCount : 1;
     this._deferWebGL2InputResize = typeof options.deferWebGL2InputResize === 'boolean' ? options.deferWebGL2InputResize : true;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
     this._pipeline = options.pipeline! || this._pipeline;
@@ -226,14 +221,20 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.end('captureFrameDelay');
     this._benchmark.start('processFrameDelay');
 
-    const { width: inferenceWidth, height: inferenceHeight } = this._inferenceDimensions;
-    let inputFrame = inputFrameBuffer;
-    let { width: captureWidth, height: captureHeight } = inputFrame;
-    if ((inputFrame as HTMLVideoElement).videoWidth) {
-      inputFrame = inputFrame as HTMLVideoElement;
-      captureWidth = inputFrame.videoWidth;
-      captureHeight = inputFrame.videoHeight;
-    }
+    const {
+      width: inferenceWidth,
+      height: inferenceHeight
+    } = this._inferenceDimensions;
+
+    const inputFrame = inputFrameBuffer instanceof HTMLVideoElement
+      ? outputFrameBuffer
+      : inputFrameBuffer;
+
+    const {
+      width: captureWidth,
+      height: captureHeight
+    } = inputFrame;
+
     if (this._outputCanvas !== outputFrameBuffer) {
       this._outputCanvas = outputFrameBuffer;
       this._outputContext = this._outputCanvas
@@ -244,43 +245,52 @@ export abstract class BackgroundProcessor extends Processor {
     }
 
     if (!this._webgl2Pipeline && this._pipeline === Pipeline.WebGL2) {
-      this._createWebGL2Pipeline(inputFrame as HTMLVideoElement, captureWidth, captureHeight, inferenceWidth, inferenceHeight);
+      this._createWebGL2Pipeline(inputFrameBuffer as HTMLVideoElement, captureWidth, captureHeight, inferenceWidth, inferenceHeight);
     }
 
     if (this._pipeline === Pipeline.WebGL2) {
       await this._webgl2Pipeline?.render();
     } else {
       // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
-      let reInitDummyImage = false;
       if (this._inputCanvas.width !== inferenceWidth) {
         this._inputCanvas.width = inferenceWidth;
         this._maskCanvas.width = inferenceWidth;
-        reInitDummyImage = true;
       }
       if (this._inputCanvas.height !== inferenceHeight) {
         this._inputCanvas.height = inferenceHeight;
         this._maskCanvas.height = inferenceHeight;
-        reInitDummyImage = true;
-      }
-      if (reInitDummyImage) {
-        this._dummyImageData = new ImageData(
-          new Uint8ClampedArray(inferenceWidth * inferenceHeight * 4),
-          inferenceWidth, inferenceHeight);
       }
 
-      const personMask = await this._createPersonMask(inputFrame);
+      // NOTE(mmalavalli): If the input frame buffer is an HTMLVideoElement, then we save
+      // the video frame here, otherwise there will be a trailing effect on the person mask.
       const ctx = this._outputContext as CanvasRenderingContext2D;
-      this._benchmark.start('imageCompositionDelay');
-      this._maskContext.putImageData(personMask, 0, 0);
       ctx.save();
-      ctx.filter = `blur(${this._maskBlurRadius}px)`;
+      ctx.filter = 'none';
       ctx.globalCompositeOperation = 'copy';
+      ctx.drawImage(inputFrameBuffer, 0, 0);
+
+      const inputFramePromise: Promise<CanvasImageSource> =
+        inputFrameBuffer instanceof HTMLVideoElement && 'blurFilterRadius' in this
+          ? createImageBitmap(inputFrame)
+          : Promise.resolve(inputFrame);
+
+      const personMask = await this._createPersonMask(inputFrame);
+      if (this._debounce) {
+        this._currentMask = this._currentMask === personMask
+          ? null
+          : personMask;
+      }
+
+      this._benchmark.start('imageCompositionDelay');
+      if (!this._debounce || this._currentMask) {
+        this._maskContext.putImageData(personMask, 0, 0);
+      }
+      ctx.filter = `blur(${this._maskBlurRadius}px)`;
+      ctx.globalCompositeOperation = 'destination-in';
       ctx.drawImage(this._maskCanvas, 0, 0, captureWidth, captureHeight);
       ctx.filter = 'none';
-      ctx.globalCompositeOperation = 'source-in';
-      ctx.drawImage(inputFrame, 0, 0, captureWidth, captureHeight);
       ctx.globalCompositeOperation = 'destination-over';
-      this._setBackground(inputFrame);
+      this._setBackground(await inputFramePromise);
       ctx.restore();
       this._benchmark.end('imageCompositionDelay');
     }
@@ -296,37 +306,45 @@ export abstract class BackgroundProcessor extends Processor {
 
   protected abstract _getWebGL2PipelineType(): WebGL2PipelineType;
 
-  protected abstract _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): void;
+  protected abstract _setBackground(inputFrame: CanvasImageSource): void;
 
-  private _applyAlpha(imageData: ImageData) {
+  private _applyAlpha(imageData: ImageData, alphaMask: Uint8ClampedArray) {
     const { height, width } = imageData;
     const pixels = width * height;
     for (let i = 0; i < pixels; i++) {
-      imageData.data[i * 4 + 3] = this._currentMask[i];
+      imageData.data[i * 4 + 3] = alphaMask[i];
     }
   }
 
-  private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): Promise<ImageData> {
-    let imageData = this._dummyImageData;
-    const shouldRunInference = this._maskUsageCounter < 1;
+  private async _createPersonMask(inputFrame: CanvasImageSource): Promise<ImageData> {
+    const stages = {
+      blendAlpha: {
+        false: (inferenceInput: ImageData, alphaMask: Uint8ClampedArray) =>
+          this._applyAlpha(inferenceInput, alphaMask),
+        true: () => { /* noop */ }
+      },
+      inference: {
+        false: async (inferenceInput: ImageData) =>
+          BackgroundProcessor._tflite!.runInference(inferenceInput.data),
+        true: async (currentMask: ImageData) => currentMask.data
+      },
+      resize: {
+        false: () => this._getResizedInputImageData(inputFrame),
+        true: () => this._currentMask as ImageData
+      }
+    };
+    const shouldDebounce = !!this._currentMask;
+    const blendAlphaStage = stages.blendAlpha[`${shouldDebounce}`];
+    const inferenceStage = stages.inference[`${shouldDebounce}`];
+    const resizeStage = stages.resize[`${shouldDebounce}`];
 
     this._benchmark.start('inputImageResizeDelay');
-    if (shouldRunInference) {
-      imageData = this._getResizedInputImageData(inputFrame);
-    }
+    const imageData = resizeStage();
     this._benchmark.end('inputImageResizeDelay');
-
     this._benchmark.start('segmentationDelay');
-    if (shouldRunInference) {
-      this._currentMask = await BackgroundProcessor
-        ._tflite!
-        .runInference(imageData.data);
-      this._maskUsageCounter = this._debounceCount;
-    }
-    this._applyAlpha(imageData);
-    this._maskUsageCounter--;
+    const alphaMask = await inferenceStage(imageData);
+    blendAlphaStage(imageData, alphaMask);
     this._benchmark.end('segmentationDelay');
-
     return imageData;
   }
 
@@ -370,7 +388,7 @@ export abstract class BackgroundProcessor extends Processor {
     });
   }
 
-  private _getResizedInputImageData(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): ImageData {
+  private _getResizedInputImageData(inputFrame: CanvasImageSource): ImageData {
     const { width, height } = this._inputCanvas;
     this._inputContext.drawImage(inputFrame, 0, 0, width, height);
     return this._inputContext.getImageData(0, 0, width, height);
