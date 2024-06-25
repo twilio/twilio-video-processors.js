@@ -14,6 +14,8 @@ import {
   WASM_INFERENCE_DIMENSIONS,
 } from '../../constants';
 
+type InputResizeMode = 'canvas' | 'image-bitmap';
+
 /**
  * @private
  */
@@ -69,6 +71,11 @@ export interface BackgroundProcessorOptions {
   inferenceDimensions?: Dimensions;
 
   /**
+   * @private
+   */
+  inputResizeMode?: InputResizeMode;
+
+  /**
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
@@ -101,17 +108,18 @@ export abstract class BackgroundProcessor extends Processor {
   private _assetsPath: string;
   private _asyncInference: boolean;
   private _benchmark: Benchmark;
-  private _currentMask: ImageData | null = null;
-  private _debounce: boolean = true;
+  private _currentMask: ImageData | null;
+  private _debounce: boolean;
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inferenceInputCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _inferenceInputContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
   private _inputFrameCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _inputFrameContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  private _inputResizeMode: InputResizeMode;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _maskContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
-  private _pipeline: Pipeline = Pipeline.WebGL2;
+  private _pipeline: Pipeline;
 
   constructor(options: BackgroundProcessorOptions) {
     super();
@@ -127,11 +135,13 @@ export abstract class BackgroundProcessor extends Processor {
     this.maskBlurRadius = options.maskBlurRadius!;
     this._assetsPath = assetsPath;
     this._asyncInference = typeof options.asyncInference === 'boolean' ? options.asyncInference : false;
-    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : this._debounce;
+    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : false;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
-    this._pipeline = options.pipeline! || this._pipeline;
+    this._inputResizeMode = typeof options.inputResizeMode === 'string' ? options.inputResizeMode : 'image-bitmap';
+    this._pipeline = options.pipeline! || Pipeline.WebGL2;
 
     this._benchmark = new Benchmark();
+    this._currentMask = null;
     this._inferenceInputCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._inferenceInputContext = this._inferenceInputCanvas.getContext('2d', { willReadFrequently: true }) as OffscreenCanvasRenderingContext2D;
     this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
@@ -326,8 +336,8 @@ export abstract class BackgroundProcessor extends Processor {
         true: async (currentMask: ImageData) => currentMask.data
       },
       resize: {
-        false: () => this._getResizedInputImageData(inputFrame),
-        true: () => this._currentMask as ImageData
+        false: async () => this._getResizedInputImageData(inputFrame),
+        true: async () => this._currentMask as ImageData
       }
     };
     const shouldDebounce = !!this._currentMask;
@@ -335,7 +345,7 @@ export abstract class BackgroundProcessor extends Processor {
     const resizeStage = stages.resize[`${shouldDebounce}`];
 
     this._benchmark.start('inputImageResizeDelay');
-    const imageData = resizeStage();
+    const imageData = await resizeStage();
     this._benchmark.end('inputImageResizeDelay');
     this._benchmark.start('segmentationDelay');
     const personMaskBuffer = await inferenceStage(imageData);
@@ -381,13 +391,23 @@ export abstract class BackgroundProcessor extends Processor {
     });
   }
 
-  private _getResizedInputImageData(inputFrame: CanvasImageSource): ImageData {
+  private async _getResizedInputImageData(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): Promise<ImageData> {
     const {
-      _inferenceInputCanvas: { width, height },
-      _inferenceInputContext: ctx
+      _inferenceInputCanvas: {
+        width: resizeWidth,
+        height: resizeHeight
+      },
+      _inferenceInputContext: ctx,
+      _inputResizeMode: resizeMode
     } = this;
-    ctx.drawImage(inputFrame, 0, 0, width, height);
-    return ctx.getImageData(0, 0, width, height);
+    if (resizeMode === 'image-bitmap') {
+      const resizedInputFrameBitmap = await createImageBitmap(inputFrame, { resizeWidth, resizeHeight, resizeQuality: 'pixelated' });
+      ctx.drawImage(resizedInputFrameBitmap, 0, 0, resizeWidth, resizeHeight);
+      resizedInputFrameBitmap.close();
+    } else {
+      ctx.drawImage(inputFrame, 0, 0, resizeWidth, resizeHeight);
+    }
+    return ctx.getImageData(0, 0, resizeWidth, resizeHeight);
   }
 
   private _runInference(inputBuffer: Uint8ClampedArray): Promise<Uint8ClampedArray> {

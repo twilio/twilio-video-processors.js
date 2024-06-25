@@ -13,7 +13,7 @@ import {
   BackgroundImageStage,
   buildBackgroundImageStage,
 } from './backgroundImageStage'
-import { buildJointBilateralFilterStage } from './jointBilateralFilterStage'
+import { buildFastBilateralFilterStage } from './fastBilateralFilterStage'
 import { buildLoadSegmentationStage } from './loadSegmentationStage'
 
 export function buildWebGL2Pipeline(
@@ -100,7 +100,7 @@ export function buildWebGL2Pipeline(
     segmentationConfig,
     segmentationTexture
   )
-  const jointBilateralFilterStage = buildJointBilateralFilterStage(
+  const fastBilateralFilterStage = buildFastBilateralFilterStage(
     gl,
     vertexShader,
     positionBuffer,
@@ -154,7 +154,7 @@ export function buildWebGL2Pipeline(
     benchmark.start('imageCompositionDelay')
     if (shouldUpscaleCurrentMask) {
       loadSegmentationStage.render(segmentationData)
-      jointBilateralFilterStage.render()
+      fastBilateralFilterStage.render()
     }
     backgroundStage.render()
     if (debounce) {
@@ -179,10 +179,10 @@ export function buildWebGL2Pipeline(
     } = jointBilateralFilter
 
     if (typeof sigmaColor === 'number') {
-      jointBilateralFilterStage.updateSigmaColor(sigmaColor)
+      fastBilateralFilterStage.updateSigmaColor(sigmaColor)
     }
     if (typeof sigmaSpace === 'number') {
-      jointBilateralFilterStage.updateSigmaSpace(sigmaSpace)
+      fastBilateralFilterStage.updateSigmaSpace(sigmaSpace)
     }
     if (Array.isArray(coverage)) {
       if (backgroundConfig.type === 'blur' || backgroundConfig.type === 'image') {
@@ -207,7 +207,7 @@ export function buildWebGL2Pipeline(
 
   function cleanUp() {
     backgroundStage.cleanUp()
-    jointBilateralFilterStage.cleanUp()
+    fastBilateralFilterStage.cleanUp()
     loadSegmentationStage.cleanUp()
 
     gl.deleteTexture(personMaskTexture)

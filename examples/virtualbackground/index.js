@@ -31,7 +31,8 @@ const captureConfig = {
 };
 
 const asyncInference = JSON.parse(params.asyncInference || 'false');
-const maskBlurRadius = Number(params.maskBlurRadius || '2');
+const inputResizeMode = params.inputResizeMode || 'image-bitmap';
+const maskBlurRadius = Number(params.maskBlurRadius || '8');
 
 videoInput.style.maxWidth = `${captureConfig.width}px`;
 
@@ -70,6 +71,7 @@ const handleButtonClick = async bg => {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
       asyncInference,
+      inputResizeMode,
       pipeline,
       debounce,
       maskBlurRadius,
@@ -82,6 +84,7 @@ const handleButtonClick = async bg => {
       assetsPath,
       asyncInference,
       backgroundImage,
+      inputResizeMode,
       pipeline,
       debounce,
       maskBlurRadius,

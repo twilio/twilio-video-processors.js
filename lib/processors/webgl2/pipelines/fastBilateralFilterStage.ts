@@ -8,7 +8,7 @@ import {
   glsl,
 } from '../helpers/webglHelper'
 
-export function buildJointBilateralFilterStage(
+export function buildFastBilateralFilterStage(
   gl: WebGL2RenderingContext,
   vertexShader: WebGLShader,
   positionBuffer: WebGLBuffer,
@@ -18,6 +18,11 @@ export function buildJointBilateralFilterStage(
   outputTexture: WebGLTexture,
   canvas: HTMLCanvasElement
 ) {
+  // NOTE(mmalavalli): This is a faster approximation of the joint bilateral filter. It improves
+  // the complexity from O(w x h x r^2) to O(w x h x r), where:
+  // w => width of the output video frame
+  // h => height of the output video frame
+  // r => radius of the joint bilateral filter kernel
   const fragmentShaderSource = glsl`#version 300 es
 
     precision highp float;
@@ -66,18 +71,28 @@ export function buildJointBilateralFilterStage(
         outColor = vec4(vec3(0.0), 1.0);
       } else {
         for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {
-          for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {
-            vec2 shift = vec2(j, i) * u_texelSize;
-            vec2 coord = vec2(centerCoord + shift);
-            vec3 frameColor = texture(u_inputFrame, coord).rgb;
-            float outVal = texture(u_segmentationMask, coord).a;
+          vec2 shift = vec2(i, i) * u_texelSize;
+          vec2 coord = vec2(centerCoord + shift);
+          vec3 frameColor = texture(u_inputFrame, coord).rgb;
+          float outVal = texture(u_segmentationMask, coord).a;
 
-            spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);
-            colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);
-            totalWeight += spaceWeight * colorWeight;
+          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);
+          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);
+          totalWeight += spaceWeight * colorWeight;
 
-            newVal += spaceWeight * colorWeight * outVal;
-          }
+          newVal += spaceWeight * colorWeight * outVal;
+        }
+        for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {
+          vec2 shift = vec2(j, -j) * u_texelSize;
+          vec2 coord = vec2(centerCoord + shift);
+          vec3 frameColor = texture(u_inputFrame, coord).rgb;
+          float outVal = texture(u_segmentationMask, coord).a;
+
+          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);
+          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);
+          totalWeight += spaceWeight * colorWeight;
+
+          newVal += spaceWeight * colorWeight * outVal;
         }
         newVal /= totalWeight;
 
