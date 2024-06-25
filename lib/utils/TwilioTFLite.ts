@@ -10,7 +10,6 @@ const loadedScripts = new Set<string>();
 let model: ArrayBuffer;
 
 export class TwilioTFLite {
-  private _inferenceBuffer: Uint8ClampedArray | null = null;
   private _isSimdEnabled: boolean = false;
   private _tflite: any = null;
 
@@ -56,11 +55,10 @@ export class TwilioTFLite {
 
     tflite._runInference();
 
-    this._inferenceBuffer = this._inferenceBuffer || new Uint8ClampedArray(pixels);
     for (let i = 0; i < pixels; i++) {
-      this._inferenceBuffer[i] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
+      inputBuffer[i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
     }
-    return this._inferenceBuffer;
+    return inputBuffer;
   }
 
   private async _loadScript(path: string): Promise<void> {

@@ -28,7 +28,7 @@ export function buildLoadSegmentationStage(
     out vec4 outColor;
 
     void main() {
-      float segmentation = texture(u_inputSegmentation, v_texCoord).r;
+      float segmentation = texture(u_inputSegmentation, v_texCoord).a;
       outColor = vec4(vec3(0.0), segmentation);
     }
   `
@@ -50,7 +50,7 @@ export function buildLoadSegmentationStage(
   const inputLocation = gl.getUniformLocation(program, 'u_inputSegmentation')
   const inputTexture = createTexture(
     gl,
-    gl.R8,
+    gl.RGBA8,
     segmentationWidth,
     segmentationHeight
   )
@@ -80,7 +80,7 @@ export function buildLoadSegmentationStage(
       0,
       segmentationWidth,
       segmentationHeight,
-      gl.RED,
+      gl.RGBA,
       gl.UNSIGNED_BYTE,
       segmentationData
     )

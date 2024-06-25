@@ -7,7 +7,6 @@ import {
 import { SourcePlayback } from '../helpers/sourceHelper'
 import { compileShader, createTexture, glsl } from '../helpers/webglHelper'
 import {
-  BackgroundBlurStage,
   buildBackgroundBlurStage,
 } from './backgroundBlurStage'
 import {
@@ -16,8 +15,6 @@ import {
 } from './backgroundImageStage'
 import { buildJointBilateralFilterStage } from './jointBilateralFilterStage'
 import { buildLoadSegmentationStage } from './loadSegmentationStage'
-import { buildResizingStage } from './resizingStage'
-import { buildSoftmaxStage } from './softmaxStage'
 
 export function buildWebGL2Pipeline(
   sourcePlayback: SourcePlayback,
@@ -25,11 +22,10 @@ export function buildWebGL2Pipeline(
   backgroundConfig: BackgroundConfig,
   segmentationConfig: SegmentationConfig,
   canvas: HTMLCanvasElement,
-  tflite: any,
   benchmark: any,
   debounce: boolean
 ) {
-  let shouldRunInference = true
+  let shouldUpscaleCurrentMask = true
 
   const vertexShaderSource = glsl`#version 300 es
 
@@ -96,19 +92,6 @@ export function buildWebGL2Pipeline(
     frameWidth,
     frameHeight
   )!
-  const segmentationInputBuffer = new Uint8ClampedArray(
-    segmentationWidth
-    * segmentationHeight
-    * 4
-  )
-  const resizingStage = buildResizingStage(
-    gl,
-    vertexShader,
-    positionBuffer,
-    texCoordBuffer,
-    segmentationConfig,
-    segmentationInputBuffer
-  )
   const loadSegmentationStage = buildLoadSegmentationStage(
     gl,
     vertexShader,
@@ -146,10 +129,7 @@ export function buildWebGL2Pipeline(
           canvas
         )
 
-  let segmentationData: Uint8ClampedArray
-
-  async function render() {
-    benchmark.start('inputImageResizeDelay')
+  async function sampleInputFrame() {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
@@ -168,23 +148,18 @@ export function buildWebGL2Pipeline(
     )
 
     gl.bindVertexArray(vertexArray)
+  }
 
-    await resizingStage.render()
-    benchmark.end('inputImageResizeDelay')
-
-    benchmark.start('segmentationDelay')
-    if (shouldRunInference) {
-      segmentationData = await tflite.runInference(segmentationInputBuffer)
-    }
-    if (debounce) {
-      shouldRunInference = !shouldRunInference
-    }
-    benchmark.end('segmentationDelay')
-
+  async function render(segmentationData: Uint8ClampedArray) {
     benchmark.start('imageCompositionDelay')
-    loadSegmentationStage.render(segmentationData)
-    jointBilateralFilterStage.render()
+    if (shouldUpscaleCurrentMask) {
+      loadSegmentationStage.render(segmentationData)
+      jointBilateralFilterStage.render()
+    }
     backgroundStage.render()
+    if (debounce) {
+      shouldUpscaleCurrentMask = !shouldUpscaleCurrentMask
+    }
     benchmark.end('imageCompositionDelay')
   }
 
@@ -234,7 +209,6 @@ export function buildWebGL2Pipeline(
     backgroundStage.cleanUp()
     jointBilateralFilterStage.cleanUp()
     loadSegmentationStage.cleanUp()
-    resizingStage.cleanUp()
 
     gl.deleteTexture(personMaskTexture)
     gl.deleteTexture(segmentationTexture)
@@ -245,5 +219,5 @@ export function buildWebGL2Pipeline(
     gl.deleteShader(vertexShader)
   }
 
-  return { render, updatePostProcessingConfig, cleanUp }
+  return { render, sampleInputFrame, updatePostProcessingConfig, cleanUp }
 }
