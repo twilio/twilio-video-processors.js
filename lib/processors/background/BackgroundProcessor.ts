@@ -79,7 +79,7 @@ export interface BackgroundProcessorOptions {
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
-   * 5
+   * 8
    * ```
    */
   maskBlurRadius?: number;
