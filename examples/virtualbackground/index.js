@@ -8,16 +8,11 @@ const videoInput = document.querySelector('video#video-input');
 const errorMessage = document.querySelector('div.modal-body');
 const errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
 const stats = document.querySelector('#stats');
-
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 const params = Object.fromEntries(new URLSearchParams(location.search).entries());
 const showStats = params.stats === 'true';
-
 const assetsPath = '';
 const pipeline = params.pipeline || Pipeline.WebGL2;
-// debounce will set to true if safari and on blur.
-// See GaussianBlurBackgroundProcessor initialization below
-const debounce = JSON.parse(params.debounce || `${isSafari}`);
+const debounce = JSON.parse(params.debounce || 'true');
 const addProcessorOptions = {
   inputFrameBufferType: 'video',
   outputFrameBufferContextType: params.pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',

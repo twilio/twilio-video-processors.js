@@ -135,7 +135,7 @@ export abstract class BackgroundProcessor extends Processor {
     this.maskBlurRadius = options.maskBlurRadius!;
     this._assetsPath = assetsPath;
     this._asyncInference = typeof options.asyncInference === 'boolean' ? options.asyncInference : false;
-    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : false;
+    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : true;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
     this._inputResizeMode = typeof options.inputResizeMode === 'string' ? options.inputResizeMode : 'image-bitmap';
     this._pipeline = options.pipeline! || Pipeline.WebGL2;
