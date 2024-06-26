@@ -18,8 +18,8 @@ export function buildFastBilateralFilterStage(
   outputTexture: WebGLTexture,
   canvas: HTMLCanvasElement
 ) {
-  // NOTE(mmalavalli): This is a faster approximation of the joint bilateral filter. It improves
-  // the complexity from O(w x h x r^2) to O(w x h x r), where:
+  // NOTE(mmalavalli): This is a faster approximation of the joint bilateral filter.
+  // It improves the complexity from O(w x h x r^2) to O(w x h x r), where:
   // w => width of the output video frame
   // h => height of the output video frame
   // r => radius of the joint bilateral filter kernel
@@ -41,23 +41,32 @@ export function buildFastBilateralFilterStage(
     out vec4 outColor;
 
     float gaussian(float x, float sigma) {
-      float coeff = -0.5 / (sigma * sigma * 4.0 + 1.0e-6);
-      return exp((x * x) * coeff);
+      return exp(-0.5 * x * x / sigma / sigma);
+    }
+
+    float calculateSpaceWeight(vec2 coord) {
+      float x = distance(v_texCoord, coord);
+      float sigma = u_sigmaTexel;
+      return gaussian(x, sigma);
+    }
+
+    float calculateColorWeight(vec2 coord) {
+      vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;
+      vec3 coordColor = texture(u_inputFrame, coord).rgb;
+      float x = distance(centerColor, coordColor);
+      float sigma = u_sigmaColor;
+      return gaussian(x, sigma);
     }
 
     void main() {
-      vec2 centerCoord = v_texCoord;
-      vec3 centerColor = texture(u_inputFrame, centerCoord).rgb;
+      vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;
       float newVal = 0.0;
-
-      float spaceWeight = 0.0;
-      float colorWeight = 0.0;
       float totalWeight = 0.0;
 
-      vec2 leftTopCoord = vec2(centerCoord + vec2(-u_radius, -u_radius) * u_texelSize);
-      vec2 rightTopCoord = vec2(centerCoord + vec2(u_radius, -u_radius) * u_texelSize);
-      vec2 leftBottomCoord = vec2(centerCoord + vec2(-u_radius, u_radius) * u_texelSize);
-      vec2 rightBottomCoord = vec2(centerCoord + vec2(u_radius, u_radius) * u_texelSize);
+      vec2 leftTopCoord = vec2(v_texCoord + vec2(-u_radius, -u_radius) * u_texelSize);
+      vec2 rightTopCoord = vec2(v_texCoord + vec2(u_radius, -u_radius) * u_texelSize);
+      vec2 leftBottomCoord = vec2(v_texCoord + vec2(-u_radius, u_radius) * u_texelSize);
+      vec2 rightBottomCoord = vec2(v_texCoord + vec2(u_radius, u_radius) * u_texelSize);
 
       float leftTopSegAlpha = texture(u_segmentationMask, leftTopCoord).a;
       float rightTopSegAlpha = texture(u_segmentationMask, rightTopCoord).a;
@@ -66,38 +75,50 @@ export function buildFastBilateralFilterStage(
       float totalSegAlpha = leftTopSegAlpha + rightTopSegAlpha + leftBottomSegAlpha + rightBottomSegAlpha;
 
       if (totalSegAlpha <= 0.0) {
-        outColor = vec4(vec3(0.0), 0.0);
+        newVal = 0.0;
       } else if (totalSegAlpha >= 4.0) {
-        outColor = vec4(vec3(0.0), 1.0);
+        newVal = 1.0;
       } else {
-        for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {
+        for (float i = 0.0; i <= u_radius - u_offset; i += u_step) {
           vec2 shift = vec2(i, i) * u_texelSize;
-          vec2 coord = vec2(centerCoord + shift);
-          vec3 frameColor = texture(u_inputFrame, coord).rgb;
-          float outVal = texture(u_segmentationMask, coord).a;
+          vec2 coord = vec2(v_texCoord + shift);
+          float spaceWeight = calculateSpaceWeight(coord);
+          float colorWeight = calculateColorWeight(coord);
+          float weight = spaceWeight * colorWeight;
+          float alpha = texture(u_segmentationMask, coord).a;
+          totalWeight += weight;
+          newVal += weight * alpha;
 
-          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);
-          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);
-          totalWeight += spaceWeight * colorWeight;
-
-          newVal += spaceWeight * colorWeight * outVal;
-        }
-        for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {
-          vec2 shift = vec2(j, -j) * u_texelSize;
-          vec2 coord = vec2(centerCoord + shift);
-          vec3 frameColor = texture(u_inputFrame, coord).rgb;
-          float outVal = texture(u_segmentationMask, coord).a;
-
-          spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);
-          colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);
-          totalWeight += spaceWeight * colorWeight;
-
-          newVal += spaceWeight * colorWeight * outVal;
+          if (i != 0.0) {
+            shift = vec2(i, -i) * u_texelSize;
+            coord = vec2(v_texCoord + shift);
+            colorWeight = calculateColorWeight(coord);
+            weight = spaceWeight * colorWeight;
+            alpha = texture(u_segmentationMask, coord).a;
+            totalWeight += weight;
+            newVal += weight * texture(u_segmentationMask, coord).a;
+            
+            shift = vec2(-i, i) * u_texelSize;
+            coord = vec2(v_texCoord + shift);
+            colorWeight = calculateColorWeight(coord);
+            weight = spaceWeight * colorWeight;
+            alpha = texture(u_segmentationMask, coord).a;
+            totalWeight += weight;
+            newVal += weight * texture(u_segmentationMask, coord).a;
+            
+            shift = vec2(-i, -i) * u_texelSize;
+            coord = vec2(v_texCoord + shift);
+            colorWeight = calculateColorWeight(coord);
+            weight = spaceWeight * colorWeight;
+            alpha = texture(u_segmentationMask, coord).a;
+            totalWeight += weight;
+            newVal += weight * texture(u_segmentationMask, coord).a;          
+          }
         }
         newVal /= totalWeight;
-
-        outColor = vec4(vec3(0.0), newVal);
       }
+
+      outColor = vec4(vec3(0.0), newVal);
     }
   `
 
