@@ -1,8 +1,10 @@
+declare const chrome: any;
+
 /**
  * @private
  */
 function getCanvas() {
-  return typeof window.OffscreenCanvas !== 'undefined' ? new window.OffscreenCanvas(1, 1) : document.createElement('canvas');
+  return typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
 }
 
 /**
@@ -14,6 +16,13 @@ export function isBrowserSupported() {
   } else {
     return false;
   }
+}
+
+/**
+ * @private
+ */
+export function isChromium() {
+  return typeof chrome === 'object' && /Chrome/.test(navigator.userAgent);
 }
 
 /**

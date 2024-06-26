@@ -11,8 +11,8 @@ const stats = document.querySelector('#stats');
 const params = Object.fromEntries(new URLSearchParams(location.search).entries());
 const showStats = params.stats === 'true';
 const assetsPath = '';
-const pipeline = params.pipeline || Pipeline.WebGL2;
-const debounce = JSON.parse(params.debounce || 'true');
+const pipeline = params.pipeline;
+const debounce = 'debounce' in params ? JSON.parse(params.debounce) : undefined;
 const addProcessorOptions = {
   inputFrameBufferType: 'video',
   outputFrameBufferContextType: params.pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',
@@ -25,9 +25,9 @@ const captureConfig = {
   frameRate: videoFps,
 };
 
-const asyncInference = JSON.parse(params.asyncInference || 'false');
-const inputResizeMode = params.inputResizeMode || 'image-bitmap';
-const maskBlurRadius = Number(params.maskBlurRadius || '8');
+const asyncInference = 'asyncInference' in params ? JSON.parse(params.asyncInference) : undefined;
+const inputResizeMode = params.inputResizeMode;
+const maskBlurRadius = 'maskBlurRadius' in params ? Number(params.maskBlurRadius) : undefined;
 
 videoInput.style.maxWidth = `${captureConfig.width}px`;
 

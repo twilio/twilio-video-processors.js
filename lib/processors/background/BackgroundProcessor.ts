@@ -2,6 +2,7 @@ import { Remote, transfer, wrap } from 'comlink';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { TwilioTFLite } from '../../utils/TwilioTFLite';
+import { isChromium } from '../../utils/support';
 import { Dimensions, Pipeline, WebGL2PipelineType } from '../../types';
 import { buildWebGL2Pipeline } from '../webgl2';
 
@@ -137,9 +138,12 @@ export abstract class BackgroundProcessor extends Processor {
     this._asyncInference = typeof options.asyncInference === 'boolean' ? options.asyncInference : false;
     this._debounce = typeof options.debounce === 'boolean' ? options.debounce : true;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
-    this._inputResizeMode = typeof options.inputResizeMode === 'string' ? options.inputResizeMode : 'image-bitmap';
-    this._pipeline = options.pipeline! || Pipeline.WebGL2;
 
+    this._inputResizeMode = typeof options.inputResizeMode === 'string'
+      ? options.inputResizeMode
+      : (isChromium() ? 'image-bitmap' : 'canvas');
+
+    this._pipeline = options.pipeline! || Pipeline.WebGL2;
     this._benchmark = new Benchmark();
     this._currentMask = null;
     this._inferenceInputCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
