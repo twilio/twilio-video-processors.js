@@ -154,8 +154,8 @@ export function buildWebGL2Pipeline(
     benchmark.start('imageCompositionDelay')
     if (shouldUpscaleCurrentMask) {
       loadSegmentationStage.render(segmentationData)
-      fastBilateralFilterStage.render()
     }
+    fastBilateralFilterStage.render()
     backgroundStage.render()
     if (debounce) {
       shouldUpscaleCurrentMask = !shouldUpscaleCurrentMask
