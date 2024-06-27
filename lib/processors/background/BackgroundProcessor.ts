@@ -1,4 +1,3 @@
-import { Remote, transfer, wrap } from 'comlink';
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { TwilioTFLite } from '../../utils/TwilioTFLite';
@@ -11,7 +10,6 @@ import {
   MODEL_NAME,
   TFLITE_LOADER_NAME,
   TFLITE_SIMD_LOADER_NAME,
-  TFLITE_WORKER_NAME,
   WASM_INFERENCE_DIMENSIONS,
 } from '../../constants';
 
@@ -53,18 +51,18 @@ export interface BackgroundProcessorOptions {
   assetsPath: string;
 
   /**
-   * @private
-   */
-  asyncInference?: boolean;
-
-  /**
    * Whether to skip processing every other frame to improve the output frame rate, but reducing accuracy in the process.
    * @default
    * ```html
-   * true
+   * false
    * ```
    */
   debounce?: boolean;
+
+  /**
+   * @private
+   */
+  deferInputResize?: boolean;
 
   /**
    * @private
@@ -80,7 +78,7 @@ export interface BackgroundProcessorOptions {
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
-   * 8
+   * 8 for WebGL2 pipeline, 4 for Canvas2D pipeline
    * ```
    */
   maskBlurRadius?: number;
@@ -99,7 +97,7 @@ export interface BackgroundProcessorOptions {
  * @private
  */
 export abstract class BackgroundProcessor extends Processor {
-  private static _tflite: TwilioTFLite | Remote<TwilioTFLite> | null = null;
+  private static _tflite: TwilioTFLite | null = null;
 
   protected _backgroundImage: HTMLImageElement | null = null;
   protected _outputCanvas: HTMLCanvasElement | null = null;
@@ -107,10 +105,10 @@ export abstract class BackgroundProcessor extends Processor {
   protected _webgl2Pipeline: ReturnType<typeof buildWebGL2Pipeline> | null = null;
 
   private _assetsPath: string;
-  private _asyncInference: boolean;
   private _benchmark: Benchmark;
   private _currentMask: ImageData | null;
   private _debounce: boolean;
+  private _deferInputResize: boolean;
   private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
   private _inferenceInputCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _inferenceInputContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
@@ -133,10 +131,9 @@ export abstract class BackgroundProcessor extends Processor {
       assetsPath += '/';
     }
 
-    this.maskBlurRadius = options.maskBlurRadius!;
     this._assetsPath = assetsPath;
-    this._asyncInference = typeof options.asyncInference === 'boolean' ? options.asyncInference : false;
-    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : true;
+    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : false;
+    this._deferInputResize = typeof options.deferInputResize === 'boolean' ? options.deferInputResize : false;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
 
     this._inputResizeMode = typeof options.inputResizeMode === 'string'
@@ -150,6 +147,7 @@ export abstract class BackgroundProcessor extends Processor {
     this._inferenceInputContext = this._inferenceInputCanvas.getContext('2d', { willReadFrequently: true }) as OffscreenCanvasRenderingContext2D;
     this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._inputFrameContext = this._inputFrameCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    this._maskBlurRadius = options.maskBlurRadius || (this._pipeline === Pipeline.WebGL2 ? 8 : 4);
     this._maskCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
   }
@@ -184,14 +182,12 @@ export abstract class BackgroundProcessor extends Processor {
    * Call this method before attaching the processor to ensure
    * video frames are processed correctly.
    */
-  async loadModel() {
+  async loadModel(): Promise<void> {
     if (BackgroundProcessor._tflite) {
       return;
     }
-    BackgroundProcessor._tflite = this._asyncInference
-      ? wrap<TwilioTFLite>(new Worker(`${this._assetsPath}${TFLITE_WORKER_NAME}`))
-      : new TwilioTFLite();
-    await BackgroundProcessor._tflite.initialize(
+    BackgroundProcessor._tflite = new TwilioTFLite();
+    return BackgroundProcessor._tflite.initialize(
       this._assetsPath,
       MODEL_NAME,
       TFLITE_LOADER_NAME,
@@ -336,12 +332,12 @@ export abstract class BackgroundProcessor extends Processor {
     const { height, width } = this._inferenceDimensions;
     const stages = {
       inference: {
-        false: async (inferenceInput: ImageData) => this._runInference(inferenceInput.data),
-        true: async (currentMask: ImageData) => currentMask.data
+        false: () => BackgroundProcessor._tflite!.runInference(),
+        true: () => this._currentMask!.data
       },
       resize: {
-        false: async () => this._getResizedInputImageData(inputFrame),
-        true: async () => this._currentMask as ImageData
+        false: async () => this._resizeInputFrame(inputFrame),
+        true: async () => { /* noop */ }
       }
     };
     const shouldDebounce = !!this._currentMask;
@@ -349,10 +345,13 @@ export abstract class BackgroundProcessor extends Processor {
     const resizeStage = stages.resize[`${shouldDebounce}`];
 
     this._benchmark.start('inputImageResizeDelay');
-    const imageData = await resizeStage();
+    const resizePromise = resizeStage();
+    if (!this._deferInputResize) {
+      await resizePromise;
+    }
     this._benchmark.end('inputImageResizeDelay');
     this._benchmark.start('segmentationDelay');
-    const personMaskBuffer = await inferenceStage(imageData);
+    const personMaskBuffer = inferenceStage();
     this._benchmark.end('segmentationDelay');
     return this._currentMask || new ImageData(personMaskBuffer, width, height);
   }
@@ -395,7 +394,7 @@ export abstract class BackgroundProcessor extends Processor {
     });
   }
 
-  private async _getResizedInputImageData(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): Promise<ImageData> {
+  private async _resizeInputFrame(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): Promise<void> {
     const {
       _inferenceInputCanvas: {
         width: resizeWidth,
@@ -405,22 +404,17 @@ export abstract class BackgroundProcessor extends Processor {
       _inputResizeMode: resizeMode
     } = this;
     if (resizeMode === 'image-bitmap') {
-      const resizedInputFrameBitmap = await createImageBitmap(inputFrame, { resizeWidth, resizeHeight, resizeQuality: 'pixelated' });
+      const resizedInputFrameBitmap = await createImageBitmap(inputFrame, {
+        resizeWidth,
+        resizeHeight,
+        resizeQuality: 'pixelated'
+      });
       ctx.drawImage(resizedInputFrameBitmap, 0, 0, resizeWidth, resizeHeight);
       resizedInputFrameBitmap.close();
     } else {
       ctx.drawImage(inputFrame, 0, 0, resizeWidth, resizeHeight);
     }
-    return ctx.getImageData(0, 0, resizeWidth, resizeHeight);
-  }
-
-  private _runInference(inputBuffer: Uint8ClampedArray): Promise<Uint8ClampedArray> {
-    const {
-      _tflite: tflite
-    } = BackgroundProcessor;
-    const arg = tflite instanceof TwilioTFLite
-      ? inputBuffer
-      : transfer<Uint8ClampedArray>(inputBuffer, [inputBuffer.buffer]);
-    return tflite!.runInference(arg);
+    const imageData = ctx.getImageData(0, 0, resizeWidth, resizeHeight);
+    BackgroundProcessor._tflite!.loadInputBuffer(imageData.data);
   }
 }

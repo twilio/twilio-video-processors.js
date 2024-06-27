@@ -1,15 +1,11 @@
-declare const WorkerGlobalScope: any;
 declare function createTwilioTFLiteModule(): Promise<any>;
 declare function createTwilioTFLiteSIMDModule(): Promise<any>;
-declare function importScripts(path: string): any;
-
-const isWebWorker = typeof WorkerGlobalScope !== 'undefined'
-  && self instanceof WorkerGlobalScope;
 
 const loadedScripts = new Set<string>();
 let model: ArrayBuffer;
 
 export class TwilioTFLite {
+  private _inputBuffer: Uint8ClampedArray | null = null;
   private _isSimdEnabled: boolean = false;
   private _tflite: any = null;
 
@@ -37,13 +33,12 @@ export class TwilioTFLite {
     tflite._loadModel(model.byteLength);
   }
 
-  async runInference(inputBuffer: Uint8ClampedArray): Promise<Uint8ClampedArray> {
+  loadInputBuffer(inputBuffer: Uint8ClampedArray): void {
     const { _tflite: tflite } = this;
     const height = tflite._getInputHeight();
     const width = tflite._getInputWidth();
     const pixels = width * height;
     const tfliteInputMemoryOffset = tflite._getInputMemoryOffset() / 4;
-    const tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
 
     for (let i = 0; i < pixels; i++) {
       const curTFLiteOffset = tfliteInputMemoryOffset + i * 3;
@@ -52,22 +47,27 @@ export class TwilioTFLite {
       tflite.HEAPF32[curTFLiteOffset + 1] = inputBuffer[curImageBufferOffset + 1] / 255;
       tflite.HEAPF32[curTFLiteOffset + 2] = inputBuffer[curImageBufferOffset + 2] / 255;
     }
+    this._inputBuffer = inputBuffer;
+  }
+
+  runInference(): Uint8ClampedArray {
+    const { _tflite: tflite } = this;
+    const height = tflite._getInputHeight();
+    const width = tflite._getInputWidth();
+    const pixels = width * height;
+    const tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
 
     tflite._runInference();
 
+    const inputBuffer = this._inputBuffer || new Uint8ClampedArray(pixels * 4);
     for (let i = 0; i < pixels; i++) {
-      inputBuffer[i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
+      inputBuffer![i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
     }
-    return inputBuffer;
+    return inputBuffer!;
   }
 
   private async _loadScript(path: string): Promise<void> {
     if (loadedScripts.has(path)) {
-      return;
-    }
-    if (isWebWorker) {
-      importScripts(path);
-      loadedScripts.add(path);
       return;
     }
     return new Promise((resolve, reject) => {

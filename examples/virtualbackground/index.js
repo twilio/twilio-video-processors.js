@@ -25,7 +25,7 @@ const captureConfig = {
   frameRate: videoFps,
 };
 
-const asyncInference = 'asyncInference' in params ? JSON.parse(params.asyncInference) : undefined;
+const deferInputResize = 'deferInputResize' in params ? JSON.parse(params.deferInputResize) : undefined;
 const inputResizeMode = params.inputResizeMode;
 const maskBlurRadius = 'maskBlurRadius' in params ? Number(params.maskBlurRadius) : undefined;
 
@@ -65,7 +65,7 @@ const handleButtonClick = async bg => {
   if (!gaussianBlurProcessor) {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
-      asyncInference,
+      deferInputResize,
       inputResizeMode,
       pipeline,
       debounce,
@@ -77,7 +77,7 @@ const handleButtonClick = async bg => {
     const backgroundImage = await loadImage('living_room');
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
       assetsPath,
-      asyncInference,
+      deferInputResize,
       backgroundImage,
       inputResizeMode,
       pipeline,
