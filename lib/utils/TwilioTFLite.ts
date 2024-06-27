@@ -4,10 +4,17 @@ declare function createTwilioTFLiteSIMDModule(): Promise<any>;
 const loadedScripts = new Set<string>();
 let model: ArrayBuffer;
 
+/**
+ * @private
+ */
 export class TwilioTFLite {
   private _inputBuffer: Uint8ClampedArray | null = null;
-  private _isSimdEnabled: boolean = false;
+  private _isSimdEnabled: boolean | null = null;
   private _tflite: any = null;
+
+  get isSimdEnabled(): boolean | null {
+    return this._isSimdEnabled;
+  }
 
   async initialize(
     assetsPath: string,

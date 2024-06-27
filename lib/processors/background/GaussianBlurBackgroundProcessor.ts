@@ -93,7 +93,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
     return WebGL2PipelineType.Blur;
   }
 
-  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): void {
+  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement): void {
     if (!this._outputContext) {
       return;
     }

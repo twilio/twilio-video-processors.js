@@ -115,7 +115,9 @@ export abstract class BackgroundProcessor extends Processor {
   private _inputFrameCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _inputFrameContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
   private _inputResizeMode: InputResizeMode;
-  private _maskBlurRadius: number = MASK_BLUR_RADIUS;
+  // tslint:disable-next-line no-unused-variable
+  private _isSimdEnabled: boolean | null;
+  private _maskBlurRadius: number;
   private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _maskContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
   private _pipeline: Pipeline;
@@ -143,11 +145,14 @@ export abstract class BackgroundProcessor extends Processor {
     this._pipeline = options.pipeline! || Pipeline.WebGL2;
     this._benchmark = new Benchmark();
     this._currentMask = null;
+    this._isSimdEnabled = null;
     this._inferenceInputCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._inferenceInputContext = this._inferenceInputCanvas.getContext('2d', { willReadFrequently: true }) as OffscreenCanvasRenderingContext2D;
     this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._inputFrameContext = this._inputFrameCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-    this._maskBlurRadius = options.maskBlurRadius || (this._pipeline === Pipeline.WebGL2 ? 8 : 4);
+    this._maskBlurRadius = typeof options.maskBlurRadius === 'number' ? options.maskBlurRadius : (
+      this._pipeline === Pipeline.WebGL2 ? MASK_BLUR_RADIUS : (MASK_BLUR_RADIUS / 2)
+    );
     this._maskCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
   }
@@ -183,16 +188,18 @@ export abstract class BackgroundProcessor extends Processor {
    * video frames are processed correctly.
    */
   async loadModel(): Promise<void> {
-    if (BackgroundProcessor._tflite) {
-      return;
+    let { _tflite: tflite } = BackgroundProcessor;
+    if (!tflite) {
+      tflite = new TwilioTFLite();
+      await tflite.initialize(
+        this._assetsPath,
+        MODEL_NAME,
+        TFLITE_LOADER_NAME,
+        TFLITE_SIMD_LOADER_NAME,
+      );
+      BackgroundProcessor._tflite = tflite;
     }
-    BackgroundProcessor._tflite = new TwilioTFLite();
-    return BackgroundProcessor._tflite.initialize(
-      this._assetsPath,
-      MODEL_NAME,
-      TFLITE_LOADER_NAME,
-      TFLITE_SIMD_LOADER_NAME,
-    );
+    this._isSimdEnabled = tflite.isSimdEnabled;
   }
 
   /**
@@ -326,9 +333,9 @@ export abstract class BackgroundProcessor extends Processor {
 
   protected abstract _getWebGL2PipelineType(): WebGL2PipelineType;
 
-  protected abstract _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): void;
+  protected abstract _setBackground(inputFrame?: OffscreenCanvas | HTMLCanvasElement): void;
 
-  private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): Promise<ImageData> {
+  private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement): Promise<ImageData> {
     const { height, width } = this._inferenceDimensions;
     const stages = {
       inference: {
@@ -394,7 +401,7 @@ export abstract class BackgroundProcessor extends Processor {
     });
   }
 
-  private async _resizeInputFrame(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): Promise<void> {
+  private async _resizeInputFrame(inputFrame: OffscreenCanvas | HTMLCanvasElement): Promise<void> {
     const {
       _inferenceInputCanvas: {
         width: resizeWidth,
