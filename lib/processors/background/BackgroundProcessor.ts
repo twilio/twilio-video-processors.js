@@ -309,13 +309,17 @@ export abstract class BackgroundProcessor extends Processor {
         this._maskContext.putImageData(personMask, 0, 0);
       }
       const ctx = this._outputContext as CanvasRenderingContext2D;
+      const {
+        height: outputHeight,
+        width: outputWidth
+      } = this._outputCanvas;
       ctx.save();
       ctx.filter = `blur(${this._maskBlurRadius}px)`;
       ctx.globalCompositeOperation = 'copy';
-      ctx.drawImage(this._maskCanvas, 0, 0, captureWidth, captureHeight);
+      ctx.drawImage(this._maskCanvas, 0, 0, outputWidth, outputHeight);
       ctx.filter = 'none';
       ctx.globalCompositeOperation = 'source-in';
-      ctx.drawImage(inputFrame, 0, 0, captureWidth, captureHeight);
+      ctx.drawImage(inputFrame, 0, 0, outputWidth, outputHeight);
       ctx.globalCompositeOperation = 'destination-over';
       this._setBackground(inputFrame);
       ctx.restore();

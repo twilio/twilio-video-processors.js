@@ -40,7 +40,7 @@ export function buildWebGL2Pipeline(
     }
   `
 
-  const { width: frameWidth, height: frameHeight } = sourcePlayback
+  const { width: outputWidth, height: outputHeight } = canvas;
   const [segmentationWidth, segmentationHeight] = inputResolutions[
     segmentationConfig.inputResolution
   ]
@@ -89,8 +89,8 @@ export function buildWebGL2Pipeline(
   const personMaskTexture = createTexture(
     gl,
     gl.RGBA8,
-    frameWidth,
-    frameHeight
+    outputWidth,
+    outputHeight
   )!
   const loadSegmentationStage = buildLoadSegmentationStage(
     gl,
