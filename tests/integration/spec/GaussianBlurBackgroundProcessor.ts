@@ -1,7 +1,6 @@
 import * as assert from 'assert';
-import { GaussianBlurBackgroundProcessor, GaussianBlurBackgroundProcessorOptions } from '../../../lib/index';
-import { compareImages, getImageFromCanvas, loadImage, pause } from '../util';
-import { Pipeline } from '../../../lib/index';
+import { GaussianBlurBackgroundProcessor, GaussianBlurBackgroundProcessorOptions, Pipeline } from '../../../lib';
+import { compareImages, getImageFromCanvas, loadImage } from '../util';
 
 describe('GaussianBlurBackgroundProcessor', function() {
   this.timeout(60000);

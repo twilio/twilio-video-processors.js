@@ -1,26 +1,24 @@
 import * as assert from 'assert';
-import * as sinon from 'sinon';
 import { isBrowserSupported } from '../../../../lib/utils/support';
 
 describe('isSupported', () => {
   const root = global as any;
 
   describe('For client side', () => {
-    describe('with offscreencanvas', () => {
+    describe('with OffscreenCanvas', () => {
       let originalOffscreenCanvas: any;
       let getContext: any;
 
       beforeEach(() => {
-        originalOffscreenCanvas = root.window.OffscreenCanvas;
-        root.window.OffscreenCanvas = OffscreenCanvas;
+        originalOffscreenCanvas = root.OffscreenCanvas;
+        root.OffscreenCanvas = OffscreenCanvas;
       });
 
       afterEach(() => {
-        root.window.OffscreenCanvas = originalOffscreenCanvas;
+        root.OffscreenCanvas = originalOffscreenCanvas;
       });
 
       class OffscreenCanvas {
-        constructor(){}
         getContext(type: string) {
           return getContext(type);
         }
@@ -42,18 +40,16 @@ describe('isSupported', () => {
       });
     });
 
-    describe('without offscreencanvas', () => {
+    describe('without OffscreenCanvas', () => {
       let originalOffscreenCanvas: any;
       let originalDocument: any;
-      let mockDocument: any;
       let getContext: any;
 
       beforeEach(() => {
-        originalOffscreenCanvas = root.window.OffscreenCanvas;
-        delete root.window.OffscreenCanvas;
+        originalOffscreenCanvas = root.OffscreenCanvas;
+        delete root.OffscreenCanvas;
         originalDocument = root.document;
-
-        mockDocument = {
+        root.document = {
           createElement: () => {
             return ({
               getContext: (type: string) => {
@@ -62,11 +58,10 @@ describe('isSupported', () => {
             });
           }
         };
-        root.document = mockDocument;
       });
 
       afterEach(() => {
-        root.window.OffscreenCanvas = originalOffscreenCanvas;
+        root.OffscreenCanvas = originalOffscreenCanvas;
         root.document = originalDocument;
       });
 
