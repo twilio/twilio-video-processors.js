@@ -109,7 +109,7 @@ describe('Benchmark', () => {
       benchmark.start('foo');
       clock.tick(delay);
       benchmark.end('foo');
-  
+
       benchmark.start('bar');
       clock.tick(delay);
       benchmark.end('bar');
@@ -117,7 +117,7 @@ describe('Benchmark', () => {
       delays.push(delay);
     }
 
-    const average = (items: number[]) => 
+    const average = (items: number[]) =>
       items.reduce((total: number, value: number) => total += value, 0) / items.length;
 
     delays.splice(0, delays.length - cacheSize);

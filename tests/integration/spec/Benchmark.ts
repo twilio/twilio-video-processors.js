@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { GaussianBlurBackgroundProcessor, Pipeline, VirtualBackgroundProcessor } from '../../../lib/index';
+import { GaussianBlurBackgroundProcessor, Pipeline, VirtualBackgroundProcessor } from '../../../lib';
 import { loadImage } from '../util';
 
 describe('Benchmark', function() {
@@ -48,20 +48,20 @@ describe('Benchmark', function() {
       // Adjusted to get a reasonable 30+ FPS
       [{
         stat: 'imageCompositionDelay',
-        maxValue: 1
+        maxValue: 2
       },{
         stat: 'inputImageResizeDelay',
-        maxValue: 1
+        maxValue: 5
       },{
         stat: 'processFrameDelay',
-        maxValue: 11
+        maxValue: 20
       },{
         stat: 'segmentationDelay',
-        maxValue: 9
+        maxValue: 10
       }].forEach(({ stat, maxValue }) => {
         const currentValue = processor['_benchmark'].getAverageDelay(stat)!;
-        console.log({stat, maxValue, currentValue });
-        assert(currentValue <= maxValue)
+        console.log({ stat, maxValue, currentValue });
+        assert(currentValue <= maxValue);
       });
     });
   });

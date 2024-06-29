@@ -1,6 +1,5 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { BackgroundProcessor } from '../../../../../lib/processors/background/BackgroundProcessor';
 import { VirtualBackgroundProcessor } from '../../../../../lib/processors/background/VirtualBackgroundProcessor';
 
 describe('VirtualBackgroundProcessor', () => {

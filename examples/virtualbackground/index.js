@@ -8,25 +8,26 @@ const videoInput = document.querySelector('video#video-input');
 const errorMessage = document.querySelector('div.modal-body');
 const errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
 const stats = document.querySelector('#stats');
-
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 const params = Object.fromEntries(new URLSearchParams(location.search).entries());
 const showStats = params.stats === 'true';
-
 const assetsPath = '';
-const pipeline = Pipeline.WebGL2;
-// debounce will set to true if safari and on blur.
-// See GaussianBlurBackgroundProcessor initialization below
-const debounce = isSafari;
+const pipeline = params.pipeline;
+const debounce = 'debounce' in params ? JSON.parse(params.debounce) : undefined;
 const addProcessorOptions = {
   inputFrameBufferType: 'video',
-  outputFrameBufferContextType: 'webgl2',
+  outputFrameBufferContextType: params.pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',
 };
+const [width, height] = (params.videoRes || `1280x720`).split('x').map(Number);
+const videoFps = Number(params.videoFps || '24');
 const captureConfig = {
-  width: isSafari ? 640 : 1280,
-  height: isSafari ? 480 : 720,
-  frameRate: 24,
+  width,
+  height,
+  frameRate: videoFps,
 };
+
+const deferInputResize = 'deferInputResize' in params ? JSON.parse(params.deferInputResize) : undefined;
+const inputResizeMode = params.inputResizeMode;
+const maskBlurRadius = 'maskBlurRadius' in params ? Number(params.maskBlurRadius) : undefined;
 
 videoInput.style.maxWidth = `${captureConfig.width}px`;
 
@@ -64,8 +65,11 @@ const handleButtonClick = async bg => {
   if (!gaussianBlurProcessor) {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
+      deferInputResize,
+      inputResizeMode,
       pipeline,
-      debounce: true,
+      debounce,
+      maskBlurRadius,
     });
     await gaussianBlurProcessor.loadModel();
   }
@@ -73,9 +77,12 @@ const handleButtonClick = async bg => {
     const backgroundImage = await loadImage('living_room');
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
       assetsPath,
+      deferInputResize,
       backgroundImage,
+      inputResizeMode,
       pipeline,
       debounce,
+      maskBlurRadius,
     });
     await virtualBackgroundProcessor.loadModel();
   }
