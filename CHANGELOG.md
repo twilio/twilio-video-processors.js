@@ -1,3 +1,12 @@
+2.2.0 (in progress)
+===================
+
+#### Performance Improvements
+
+* Fixed trailing effect of the person mask in both Canvas2D and WebGL2 pipelines.
+* TFLite module is loaded and initialized only once, no matter how many VideoProcessor instances are created.
+* Better performance with 720p (HD) LocalVideoTracks due to improvements in the WebGL2 pipeline.
+
 2.1.0 (December 12, 2023)
 =========================
 
