@@ -1,36 +1,36 @@
 'use strict';
 
-const Video = Twilio.Video;
-const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported, Pipeline } = Twilio.VideoProcessors;
-const bootstrap = window.bootstrap;
+const { Video, VideoProcessors } = Twilio;
+const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported, Pipeline } = VideoProcessors;
+const { bootstrap, wasmFeatureDetect: { simd } } = window;
 
 const videoInput = document.querySelector('video#video-input');
 const errorMessage = document.querySelector('div.modal-body');
 const errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
 const stats = document.querySelector('#stats');
+
+const assetsPath = '';
+
 const params = Object.fromEntries(new URLSearchParams(location.search).entries());
 const showStats = params.stats === 'true';
-const assetsPath = '';
 const pipeline = params.pipeline;
-const debounce = 'debounce' in params ? JSON.parse(params.debounce) : undefined;
-const addProcessorOptions = {
-  inputFrameBufferType: 'video',
-  outputFrameBufferContextType: params.pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',
-};
 const [width, height] = (params.videoRes || `1280x720`).split('x').map(Number);
 const videoFps = Number(params.videoFps || '24');
+
+const addProcessorOptions = {
+  inputFrameBufferType: 'video',
+  outputFrameBufferContextType: pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',
+};
+
 const captureConfig = {
   width,
   height,
   frameRate: videoFps,
 };
 
-const deferInputResize = 'deferInputResize' in params ? JSON.parse(params.deferInputResize) : undefined;
-const inputResizeMode = params.inputResizeMode;
-const maskBlurRadius = 'maskBlurRadius' in params ? Number(params.maskBlurRadius) : undefined;
-
 videoInput.style.maxWidth = `${captureConfig.width}px`;
 
+let isWasmSimdSupported;
 let videoTrack;
 let gaussianBlurProcessor;
 let virtualBackgroundProcessor;
@@ -63,13 +63,11 @@ const setProcessor = (processor, track) => {
 
 const handleButtonClick = async bg => {
   if (!gaussianBlurProcessor) {
+    isWasmSimdSupported = await simd();
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
-      deferInputResize,
-      inputResizeMode,
+      debounce: !isWasmSimdSupported,
       pipeline,
-      debounce,
-      maskBlurRadius,
     });
     await gaussianBlurProcessor.loadModel();
   }
@@ -77,12 +75,9 @@ const handleButtonClick = async bg => {
     const backgroundImage = await loadImage('living_room');
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
       assetsPath,
-      deferInputResize,
       backgroundImage,
-      inputResizeMode,
+      debounce: !isWasmSimdSupported,
       pipeline,
-      debounce,
-      maskBlurRadius,
     });
     await virtualBackgroundProcessor.loadModel();
   }
