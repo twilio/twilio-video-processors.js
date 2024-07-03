@@ -129,7 +129,7 @@ describe('BackgroundProcessor', () => {
       const param = option ? JSON.stringify(option) : option;
       it(`should set debounce to ${useDefault ? 'default' : option.debounce} if option is ${param}`, () => {
         const processor: any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
-        const expected = useDefault ? false : option.debounce;
+        const expected = useDefault ? true : option.debounce;
         assert.deepStrictEqual(processor._debounce, expected);
       });
     });
