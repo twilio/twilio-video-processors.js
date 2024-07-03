@@ -135,19 +135,14 @@ export abstract class BackgroundProcessor extends Processor {
 
     this._assetsPath = assetsPath;
     this._debounce = typeof options.debounce === 'boolean' ? options.debounce : true;
+    this._deferInputResize = typeof options.deferInputResize === 'boolean' ? options.deferInputResize : false;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
 
     this._inputResizeMode = typeof options.inputResizeMode === 'string'
       ? options.inputResizeMode
       : (isChromiumImageBitmap() ? 'image-bitmap' : 'canvas');
 
-    this._pipeline = options.pipeline!
-      || Pipeline.WebGL2;
-
-    this._deferInputResize = typeof options.deferInputResize === 'boolean'
-      ? options.deferInputResize
-      : (this._pipeline === Pipeline.WebGL2 && this._getWebGL2PipelineType() === WebGL2PipelineType.Blur);
-
+    this._pipeline = options.pipeline! || Pipeline.WebGL2;
     this._benchmark = new Benchmark();
     this._currentMask = null;
     this._isSimdEnabled = null;
