@@ -1,7 +1,7 @@
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { TwilioTFLite } from '../../utils/TwilioTFLite';
-import { isChromium } from '../../utils/support';
+import { isChromiumImageBitmap } from '../../utils/support';
 import { Dimensions, Pipeline, WebGL2PipelineType } from '../../types';
 import { buildWebGL2Pipeline } from '../webgl2';
 
@@ -54,7 +54,7 @@ export interface BackgroundProcessorOptions {
    * Whether to skip processing every other frame to improve the output frame rate, but reducing accuracy in the process.
    * @default
    * ```html
-   * false
+   * true
    * ```
    */
   debounce?: boolean;
@@ -134,15 +134,20 @@ export abstract class BackgroundProcessor extends Processor {
     }
 
     this._assetsPath = assetsPath;
-    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : false;
-    this._deferInputResize = typeof options.deferInputResize === 'boolean' ? options.deferInputResize : false;
+    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : true;
     this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
 
     this._inputResizeMode = typeof options.inputResizeMode === 'string'
       ? options.inputResizeMode
-      : (isChromium() ? 'image-bitmap' : 'canvas');
+      : (isChromiumImageBitmap() ? 'image-bitmap' : 'canvas');
 
-    this._pipeline = options.pipeline! || Pipeline.WebGL2;
+    this._pipeline = options.pipeline!
+      || Pipeline.WebGL2;
+
+    this._deferInputResize = typeof options.deferInputResize === 'boolean'
+      ? options.deferInputResize
+      : (this._pipeline === Pipeline.WebGL2 && this._getWebGL2PipelineType() === WebGL2PipelineType.Blur);
+
     this._benchmark = new Benchmark();
     this._currentMask = null;
     this._isSimdEnabled = null;

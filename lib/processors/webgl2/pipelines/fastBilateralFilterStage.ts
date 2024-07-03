@@ -19,7 +19,12 @@ export function buildFastBilateralFilterStage(
   canvas: HTMLCanvasElement
 ) {
   // NOTE(mmalavalli): This is a faster approximation of the joint bilateral filter.
-  // It improves the complexity from O(w x h x r^2) to O(w x h x r), where:
+  // For a given pixel, instead of calculating the space and color weights of all
+  // the pixels within the filter kernel, which would have a complexity of O(r^2),
+  // we calculate the space and color weights of only those pixels which form two
+  // diagonal lines between the two pairs of opposite corners of the filter kernel,
+  // which would have a complexity of O(r). This improves the overall complexity
+  // of this stage from O(w x h x r^2) to O(w x h x r), where:
   // w => width of the output video frame
   // h => height of the output video frame
   // r => radius of the joint bilateral filter kernel
