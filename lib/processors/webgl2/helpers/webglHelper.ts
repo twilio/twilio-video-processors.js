@@ -9,7 +9,7 @@
  */
 export const glsl = String.raw
 
-export function createPiplelineStageProgram(
+export function createPipelineStageProgram(
   gl: WebGL2RenderingContext,
   vertexShader: WebGLShader,
   fragmentShader: WebGLShader,
@@ -78,4 +78,18 @@ export function createTexture(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter)
   gl.texStorage2D(gl.TEXTURE_2D, 1, internalformat, width, height)
   return texture
+}
+
+export function initBuffer(
+  gl: WebGL2RenderingContext,
+  data: number[]
+) {
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(data),
+    gl.STATIC_DRAW,
+  );
+  return buffer;
 }

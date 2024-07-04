@@ -1,13 +1,3 @@
-export type BlendMode = 'screen' | 'linearDodge'
-
-export type PostProcessingConfig = {
-  jointBilateralFilter?: JointBilateralFilterConfig
-  coverage?: [number, number]
-  lightWrapping?: number
-  blendMode?: BlendMode
-}
-
-export type JointBilateralFilterConfig = {
+export type FastBilateralFilterConfig = {
   sigmaSpace?: number
-  sigmaColor?: number
 }
