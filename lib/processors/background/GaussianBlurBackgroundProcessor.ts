@@ -1,6 +1,5 @@
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { BLUR_FILTER_RADIUS } from '../../constants';
-import { WebGL2PipelineType } from '../../types';
 
 /**
  * Options passed to [[GaussianBlurBackgroundProcessor]] constructor.
@@ -97,10 +96,6 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       radius = BLUR_FILTER_RADIUS;
     }
     this._blurFilterRadius = radius;
-  }
-
-  protected _getWebGL2PipelineType(): WebGL2PipelineType {
-    return WebGL2PipelineType.Blur;
   }
 
   protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement): void {

@@ -2,8 +2,8 @@ import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { TwilioTFLite } from '../../utils/TwilioTFLite';
 import { isChromiumImageBitmap } from '../../utils/support';
-import { Dimensions, Pipeline, WebGL2PipelineType } from '../../types';
-import { buildWebGL2Pipeline } from '../webgl2';
+import { Dimensions } from '../../types';
+import { PersonMaskUpscalePipeline } from '../webgl2';
 
 import {
   MASK_BLUR_RADIUS,
@@ -82,15 +82,6 @@ export interface BackgroundProcessorOptions {
    * ```
    */
   maskBlurRadius?: number;
-
-  /**
-   * Specifies which pipeline to use when processing video frames.
-   * @default
-   * ```html
-   * 'WebGL2'
-   * ```
-   */
-  pipeline?: Pipeline;
 }
 
 /**
@@ -101,8 +92,8 @@ export abstract class BackgroundProcessor extends Processor {
 
   protected _backgroundImage: HTMLImageElement | null = null;
   protected _outputCanvas: HTMLCanvasElement | null = null;
-  protected _outputContext: CanvasRenderingContext2D | WebGL2RenderingContext | null = null;
-  protected _webgl2Pipeline: ReturnType<typeof buildWebGL2Pipeline> | null = null;
+  protected _outputContext: CanvasRenderingContext2D | null = null;
+  protected _personMaskUpscalePipeline: PersonMaskUpscalePipeline | null = null;
 
   private _assetsPath: string;
   private _benchmark: Benchmark;
@@ -119,8 +110,6 @@ export abstract class BackgroundProcessor extends Processor {
   private _isSimdEnabled: boolean | null;
   private _maskBlurRadius: number;
   private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
-  private _maskContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
-  private _pipeline: Pipeline;
 
   constructor(options: BackgroundProcessorOptions) {
     super();
@@ -142,7 +131,6 @@ export abstract class BackgroundProcessor extends Processor {
       ? options.inputResizeMode
       : (isChromiumImageBitmap() ? 'image-bitmap' : 'canvas');
 
-    this._pipeline = options.pipeline! || Pipeline.WebGL2;
     this._benchmark = new Benchmark();
     this._currentMask = null;
     this._isSimdEnabled = null;
@@ -150,11 +138,8 @@ export abstract class BackgroundProcessor extends Processor {
     this._inferenceInputContext = this._inferenceInputCanvas.getContext('2d', { willReadFrequently: true }) as OffscreenCanvasRenderingContext2D;
     this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._inputFrameContext = this._inputFrameCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-    this._maskBlurRadius = typeof options.maskBlurRadius === 'number' ? options.maskBlurRadius : (
-      this._pipeline === Pipeline.WebGL2 ? MASK_BLUR_RADIUS : (MASK_BLUR_RADIUS / 2)
-    );
+    this._maskBlurRadius = typeof options.maskBlurRadius === 'number' ? options.maskBlurRadius : MASK_BLUR_RADIUS;
     this._maskCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
-    this._maskContext = this._maskCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
   }
 
   /**
@@ -174,10 +159,8 @@ export abstract class BackgroundProcessor extends Processor {
     }
     if (this._maskBlurRadius !== radius) {
       this._maskBlurRadius = radius;
-      this._webgl2Pipeline?.updatePostProcessingConfig({
-        jointBilateralFilter: {
-          sigmaSpace: this._maskBlurRadius
-        }
+      this._personMaskUpscalePipeline?.updateFastBilateralFilterConfig({
+        sigmaSpace: this._maskBlurRadius
       });
     }
   }
@@ -247,28 +230,18 @@ export abstract class BackgroundProcessor extends Processor {
       ? { width: inputFrameBuffer.videoWidth, height: inputFrameBuffer.videoHeight }
       : inputFrameBuffer;
 
+    const {
+      height: outputHeight,
+      width: outputWidth
+    } = outputFrameBuffer;
+
     if (this._outputCanvas !== outputFrameBuffer) {
       this._outputCanvas = outputFrameBuffer;
-      this._outputContext = this._outputCanvas
-        .getContext(this._pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2') as
-        CanvasRenderingContext2D | WebGL2RenderingContext;
-      this._webgl2Pipeline?.cleanUp();
-      this._webgl2Pipeline = null;
+      this._outputContext = this._outputCanvas.getContext('2d');
+      this._maskCanvas.width = outputWidth;
+      this._maskCanvas.height = outputHeight;
+      this._cleanupPersonMaskUpscalePipeline();
     }
-
-    if (this._pipeline === Pipeline.WebGL2) {
-      if (!this._webgl2Pipeline) {
-        this._createWebGL2Pipeline(
-          inputFrameBuffer as HTMLVideoElement,
-          captureWidth,
-          captureHeight,
-          inferenceWidth,
-          inferenceHeight
-        );
-      }
-      this._webgl2Pipeline?.sampleInputFrame();
-    }
-
     // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
     if (this._inputFrameCanvas.width !== captureWidth) {
       this._inputFrameCanvas.width = captureWidth;
@@ -278,19 +251,20 @@ export abstract class BackgroundProcessor extends Processor {
     }
     if (this._inferenceInputCanvas.width !== inferenceWidth) {
       this._inferenceInputCanvas.width = inferenceWidth;
-      this._maskCanvas.width = inferenceWidth;
     }
     if (this._inferenceInputCanvas.height !== inferenceHeight) {
       this._inferenceInputCanvas.height = inferenceHeight;
-      this._maskCanvas.height = inferenceHeight;
     }
 
-    let inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement;
+    let inputFrame: OffscreenCanvas | HTMLCanvasElement;
     if (inputFrameBuffer instanceof HTMLVideoElement) {
       this._inputFrameContext.drawImage(inputFrameBuffer, 0, 0);
       inputFrame = this._inputFrameCanvas;
     } else {
       inputFrame = inputFrameBuffer;
+    }
+    if (!this._personMaskUpscalePipeline) {
+      this._createPersonMaskUpscalePipeline(inputFrame);
     }
 
     const personMask = await this._createPersonMask(inputFrame);
@@ -300,31 +274,22 @@ export abstract class BackgroundProcessor extends Processor {
         : personMask;
     }
 
-    if (this._pipeline === Pipeline.WebGL2) {
-      this._webgl2Pipeline?.render(personMask.data);
+    this._benchmark.start('imageCompositionDelay');
+    if (!this._debounce || this._currentMask) {
+      this._personMaskUpscalePipeline?.render(personMask);
     }
-    else {
-      this._benchmark.start('imageCompositionDelay');
-      if (!this._debounce || this._currentMask) {
-        this._maskContext.putImageData(personMask, 0, 0);
-      }
-      const ctx = this._outputContext as CanvasRenderingContext2D;
-      const {
-        height: outputHeight,
-        width: outputWidth
-      } = this._outputCanvas;
-      ctx.save();
-      ctx.filter = `blur(${this._maskBlurRadius}px)`;
-      ctx.globalCompositeOperation = 'copy';
-      ctx.drawImage(this._maskCanvas, 0, 0, outputWidth, outputHeight);
-      ctx.filter = 'none';
-      ctx.globalCompositeOperation = 'source-in';
-      ctx.drawImage(inputFrame, 0, 0, outputWidth, outputHeight);
-      ctx.globalCompositeOperation = 'destination-over';
-      this._setBackground(inputFrame);
-      ctx.restore();
-      this._benchmark.end('imageCompositionDelay');
-    }
+
+    const ctx = this._outputContext as CanvasRenderingContext2D;
+    ctx.save();
+    ctx.filter = 'none';
+    ctx.globalCompositeOperation = 'copy';
+    ctx.drawImage(this._maskCanvas, 0, 0, outputWidth, outputHeight);
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.drawImage(inputFrame, 0, 0, outputWidth, outputHeight);
+    ctx.globalCompositeOperation = 'destination-over';
+    this._setBackground(inputFrame);
+    ctx.restore();
+    this._benchmark.end('imageCompositionDelay');
 
     this._benchmark.end('processFrameDelay');
     this._benchmark.end('totalProcessingDelay');
@@ -335,9 +300,12 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.start('captureFrameDelay');
   }
 
-  protected abstract _getWebGL2PipelineType(): WebGL2PipelineType;
-
   protected abstract _setBackground(inputFrame?: OffscreenCanvas | HTMLCanvasElement): void;
+
+  private _cleanupPersonMaskUpscalePipeline(): void {
+    this._personMaskUpscalePipeline?.cleanUp();
+    this._personMaskUpscalePipeline = null;
+  }
 
   private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement): Promise<ImageData> {
     const { height, width } = this._inferenceDimensions;
@@ -367,41 +335,14 @@ export abstract class BackgroundProcessor extends Processor {
     return this._currentMask || new ImageData(personMaskBuffer, width, height);
   }
 
-  private _createWebGL2Pipeline(
-    inputFrame: HTMLVideoElement,
-    captureWidth: number,
-    captureHeight: number,
-    inferenceWidth: number,
-    inferenceHeight: number,
-  ): void {
-    this._webgl2Pipeline = buildWebGL2Pipeline(
-      {
-        htmlElement: inputFrame,
-        width: captureWidth,
-        height: captureHeight,
-      },
-      this._backgroundImage,
-      {
-        type: this._getWebGL2PipelineType(),
-      },
-      {
-        inputResolution: `${inferenceWidth}x${inferenceHeight}`,
-      },
-      this._outputCanvas!,
-      this._benchmark,
-      this._debounce
+  private _createPersonMaskUpscalePipeline(inputFrame: OffscreenCanvas | HTMLCanvasElement): void {
+    this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
+      inputFrame,
+      this._inferenceDimensions,
+      this._maskCanvas
     );
-    this._webgl2Pipeline.updatePostProcessingConfig({
-      jointBilateralFilter: {
-        sigmaSpace: this._maskBlurRadius,
-        sigmaColor: 0.1
-      },
-      coverage: [
-        0,
-        0.99
-      ],
-      lightWrapping: 0,
-      blendMode: 'screen'
+    this._personMaskUpscalePipeline?.updateFastBilateralFilterConfig({
+      sigmaSpace: this._maskBlurRadius
     });
   }
 

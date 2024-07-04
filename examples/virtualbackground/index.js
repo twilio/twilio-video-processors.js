@@ -13,13 +13,12 @@ const assetsPath = '';
 
 const params = Object.fromEntries(new URLSearchParams(location.search).entries());
 const showStats = params.stats === 'true';
-const pipeline = params.pipeline;
 const [width, height] = (params.videoRes || `1280x720`).split('x').map(Number);
 const videoFps = Number(params.videoFps || '24');
 
 const addProcessorOptions = {
   inputFrameBufferType: 'video',
-  outputFrameBufferContextType: pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',
+  outputFrameBufferContextType: '2d',
 };
 
 const captureConfig = {
@@ -67,7 +66,6 @@ const handleButtonClick = async bg => {
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
       debounce: !isWasmSimdSupported,
-      pipeline,
     });
     await gaussianBlurProcessor.loadModel();
   }
@@ -77,7 +75,6 @@ const handleButtonClick = async bg => {
       assetsPath,
       backgroundImage,
       debounce: !isWasmSimdSupported,
-      pipeline,
     });
     await virtualBackgroundProcessor.loadModel();
   }

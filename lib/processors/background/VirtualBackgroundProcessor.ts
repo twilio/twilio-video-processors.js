@@ -1,5 +1,5 @@
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
-import { ImageFit, WebGL2PipelineType } from '../../types';
+import { ImageFit } from '../../types';
 
 /**
  * Options passed to [[VirtualBackgroundProcessor]] constructor.
@@ -112,10 +112,6 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
     }
     this._backgroundImage = image;
-
-    // Triggers recreation of the pipeline in the next processFrame call
-    this._webgl2Pipeline?.cleanUp();
-    this._webgl2Pipeline = null;
   }
 
   /**
@@ -135,10 +131,6 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       fitType = ImageFit.Fill;
     }
     this._fitType = fitType;
-  }
-
-  protected _getWebGL2PipelineType(): WebGL2PipelineType {
-    return WebGL2PipelineType.Image;
   }
 
   protected _setBackground(): void {
