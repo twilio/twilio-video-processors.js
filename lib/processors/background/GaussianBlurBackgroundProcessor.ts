@@ -28,31 +28,41 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
  * import { Pipeline, GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+ * import { simd } from 'wasm-feature-detect';
  *
- * const blurBackground = new GaussianBlurBackgroundProcessor({
- *   assetsPath: 'https://my-server-path/assets',
- *   pipeline: Pipeline.WebGL2,
- *   debounce: true,
- * });
+ * let blurBackground: GaussianBlurBackgroundProcessor;
  *
- * blurBackground.loadModel().then(() => {
- *   createLocalVideoTrack({
+ * (async() => {
+ *   const isWasmSimdSupported = await simd();
+ *
+ *   blurBackground = new GaussianBlurBackgroundProcessor({
+ *     assetsPath: 'https://my-server-path/assets',
+ *
+ *     // Enable debounce only if the browser does not support
+ *     // WASM SIMD in order to retain an acceptable frame rate.
+ *     debounce: !isWasmSimdSupported,
+ *
+ *     pipeline: Pipeline.WebGL2,
+ *   });
+ *   await blurBackground.loadModel();
+ *
+ *   const track = await createLocalVideoTrack({
  *     // Increasing the capture resolution decreases the output FPS
  *     // especially on browsers that do not support SIMD
  *     // such as desktop Safari and iOS browsers, or on Chrome
  *     // with capture resolutions above 640x480 for webgl2.
  *     width: 640,
  *     height: 480,
+ *
  *     // Any frame rate above 24 fps on desktop browsers increase CPU
  *     // usage without noticeable increase in quality.
  *     frameRate: 24
- *   }).then(track => {
- *     track.addProcessor(blurBackground, {
- *       inputFrameBufferType: 'video',
- *       outputFrameBufferContextType: 'webgl2',
- *     });
  *   });
- * });
+ *   track.addProcessor(virtualBackground, {
+ *     inputFrameBufferType: 'video',
+ *     outputFrameBufferContextType: 'webgl2',
+ *   });
+ * })();
  * ```
  */
 export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
@@ -93,7 +103,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
     return WebGL2PipelineType.Blur;
   }
 
-  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement): void {
+  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement): void {
     if (!this._outputContext) {
       return;
     }

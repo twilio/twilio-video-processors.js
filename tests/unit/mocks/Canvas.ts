@@ -1,7 +1,7 @@
 export class Canvas {
-  width: number;
-  height: number;
   drawing: any;
+  height: number;
+  width: number;
 
   constructor(width: number, height: number) {
     this.width = width;

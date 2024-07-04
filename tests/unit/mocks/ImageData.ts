@@ -1,6 +1,6 @@
 export class ImageData {
-  width: number;
   height: number;
+  width: number;
 
   constructor(width: number, height: number) {
     this.width = width;

@@ -7,17 +7,14 @@ import {
 import { SourcePlayback } from '../helpers/sourceHelper'
 import { compileShader, createTexture, glsl } from '../helpers/webglHelper'
 import {
-  BackgroundBlurStage,
   buildBackgroundBlurStage,
 } from './backgroundBlurStage'
 import {
   BackgroundImageStage,
   buildBackgroundImageStage,
 } from './backgroundImageStage'
-import { buildJointBilateralFilterStage } from './jointBilateralFilterStage'
+import { buildFastBilateralFilterStage } from './fastBilateralFilterStage'
 import { buildLoadSegmentationStage } from './loadSegmentationStage'
-import { buildResizingStage } from './resizingStage'
-import { buildSoftmaxStage } from './softmaxStage'
 
 export function buildWebGL2Pipeline(
   sourcePlayback: SourcePlayback,
@@ -25,11 +22,10 @@ export function buildWebGL2Pipeline(
   backgroundConfig: BackgroundConfig,
   segmentationConfig: SegmentationConfig,
   canvas: HTMLCanvasElement,
-  tflite: any,
   benchmark: any,
-  debounce: boolean,
+  debounce: boolean
 ) {
-  let shouldRunInference = true;
+  let shouldUpscaleCurrentMask = true
 
   const vertexShaderSource = glsl`#version 300 es
 
@@ -44,7 +40,7 @@ export function buildWebGL2Pipeline(
     }
   `
 
-  const { width: frameWidth, height: frameHeight } = sourcePlayback
+  const { width: outputWidth, height: outputHeight } = canvas;
   const [segmentationWidth, segmentationHeight] = inputResolutions[
     segmentationConfig.inputResolution
   ]
@@ -93,28 +89,18 @@ export function buildWebGL2Pipeline(
   const personMaskTexture = createTexture(
     gl,
     gl.RGBA8,
-    frameWidth,
-    frameHeight
+    outputWidth,
+    outputHeight
   )!
-
-  const resizingStage = buildResizingStage(
-    gl,
-    vertexShader,
-    positionBuffer,
-    texCoordBuffer,
-    segmentationConfig,
-    tflite
-  )
   const loadSegmentationStage = buildLoadSegmentationStage(
     gl,
     vertexShader,
     positionBuffer,
     texCoordBuffer,
     segmentationConfig,
-    tflite,
     segmentationTexture
-  );
-  const jointBilateralFilterStage = buildJointBilateralFilterStage(
+  )
+  const fastBilateralFilterStage = buildFastBilateralFilterStage(
     gl,
     vertexShader,
     positionBuffer,
@@ -143,8 +129,7 @@ export function buildWebGL2Pipeline(
           canvas
         )
 
-  async function render() {
-    benchmark.start('inputImageResizeDelay')
+  async function sampleInputFrame() {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
@@ -163,47 +148,56 @@ export function buildWebGL2Pipeline(
     )
 
     gl.bindVertexArray(vertexArray)
+  }
 
-    resizingStage.render()
-    benchmark.end('inputImageResizeDelay')
-
-    benchmark.start('segmentationDelay')
-    if (shouldRunInference) {
-      tflite._runInference()
-    }
-    if (debounce) {
-      shouldRunInference = !shouldRunInference;
-    }
-    benchmark.end('segmentationDelay')
-
+  async function render(segmentationData: Uint8ClampedArray) {
     benchmark.start('imageCompositionDelay')
-    loadSegmentationStage.render()
-    jointBilateralFilterStage.render()
+    if (shouldUpscaleCurrentMask) {
+      loadSegmentationStage.render(segmentationData)
+    }
+    fastBilateralFilterStage.render()
     backgroundStage.render()
+    if (debounce) {
+      shouldUpscaleCurrentMask = !shouldUpscaleCurrentMask
+    }
     benchmark.end('imageCompositionDelay')
   }
 
   function updatePostProcessingConfig(
     postProcessingConfig: PostProcessingConfig
   ) {
-    jointBilateralFilterStage.updateSigmaSpace(
-      postProcessingConfig.jointBilateralFilter.sigmaSpace
-    )
-    jointBilateralFilterStage.updateSigmaColor(
-      postProcessingConfig.jointBilateralFilter.sigmaColor
-    )
+    const {
+      blendMode,
+      coverage,
+      lightWrapping,
+      jointBilateralFilter = {}
+    } = postProcessingConfig
 
+    const {
+      sigmaColor,
+      sigmaSpace
+    } = jointBilateralFilter
+
+    if (typeof sigmaColor === 'number') {
+      fastBilateralFilterStage.updateSigmaColor(sigmaColor)
+    }
+    if (typeof sigmaSpace === 'number') {
+      fastBilateralFilterStage.updateSigmaSpace(sigmaSpace)
+    }
+    if (Array.isArray(coverage)) {
+      if (backgroundConfig.type === 'blur' || backgroundConfig.type === 'image') {
+        backgroundStage.updateCoverage(coverage)
+      }
+    }
     if (backgroundConfig.type === 'image') {
       const backgroundImageStage = backgroundStage as BackgroundImageStage
-      backgroundImageStage.updateCoverage(postProcessingConfig.coverage)
-      backgroundImageStage.updateLightWrapping(
-        postProcessingConfig.lightWrapping
-      )
-      backgroundImageStage.updateBlendMode(postProcessingConfig.blendMode)
-    } else if (backgroundConfig.type === 'blur') {
-      const backgroundBlurStage = backgroundStage as BackgroundBlurStage
-      backgroundBlurStage.updateCoverage(postProcessingConfig.coverage)
-    } else {
+      if (typeof lightWrapping === 'number') {
+        backgroundImageStage.updateLightWrapping(lightWrapping)
+      }
+      if (typeof blendMode === 'string') {
+        backgroundImageStage.updateBlendMode(blendMode)
+      }
+    } else if (backgroundConfig.type !== 'blur') {
       // TODO Handle no background in a separate pipeline path
       const backgroundImageStage = backgroundStage as BackgroundImageStage
       backgroundImageStage.updateCoverage([0, 0.9999])
@@ -213,9 +207,8 @@ export function buildWebGL2Pipeline(
 
   function cleanUp() {
     backgroundStage.cleanUp()
-    jointBilateralFilterStage.cleanUp()
+    fastBilateralFilterStage.cleanUp()
     loadSegmentationStage.cleanUp()
-    resizingStage.cleanUp()
 
     gl.deleteTexture(personMaskTexture)
     gl.deleteTexture(segmentationTexture)
@@ -226,5 +219,5 @@ export function buildWebGL2Pipeline(
     gl.deleteShader(vertexShader)
   }
 
-  return { render, updatePostProcessingConfig, cleanUp }
+  return { render, sampleInputFrame, updatePostProcessingConfig, cleanUp }
 }
