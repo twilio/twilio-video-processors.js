@@ -8,7 +8,7 @@ export class Pipeline implements Pipeline.Stage {
     this._stages.push(stage)
   }
 
-  render(...args: any[]): void {
+  render(): void {
     this._stages.forEach((stage) => {
       stage.render()
     })
@@ -17,6 +17,6 @@ export class Pipeline implements Pipeline.Stage {
 
 export namespace Pipeline {
   export interface Stage {
-    render(...args: any[]): void
+    render(): void
   }
 }
