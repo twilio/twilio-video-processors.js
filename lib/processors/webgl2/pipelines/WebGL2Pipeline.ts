@@ -16,6 +16,7 @@ interface OutputConfig {
   fragmentShaderSource: string
   glOut: WebGL2RenderingContext
   height?: number
+  textureUnit?: number
   type: 'canvas' | 'texture'
   uniformVars?: UniformVarInfo[]
   vertexShaderSource?: string
@@ -35,7 +36,8 @@ class WebGL2PipelineInputStage implements Pipeline.Stage {
   private _glOut: WebGL2RenderingContext
   private _inputFrame: OffscreenCanvas | HTMLCanvasElement
   private _inputFrameTexture: WebGLTexture
-  private _personMaskTexture: WebGLTexture | null
+  private _inputTexture: WebGLTexture | null
+  private _inputTextureData: ImageData | null
 
   constructor(
     glOut: WebGL2RenderingContext,
@@ -52,24 +54,26 @@ class WebGL2PipelineInputStage implements Pipeline.Stage {
       glOut.NEAREST,
       glOut.NEAREST
     )!
-    this._personMaskTexture = null;
+    this._inputTexture = null;
+    this._inputTextureData = null;
   }
 
   cleanUp(): void {
     const {
       _glOut,
       _inputFrameTexture,
-      _personMaskTexture
+      _inputTexture
     } = this
     _glOut.deleteTexture(_inputFrameTexture)
-    _glOut.deleteTexture(_personMaskTexture)
+    _glOut.deleteTexture(_inputTexture)
   }
 
-  render(personMask: ImageData): void {
+  render(): void {
     const {
       _glOut,
       _inputFrame,
-      _inputFrameTexture
+      _inputFrameTexture,
+      _inputTextureData
     } = this
 
     const { height, width } = _inputFrame
@@ -94,41 +98,48 @@ class WebGL2PipelineInputStage implements Pipeline.Stage {
       _inputFrame
     )
 
+    if (!_inputTextureData) {
+      return
+    }
     const {
       data,
-      height: maskHeight,
-      width: maskWidth
-    } = personMask
+      height: textureHeight,
+      width: textureWidth
+    } = _inputTextureData
 
-    if (!this._personMaskTexture) {
-      this._personMaskTexture = createTexture(
+    if (!this._inputTexture) {
+      this._inputTexture = createTexture(
         _glOut,
         _glOut.RGBA8,
-        maskWidth,
-        maskHeight,
+        textureWidth,
+        textureHeight,
         _glOut.NEAREST,
         _glOut.NEAREST
       )
     }
 
-    _glOut.viewport(0, 0, maskWidth, maskHeight)
+    _glOut.viewport(0, 0, textureWidth, textureHeight)
     _glOut.activeTexture(_glOut.TEXTURE1)
 
     _glOut.bindTexture(
       _glOut.TEXTURE_2D,
-      this._personMaskTexture
+      this._inputTexture
     )
     _glOut.texSubImage2D(
       _glOut.TEXTURE_2D,
       0,
       0,
       0,
-      maskWidth,
-      maskHeight,
+      textureWidth,
+      textureHeight,
       _glOut.RGBA,
       _glOut.UNSIGNED_BYTE,
       data
     )
+  }
+
+  setInputTextureData(inputTextureData: ImageData): void {
+    this._inputTextureData = inputTextureData
   }
 }
 
@@ -142,6 +153,7 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
   private _inputTextureUnit: number
   private _outputFramebuffer: WebGLBuffer | null = null
   private _outputTexture: WebGLTexture | null = null
+  private _outputTextureUnit: number
   private _positionBuffer: WebGLBuffer
   private _program: WebGLProgram
   private _texCoordBuffer: WebGLBuffer
@@ -164,6 +176,7 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
     const {
       fragmentShaderSource,
       height = glOut.canvas.height,
+      textureUnit: outputTextureUnit = textureUnit + 1,
       type: outputType,
       uniformVars = [],
       vertexShaderSource = `#version 300 es
@@ -188,6 +201,8 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
       height,
       width
     }
+
+    this._outputTextureUnit = outputTextureUnit
 
     this._fragmentShader = compileShader(
       glOut,
@@ -280,13 +295,13 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
   render(): void {
     const {
       _glOut,
-      _inputTextureUnit,
       _outputDimensions: {
         height,
         width
       },
       _outputFramebuffer,
       _outputTexture,
+      _outputTextureUnit,
       _program
     } = this
 
@@ -296,8 +311,7 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
     if (_outputTexture) {
       _glOut.activeTexture(
         _glOut.TEXTURE0
-        + _inputTextureUnit
-        + 1
+        + _outputTextureUnit
       )
       _glOut.bindTexture(
         _glOut.TEXTURE_2D,
@@ -351,24 +365,14 @@ export class WebGL2Pipeline extends Pipeline {
   static ProcessingStage = WebGL2PipelineProcessingStage
   protected _stages: (WebGL2PipelineInputStage | WebGL2PipelineProcessingStage)[] = []
 
-  render(personMask: ImageData): void {
-    const [
-      inputStage,
-      ...otherStages
-    ] = this._stages as [
-      WebGL2PipelineInputStage,
-      ...WebGL2PipelineProcessingStage[]
-    ]
-
-    inputStage.render(personMask)
-    otherStages.forEach(
-      (stage) => stage.render()
-    )
-  }
-
   cleanUp(): void {
     this._stages.forEach(
       (stage) => stage.cleanUp()
     )
+  }
+
+  setInputTextureData(inputTextureData: ImageData): void {
+    const [inputStage] = this._stages as [WebGL2PipelineInputStage]
+    inputStage.setInputTextureData(inputTextureData);
   }
 }

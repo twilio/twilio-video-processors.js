@@ -142,7 +142,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     const imageHeight = img.naturalHeight;
     const canvasWidth = this._outputCanvas.width;
     const canvasHeight = this._outputCanvas.height;
-    const ctx = this._outputContext as CanvasRenderingContext2D;
+    const ctx = this._outputContext;
 
     if (this._fitType === ImageFit.Fill) {
       ctx.drawImage(img, 0, 0, imageWidth, imageHeight, 0, 0, canvasWidth, canvasHeight);

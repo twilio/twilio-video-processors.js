@@ -1,7 +1,7 @@
 import { Processor } from '../Processor';
 import { Benchmark } from '../../utils/Benchmark';
 import { TwilioTFLite } from '../../utils/TwilioTFLite';
-import { isChromiumImageBitmap } from '../../utils/support';
+import { isCanvasBlurSupported, isChromiumImageBitmap } from '../../utils/support';
 import { Dimensions } from '../../types';
 import { PersonMaskUpscalePipeline } from '../webgl2';
 
@@ -78,7 +78,7 @@ export interface BackgroundProcessorOptions {
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
-   * 8 for WebGL2 pipeline, 4 for Canvas2D pipeline
+   * 8
    * ```
    */
   maskBlurRadius?: number;
@@ -94,6 +94,7 @@ export abstract class BackgroundProcessor extends Processor {
   protected _outputCanvas: HTMLCanvasElement | null = null;
   protected _outputContext: CanvasRenderingContext2D | null = null;
   protected _personMaskUpscalePipeline: PersonMaskUpscalePipeline | null = null;
+  protected _webgl2Canvas: OffscreenCanvas | HTMLCanvasElement;
 
   private _assetsPath: string;
   private _benchmark: Benchmark;
@@ -109,7 +110,6 @@ export abstract class BackgroundProcessor extends Processor {
   // tslint:disable-next-line no-unused-variable
   private _isSimdEnabled: boolean | null;
   private _maskBlurRadius: number;
-  private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
 
   constructor(options: BackgroundProcessorOptions) {
     super();
@@ -139,7 +139,7 @@ export abstract class BackgroundProcessor extends Processor {
     this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._inputFrameContext = this._inputFrameCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
     this._maskBlurRadius = typeof options.maskBlurRadius === 'number' ? options.maskBlurRadius : MASK_BLUR_RADIUS;
-    this._maskCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
+    this._webgl2Canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
   }
 
   /**
@@ -238,8 +238,8 @@ export abstract class BackgroundProcessor extends Processor {
     if (this._outputCanvas !== outputFrameBuffer) {
       this._outputCanvas = outputFrameBuffer;
       this._outputContext = this._outputCanvas.getContext('2d');
-      this._maskCanvas.width = outputWidth;
-      this._maskCanvas.height = outputHeight;
+      this._webgl2Canvas.width = outputWidth;
+      this._webgl2Canvas.height = outputHeight;
       this._cleanupPersonMaskUpscalePipeline();
     }
     // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
@@ -275,15 +275,16 @@ export abstract class BackgroundProcessor extends Processor {
     }
 
     this._benchmark.start('imageCompositionDelay');
-    if (!this._debounce || this._currentMask) {
-      this._personMaskUpscalePipeline?.render(personMask);
+    if (!this._debounce || this._currentMask || !isCanvasBlurSupported) {
+      this._personMaskUpscalePipeline?.setInputTextureData(personMask);
+      this._personMaskUpscalePipeline?.render();
     }
 
     const ctx = this._outputContext as CanvasRenderingContext2D;
     ctx.save();
     ctx.filter = 'none';
     ctx.globalCompositeOperation = 'copy';
-    ctx.drawImage(this._maskCanvas, 0, 0, outputWidth, outputHeight);
+    ctx.drawImage(this._webgl2Canvas, 0, 0, outputWidth, outputHeight);
     ctx.globalCompositeOperation = 'source-in';
     ctx.drawImage(inputFrame, 0, 0, outputWidth, outputHeight);
     ctx.globalCompositeOperation = 'destination-over';
@@ -339,7 +340,7 @@ export abstract class BackgroundProcessor extends Processor {
     this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
       inputFrame,
       this._inferenceDimensions,
-      this._maskCanvas
+      this._webgl2Canvas
     );
     this._personMaskUpscalePipeline?.updateFastBilateralFilterConfig({
       sigmaSpace: this._maskBlurRadius

@@ -4,4 +4,5 @@
  * It was modified and converted into a module to work with
  * Twilio's Video Processor
  */
+export { GaussianBlurFilterPipeline } from './pipelines/GaussianBlurFilterPipeline';
 export { PersonMaskUpscalePipeline } from './pipelines/PersonMaskUpscalePipeline';
