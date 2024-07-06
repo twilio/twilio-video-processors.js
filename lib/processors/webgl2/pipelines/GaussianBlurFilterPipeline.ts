@@ -7,8 +7,8 @@ import { WebGL2Pipeline } from './WebGL2Pipeline';
 export class GaussianBlurFilterPipeline extends WebGL2Pipeline {
   constructor(outputCanvas: OffscreenCanvas | HTMLCanvasElement) {
     super()
-
     const glOut = outputCanvas.getContext('webgl2')! as WebGL2RenderingContext
+
     this.addStage(new SinglePassGaussianBlurFilterStage(
       glOut,
       'horizontal',
@@ -16,6 +16,7 @@ export class GaussianBlurFilterPipeline extends WebGL2Pipeline {
       0,
       2
     ))
+
     this.addStage(new SinglePassGaussianBlurFilterStage(
       glOut,
       'vertical',
