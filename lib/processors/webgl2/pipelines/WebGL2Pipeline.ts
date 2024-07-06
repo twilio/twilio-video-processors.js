@@ -150,7 +150,6 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
   protected _outputDimensions: Dimensions
   private _fragmentShader: WebGLSampler
   private _glOut: WebGL2RenderingContext
-  private _inputTextureUnit: number
   private _outputFramebuffer: WebGLBuffer | null = null
   private _outputTexture: WebGLTexture | null = null
   private _outputTextureUnit: number
@@ -167,8 +166,6 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
       textureName,
       textureUnit,
     } = inputConfig
-
-    this._inputTextureUnit = textureUnit
 
     const { glOut } = outputConfig
     this._glOut = glOut
