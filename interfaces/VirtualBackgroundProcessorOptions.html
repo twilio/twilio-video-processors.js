@@ -54,13 +54,13 @@ These assets can be copied from the <code>dist/build</code> folder which you can
 For virtual background:
 <br/>
 
-<pre><code class="language-ts"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">virtualBackground</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-11">VirtualBackgroundProcessor</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">assetsPath:</span><span class="hl-1"> </span><span class="hl-4">&#39;https://my-server-path/assets&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">backgroundImage:</span><span class="hl-1"> </span><span class="hl-0">img</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><span class="hl-2">await</span><span class="hl-1"> </span><span class="hl-0">virtualBackground</span><span class="hl-1">.</span><span class="hl-11">loadModel</span><span class="hl-1">();</span>
+<pre><code class="language-ts"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">virtualBackground</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-12">VirtualBackgroundProcessor</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">assetsPath:</span><span class="hl-1"> </span><span class="hl-4">&#39;https://my-server-path/assets&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">backgroundImage:</span><span class="hl-1"> </span><span class="hl-0">img</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><span class="hl-2">await</span><span class="hl-1"> </span><span class="hl-0">virtualBackground</span><span class="hl-1">.</span><span class="hl-12">loadModel</span><span class="hl-1">();</span>
 </code><button>Copy</button></pre>
 <br/>
 For blur background:
 <br/>
 
-<pre><code class="language-ts"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">blurBackground</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-11">GaussianBlurBackgroundProcessor</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">assetsPath:</span><span class="hl-1"> </span><span class="hl-4">&#39;https://my-server-path/assets&#39;</span><br/><span class="hl-1">});</span><br/><span class="hl-2">await</span><span class="hl-1"> </span><span class="hl-0">blurBackground</span><span class="hl-1">.</span><span class="hl-11">loadModel</span><span class="hl-1">();</span>
+<pre><code class="language-ts"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">blurBackground</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-12">GaussianBlurBackgroundProcessor</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">assetsPath:</span><span class="hl-1"> </span><span class="hl-4">&#39;https://my-server-path/assets&#39;</span><br/><span class="hl-1">});</span><br/><span class="hl-2">await</span><span class="hl-1"> </span><span class="hl-0">blurBackground</span><span class="hl-1">.</span><span class="hl-12">loadModel</span><span class="hl-1">();</span>
 </code><button>Copy</button></pre>
 </div><aside class="tsd-sources">
 <p>Inherited from BackgroundProcessorOptions.assetsPath</p></aside></section>
@@ -99,7 +99,7 @@ supports this option. WebGL2 ignores this option and falls back to Cover.</p>
 <div class="tsd-comment tsd-typography"><p>The blur radius to use when smoothing out the edges of the person&#39;s mask.</p>
 </div>
 <div class="tsd-comment tsd-typography">
-<h4>Default</h4><pre><code class="language-html"><span class="hl-1">5</span>
+<h4>Default</h4><pre><code class="language-html"><span class="hl-1">8 for WebGL2 pipeline, 4 for Canvas2D pipeline</span>
 </code><button>Copy</button></pre>
 </div><aside class="tsd-sources">
 <p>Inherited from BackgroundProcessorOptions.maskBlurRadius</p></aside></section>

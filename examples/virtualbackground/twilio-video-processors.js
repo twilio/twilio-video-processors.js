@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 2.1.0
+/*! twilio-video-processors.js 2.2.0-rc1
 
 The following license applies to all parts of this software except as
 documented below.
@@ -38,15 +38,13 @@ documented below.
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WASM_INFERENCE_DIMENSIONS = exports.TFLITE_SIMD_LOADER_NAME = exports.TFLITE_LOADER_NAME = exports.MODEL_NAME = exports.PERSON_PROBABILITY_THRESHOLD = exports.HISTORY_COUNT_MULTIPLIER = exports.MASK_BLUR_RADIUS = exports.DEBOUNCE_COUNT = exports.BLUR_FILTER_RADIUS = void 0;
+exports.WASM_INFERENCE_DIMENSIONS = exports.TFLITE_WORKER_NAME = exports.TFLITE_SIMD_LOADER_NAME = exports.TFLITE_LOADER_NAME = exports.MODEL_NAME = exports.MASK_BLUR_RADIUS = exports.BLUR_FILTER_RADIUS = void 0;
 exports.BLUR_FILTER_RADIUS = 15;
-exports.DEBOUNCE_COUNT = 2;
-exports.MASK_BLUR_RADIUS = 5;
-exports.HISTORY_COUNT_MULTIPLIER = 3;
-exports.PERSON_PROBABILITY_THRESHOLD = 0.4;
+exports.MASK_BLUR_RADIUS = 8;
 exports.MODEL_NAME = 'selfie_segmentation_landscape.tflite';
 exports.TFLITE_LOADER_NAME = 'tflite-1-0-0.js';
 exports.TFLITE_SIMD_LOADER_NAME = 'tflite-simd-1-0-0.js';
+exports.TFLITE_WORKER_NAME = 'tflite-worker.js';
 exports.WASM_INFERENCE_DIMENSIONS = {
     width: 256,
     height: 144,
@@ -83,7 +81,7 @@ if (typeof window !== 'undefined') {
     window.Twilio.VideoProcessors = __assign(__assign({}, window.Twilio.VideoProcessors), { GaussianBlurBackgroundProcessor: GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor, ImageFit: types_1.ImageFit, Pipeline: types_1.Pipeline, isSupported: support_1.isSupported, version: version_1.version, VirtualBackgroundProcessor: VirtualBackgroundProcessor_1.VirtualBackgroundProcessor });
 }
 
-},{"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./types":16,"./utils/support":18,"./utils/version":19}],3:[function(require,module,exports){
+},{"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./types":15,"./utils/support":18,"./utils/version":19}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Processor = void 0;
@@ -155,7 +153,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BackgroundProcessor = void 0;
 var Processor_1 = require("../Processor");
 var Benchmark_1 = require("../../utils/Benchmark");
-var version_1 = require("../../utils/version");
+var TwilioTFLite_1 = require("../../utils/TwilioTFLite");
+var support_1 = require("../../utils/support");
 var types_1 = require("../../types");
 var webgl2_1 = require("../webgl2");
 var constants_1 = require("../../constants");
@@ -170,21 +169,7 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         _this._outputCanvas = null;
         _this._outputContext = null;
         _this._webgl2Pipeline = null;
-        _this._currentMask = new Uint8ClampedArray();
-        _this._debounce = true;
-        _this._debounceCount = constants_1.DEBOUNCE_COUNT;
-        _this._dummyImageData = new ImageData(1, 1);
         _this._inferenceDimensions = constants_1.WASM_INFERENCE_DIMENSIONS;
-        _this._inputMemoryOffset = 0;
-        // tslint:disable-next-line no-unused-variable
-        _this._isSimdEnabled = null;
-        _this._maskBlurRadius = constants_1.MASK_BLUR_RADIUS;
-        _this._maskUsageCounter = 0;
-        _this._outputMemoryOffset = 0;
-        _this._personProbabilityThreshold = constants_1.PERSON_PROBABILITY_THRESHOLD;
-        _this._pipeline = types_1.Pipeline.WebGL2;
-        // tslint:disable-next-line no-unused-variable
-        _this._version = version_1.version;
         if (typeof options.assetsPath !== 'string') {
             throw new Error('assetsPath parameter is missing');
         }
@@ -192,20 +177,24 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         if (assetsPath && assetsPath[assetsPath.length - 1] !== '/') {
             assetsPath += '/';
         }
-        _this.maskBlurRadius = options.maskBlurRadius;
         _this._assetsPath = assetsPath;
-        _this._debounce = typeof options.debounce === 'boolean' ? options.debounce : _this._debounce;
-        _this._debounceCount = _this._debounce ? _this._debounceCount : 1;
+        _this._debounce = typeof options.debounce === 'boolean' ? options.debounce : true;
+        _this._deferInputResize = typeof options.deferInputResize === 'boolean' ? options.deferInputResize : false;
         _this._inferenceDimensions = options.inferenceDimensions || _this._inferenceDimensions;
-        _this._historyCount = constants_1.HISTORY_COUNT_MULTIPLIER * _this._debounceCount;
-        _this._personProbabilityThreshold = options.personProbabilityThreshold || _this._personProbabilityThreshold;
-        _this._pipeline = options.pipeline || _this._pipeline;
+        _this._inputResizeMode = typeof options.inputResizeMode === 'string'
+            ? options.inputResizeMode
+            : ((0, support_1.isChromiumImageBitmap)() ? 'image-bitmap' : 'canvas');
+        _this._pipeline = options.pipeline || types_1.Pipeline.WebGL2;
         _this._benchmark = new Benchmark_1.Benchmark();
-        _this._inputCanvas = document.createElement('canvas');
-        _this._inputContext = _this._inputCanvas.getContext('2d');
-        _this._maskCanvas = typeof window.OffscreenCanvas !== 'undefined' ? new window.OffscreenCanvas(1, 1) : document.createElement('canvas');
+        _this._currentMask = null;
+        _this._isSimdEnabled = null;
+        _this._inferenceInputCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
+        _this._inferenceInputContext = _this._inferenceInputCanvas.getContext('2d', { willReadFrequently: true });
+        _this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
+        _this._inputFrameContext = _this._inputFrameCanvas.getContext('2d');
+        _this._maskBlurRadius = typeof options.maskBlurRadius === 'number' ? options.maskBlurRadius : (_this._pipeline === types_1.Pipeline.WebGL2 ? constants_1.MASK_BLUR_RADIUS : (constants_1.MASK_BLUR_RADIUS / 2));
+        _this._maskCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
         _this._maskContext = _this._maskCanvas.getContext('2d');
-        _this._masks = [];
         return _this;
     }
     Object.defineProperty(BackgroundProcessor.prototype, "maskBlurRadius", {
@@ -219,11 +208,19 @@ var BackgroundProcessor = /** @class */ (function (_super) {
          * Set a new blur radius to be used when smoothing out the edges of the person's mask.
          */
         set: function (radius) {
+            var _a;
             if (typeof radius !== 'number' || radius < 0) {
                 console.warn("Valid mask blur radius not found. Using ".concat(constants_1.MASK_BLUR_RADIUS, " as default."));
                 radius = constants_1.MASK_BLUR_RADIUS;
             }
-            this._maskBlurRadius = radius;
+            if (this._maskBlurRadius !== radius) {
+                this._maskBlurRadius = radius;
+                (_a = this._webgl2Pipeline) === null || _a === void 0 ? void 0 : _a.updatePostProcessingConfig({
+                    jointBilateralFilter: {
+                        sigmaSpace: this._maskBlurRadius
+                    }
+                });
+            }
         },
         enumerable: false,
         configurable: true
@@ -235,24 +232,20 @@ var BackgroundProcessor = /** @class */ (function (_super) {
      */
     BackgroundProcessor.prototype.loadModel = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, tflite, modelResponse, model, modelBufferOffset;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0: return [4 /*yield*/, Promise.all([
-                            this._loadTwilioTfLite(),
-                            fetch(this._assetsPath + constants_1.MODEL_NAME),
-                        ])];
+            var tflite;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        tflite = BackgroundProcessor._tflite;
+                        if (!!tflite) return [3 /*break*/, 2];
+                        tflite = new TwilioTFLite_1.TwilioTFLite();
+                        return [4 /*yield*/, tflite.initialize(this._assetsPath, constants_1.MODEL_NAME, constants_1.TFLITE_LOADER_NAME, constants_1.TFLITE_SIMD_LOADER_NAME)];
                     case 1:
-                        _a = _b.sent(), tflite = _a[0], modelResponse = _a[1];
-                        return [4 /*yield*/, modelResponse.arrayBuffer()];
+                        _a.sent();
+                        BackgroundProcessor._tflite = tflite;
+                        _a.label = 2;
                     case 2:
-                        model = _b.sent();
-                        modelBufferOffset = tflite._getModelBufferMemoryOffset();
-                        tflite.HEAPU8.set(new Uint8Array(model), modelBufferOffset);
-                        tflite._loadModel(model.byteLength);
-                        this._inputMemoryOffset = tflite._getInputMemoryOffset() / 4;
-                        this._outputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
-                        this._tflite = tflite;
+                        this._isSimdEnabled = tflite.isSimdEnabled;
                         return [2 /*return*/];
                 }
             });
@@ -279,13 +272,13 @@ var BackgroundProcessor = /** @class */ (function (_super) {
      * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
      */
     BackgroundProcessor.prototype.processFrame = function (inputFrameBuffer, outputFrameBuffer) {
-        var _a, _b;
+        var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function () {
-            var _c, inferenceWidth, inferenceHeight, inputFrame, captureWidth, captureHeight, reInitDummyImage, personMask, ctx;
-            return __generator(this, function (_d) {
-                switch (_d.label) {
+            var _d, inferenceWidth, inferenceHeight, _e, captureWidth, captureHeight, inputFrame, personMask, ctx, _f, outputHeight, outputWidth;
+            return __generator(this, function (_g) {
+                switch (_g.label) {
                     case 0:
-                        if (!this._tflite) {
+                        if (!BackgroundProcessor._tflite) {
                             return [2 /*return*/];
                         }
                         if (!inputFrameBuffer || !outputFrameBuffer) {
@@ -293,14 +286,10 @@ var BackgroundProcessor = /** @class */ (function (_super) {
                         }
                         this._benchmark.end('captureFrameDelay');
                         this._benchmark.start('processFrameDelay');
-                        _c = this._inferenceDimensions, inferenceWidth = _c.width, inferenceHeight = _c.height;
-                        inputFrame = inputFrameBuffer;
-                        captureWidth = inputFrame.width, captureHeight = inputFrame.height;
-                        if (inputFrame.videoWidth) {
-                            inputFrame = inputFrame;
-                            captureWidth = inputFrame.videoWidth;
-                            captureHeight = inputFrame.videoHeight;
-                        }
+                        _d = this._inferenceDimensions, inferenceWidth = _d.width, inferenceHeight = _d.height;
+                        _e = inputFrameBuffer instanceof HTMLVideoElement
+                            ? { width: inputFrameBuffer.videoWidth, height: inputFrameBuffer.videoHeight }
+                            : inputFrameBuffer, captureWidth = _e.width, captureHeight = _e.height;
                         if (this._outputCanvas !== outputFrameBuffer) {
                             this._outputCanvas = outputFrameBuffer;
                             this._outputContext = this._outputCanvas
@@ -308,48 +297,64 @@ var BackgroundProcessor = /** @class */ (function (_super) {
                             (_a = this._webgl2Pipeline) === null || _a === void 0 ? void 0 : _a.cleanUp();
                             this._webgl2Pipeline = null;
                         }
-                        if (!this._webgl2Pipeline && this._pipeline === types_1.Pipeline.WebGL2) {
-                            this._createWebGL2Pipeline(inputFrame, captureWidth, captureHeight, inferenceWidth, inferenceHeight);
+                        if (this._pipeline === types_1.Pipeline.WebGL2) {
+                            if (!this._webgl2Pipeline) {
+                                this._createWebGL2Pipeline(inputFrameBuffer, captureWidth, captureHeight, inferenceWidth, inferenceHeight);
+                            }
+                            (_b = this._webgl2Pipeline) === null || _b === void 0 ? void 0 : _b.sampleInputFrame();
                         }
-                        if (!(this._pipeline === types_1.Pipeline.WebGL2)) return [3 /*break*/, 2];
-                        return [4 /*yield*/, ((_b = this._webgl2Pipeline) === null || _b === void 0 ? void 0 : _b.render())];
-                    case 1:
-                        _d.sent();
-                        return [3 /*break*/, 4];
-                    case 2:
-                        reInitDummyImage = false;
-                        if (this._inputCanvas.width !== inferenceWidth) {
-                            this._inputCanvas.width = inferenceWidth;
+                        // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
+                        if (this._inputFrameCanvas.width !== captureWidth) {
+                            this._inputFrameCanvas.width = captureWidth;
+                        }
+                        if (this._inputFrameCanvas.height !== captureHeight) {
+                            this._inputFrameCanvas.height = captureHeight;
+                        }
+                        if (this._inferenceInputCanvas.width !== inferenceWidth) {
+                            this._inferenceInputCanvas.width = inferenceWidth;
                             this._maskCanvas.width = inferenceWidth;
-                            reInitDummyImage = true;
                         }
-                        if (this._inputCanvas.height !== inferenceHeight) {
-                            this._inputCanvas.height = inferenceHeight;
+                        if (this._inferenceInputCanvas.height !== inferenceHeight) {
+                            this._inferenceInputCanvas.height = inferenceHeight;
                             this._maskCanvas.height = inferenceHeight;
-                            reInitDummyImage = true;
                         }
-                        if (reInitDummyImage) {
-                            this._dummyImageData = new ImageData(new Uint8ClampedArray(inferenceWidth * inferenceHeight * 4), inferenceWidth, inferenceHeight);
+                        if (inputFrameBuffer instanceof HTMLVideoElement) {
+                            this._inputFrameContext.drawImage(inputFrameBuffer, 0, 0);
+                            inputFrame = this._inputFrameCanvas;
+                        }
+                        else {
+                            inputFrame = inputFrameBuffer;
                         }
                         return [4 /*yield*/, this._createPersonMask(inputFrame)];
-                    case 3:
-                        personMask = _d.sent();
-                        ctx = this._outputContext;
-                        this._benchmark.start('imageCompositionDelay');
-                        this._maskContext.putImageData(personMask, 0, 0);
-                        ctx.save();
-                        ctx.filter = "blur(".concat(this._maskBlurRadius, "px)");
-                        ctx.globalCompositeOperation = 'copy';
-                        ctx.drawImage(this._maskCanvas, 0, 0, captureWidth, captureHeight);
-                        ctx.filter = 'none';
-                        ctx.globalCompositeOperation = 'source-in';
-                        ctx.drawImage(inputFrame, 0, 0, captureWidth, captureHeight);
-                        ctx.globalCompositeOperation = 'destination-over';
-                        this._setBackground(inputFrame);
-                        ctx.restore();
-                        this._benchmark.end('imageCompositionDelay');
-                        _d.label = 4;
-                    case 4:
+                    case 1:
+                        personMask = _g.sent();
+                        if (this._debounce) {
+                            this._currentMask = this._currentMask === personMask
+                                ? null
+                                : personMask;
+                        }
+                        if (this._pipeline === types_1.Pipeline.WebGL2) {
+                            (_c = this._webgl2Pipeline) === null || _c === void 0 ? void 0 : _c.render(personMask.data);
+                        }
+                        else {
+                            this._benchmark.start('imageCompositionDelay');
+                            if (!this._debounce || this._currentMask) {
+                                this._maskContext.putImageData(personMask, 0, 0);
+                            }
+                            ctx = this._outputContext;
+                            _f = this._outputCanvas, outputHeight = _f.height, outputWidth = _f.width;
+                            ctx.save();
+                            ctx.filter = "blur(".concat(this._maskBlurRadius, "px)");
+                            ctx.globalCompositeOperation = 'copy';
+                            ctx.drawImage(this._maskCanvas, 0, 0, outputWidth, outputHeight);
+                            ctx.filter = 'none';
+                            ctx.globalCompositeOperation = 'source-in';
+                            ctx.drawImage(inputFrame, 0, 0, outputWidth, outputHeight);
+                            ctx.globalCompositeOperation = 'destination-over';
+                            this._setBackground(inputFrame);
+                            ctx.restore();
+                            this._benchmark.end('imageCompositionDelay');
+                        }
                         this._benchmark.end('processFrameDelay');
                         this._benchmark.end('totalProcessingDelay');
                         // NOTE (csantos): Start the benchmark from here so we can include the delay from the Video sdk
@@ -361,45 +366,45 @@ var BackgroundProcessor = /** @class */ (function (_super) {
             });
         });
     };
-    BackgroundProcessor.prototype._addMask = function (mask) {
-        if (this._masks.length >= this._historyCount) {
-            this._masks.splice(0, this._masks.length - this._historyCount + 1);
-        }
-        this._masks.push(mask);
-    };
-    BackgroundProcessor.prototype._applyAlpha = function (imageData) {
-        var weightedSum = this._masks.reduce(function (sum, mask, j) { return sum + (j + 1) * (j + 1); }, 0);
-        var pixels = imageData.height * imageData.width;
-        var _loop_1 = function (i) {
-            var w = this_1._masks.reduce(function (sum, mask, j) { return sum + mask[i] * (j + 1) * (j + 1); }, 0) / weightedSum;
-            imageData.data[i * 4 + 3] = Math.round(w * 255);
-        };
-        var this_1 = this;
-        for (var i = 0; i < pixels; i++) {
-            _loop_1(i);
-        }
-    };
     BackgroundProcessor.prototype._createPersonMask = function (inputFrame) {
         return __awaiter(this, void 0, void 0, function () {
-            var imageData, shouldRunInference;
-            return __generator(this, function (_a) {
-                imageData = this._dummyImageData;
-                shouldRunInference = this._maskUsageCounter < 1;
-                this._benchmark.start('inputImageResizeDelay');
-                if (shouldRunInference) {
-                    imageData = this._getResizedInputImageData(inputFrame);
+            var _a, height, width, stages, shouldDebounce, inferenceStage, resizeStage, resizePromise, personMaskBuffer;
+            var _this = this;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = this._inferenceDimensions, height = _a.height, width = _a.width;
+                        stages = {
+                            inference: {
+                                false: function () { return BackgroundProcessor._tflite.runInference(); },
+                                true: function () { return _this._currentMask.data; }
+                            },
+                            resize: {
+                                false: function () { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                                    return [2 /*return*/, this._resizeInputFrame(inputFrame)];
+                                }); }); },
+                                true: function () { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                                    return [2 /*return*/];
+                                }); }); }
+                            }
+                        };
+                        shouldDebounce = !!this._currentMask;
+                        inferenceStage = stages.inference["".concat(shouldDebounce)];
+                        resizeStage = stages.resize["".concat(shouldDebounce)];
+                        this._benchmark.start('inputImageResizeDelay');
+                        resizePromise = resizeStage();
+                        if (!!this._deferInputResize) return [3 /*break*/, 2];
+                        return [4 /*yield*/, resizePromise];
+                    case 1:
+                        _b.sent();
+                        _b.label = 2;
+                    case 2:
+                        this._benchmark.end('inputImageResizeDelay');
+                        this._benchmark.start('segmentationDelay');
+                        personMaskBuffer = inferenceStage();
+                        this._benchmark.end('segmentationDelay');
+                        return [2 /*return*/, this._currentMask || new ImageData(personMaskBuffer, width, height)];
                 }
-                this._benchmark.end('inputImageResizeDelay');
-                this._benchmark.start('segmentationDelay');
-                if (shouldRunInference) {
-                    this._currentMask = this._runTwilioTfLiteInference(imageData);
-                    this._maskUsageCounter = this._debounceCount;
-                }
-                this._addMask(this._currentMask);
-                this._applyAlpha(imageData);
-                this._maskUsageCounter--;
-                this._benchmark.end('segmentationDelay');
-                return [2 /*return*/, imageData];
             });
         });
     };
@@ -408,12 +413,15 @@ var BackgroundProcessor = /** @class */ (function (_super) {
             htmlElement: inputFrame,
             width: captureWidth,
             height: captureHeight,
-        }, this._backgroundImage, { type: this._getWebGL2PipelineType() }, { inputResolution: "".concat(inferenceWidth, "x").concat(inferenceHeight) }, this._outputCanvas, this._tflite, this._benchmark, this._debounce);
+        }, this._backgroundImage, {
+            type: this._getWebGL2PipelineType(),
+        }, {
+            inputResolution: "".concat(inferenceWidth, "x").concat(inferenceHeight),
+        }, this._outputCanvas, this._benchmark, this._debounce);
         this._webgl2Pipeline.updatePostProcessingConfig({
-            smoothSegmentationMask: true,
             jointBilateralFilter: {
-                sigmaSpace: 10,
-                sigmaColor: 0.12
+                sigmaSpace: this._maskBlurRadius,
+                sigmaColor: 0.1
             },
             coverage: [
                 0,
@@ -423,81 +431,41 @@ var BackgroundProcessor = /** @class */ (function (_super) {
             blendMode: 'screen'
         });
     };
-    BackgroundProcessor.prototype._getResizedInputImageData = function (inputFrame) {
-        var _a = this._inputCanvas, width = _a.width, height = _a.height;
-        this._inputContext.drawImage(inputFrame, 0, 0, width, height);
-        var imageData = this._inputContext.getImageData(0, 0, width, height);
-        return imageData;
-    };
-    BackgroundProcessor.prototype._loadJs = function (url) {
-        if (BackgroundProcessor._loadedScripts.includes(url)) {
-            return Promise.resolve();
-        }
-        return new Promise(function (resolve, reject) {
-            var script = document.createElement('script');
-            script.onload = function () {
-                BackgroundProcessor._loadedScripts.push(url);
-                resolve();
-            };
-            script.onerror = reject;
-            document.head.append(script);
-            script.src = url;
-        });
-    };
-    BackgroundProcessor.prototype._loadTwilioTfLite = function () {
+    BackgroundProcessor.prototype._resizeInputFrame = function (inputFrame) {
         return __awaiter(this, void 0, void 0, function () {
-            var tflite, _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0: return [4 /*yield*/, this._loadJs(this._assetsPath + constants_1.TFLITE_SIMD_LOADER_NAME)];
+            var _a, _b, resizeWidth, resizeHeight, ctx, resizeMode, resizedInputFrameBitmap, imageData;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        _a = this, _b = _a._inferenceInputCanvas, resizeWidth = _b.width, resizeHeight = _b.height, ctx = _a._inferenceInputContext, resizeMode = _a._inputResizeMode;
+                        if (!(resizeMode === 'image-bitmap')) return [3 /*break*/, 2];
+                        return [4 /*yield*/, createImageBitmap(inputFrame, {
+                                resizeWidth: resizeWidth,
+                                resizeHeight: resizeHeight,
+                                resizeQuality: 'pixelated'
+                            })];
                     case 1:
-                        _b.sent();
-                        _b.label = 2;
+                        resizedInputFrameBitmap = _c.sent();
+                        ctx.drawImage(resizedInputFrameBitmap, 0, 0, resizeWidth, resizeHeight);
+                        resizedInputFrameBitmap.close();
+                        return [3 /*break*/, 3];
                     case 2:
-                        _b.trys.push([2, 4, , 7]);
-                        return [4 /*yield*/, window.createTwilioTFLiteSIMDModule()];
+                        ctx.drawImage(inputFrame, 0, 0, resizeWidth, resizeHeight);
+                        _c.label = 3;
                     case 3:
-                        tflite = _b.sent();
-                        this._isSimdEnabled = true;
-                        return [3 /*break*/, 7];
-                    case 4:
-                        _a = _b.sent();
-                        console.warn('SIMD not supported. You may experience poor quality of background replacement.');
-                        return [4 /*yield*/, this._loadJs(this._assetsPath + constants_1.TFLITE_LOADER_NAME)];
-                    case 5:
-                        _b.sent();
-                        return [4 /*yield*/, window.createTwilioTFLiteModule()];
-                    case 6:
-                        tflite = _b.sent();
-                        this._isSimdEnabled = false;
-                        return [3 /*break*/, 7];
-                    case 7: return [2 /*return*/, tflite];
+                        imageData = ctx.getImageData(0, 0, resizeWidth, resizeHeight);
+                        BackgroundProcessor._tflite.loadInputBuffer(imageData.data);
+                        return [2 /*return*/];
                 }
             });
         });
     };
-    BackgroundProcessor.prototype._runTwilioTfLiteInference = function (inputImage) {
-        var _a = this, _b = _a._inferenceDimensions, width = _b.width, height = _b.height, offset = _a._inputMemoryOffset, tflite = _a._tflite;
-        var pixels = width * height;
-        for (var i = 0; i < pixels; i++) {
-            tflite.HEAPF32[offset + i * 3] = inputImage.data[i * 4] / 255;
-            tflite.HEAPF32[offset + i * 3 + 1] = inputImage.data[i * 4 + 1] / 255;
-            tflite.HEAPF32[offset + i * 3 + 2] = inputImage.data[i * 4 + 2] / 255;
-        }
-        tflite._runInference();
-        var inferenceData = new Uint8ClampedArray(pixels * 4);
-        for (var i = 0; i < pixels; i++) {
-            var personProbability = tflite.HEAPF32[this._outputMemoryOffset + i];
-            inferenceData[i] = Number(personProbability >= this._personProbabilityThreshold) * personProbability;
-        }
-        return inferenceData;
-    };
-    BackgroundProcessor._loadedScripts = [];
+    BackgroundProcessor._tflite = null;
     return BackgroundProcessor;
 }(Processor_1.Processor));
 exports.BackgroundProcessor = BackgroundProcessor;
 
-},{"../../constants":1,"../../types":16,"../../utils/Benchmark":17,"../../utils/version":19,"../Processor":3,"../webgl2":9}],5:[function(require,module,exports){
+},{"../../constants":1,"../../types":15,"../../utils/Benchmark":16,"../../utils/TwilioTFLite":17,"../../utils/support":18,"../Processor":3,"../webgl2":9}],5:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -531,31 +499,41 @@ var types_1 = require("../../types");
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
  * import { Pipeline, GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+ * import { simd } from 'wasm-feature-detect';
  *
- * const blurBackground = new GaussianBlurBackgroundProcessor({
- *   assetsPath: 'https://my-server-path/assets',
- *   pipeline: Pipeline.WebGL2,
- *   debounce: true,
- * });
+ * let blurBackground: GaussianBlurBackgroundProcessor;
  *
- * blurBackground.loadModel().then(() => {
- *   createLocalVideoTrack({
+ * (async() => {
+ *   const isWasmSimdSupported = await simd();
+ *
+ *   blurBackground = new GaussianBlurBackgroundProcessor({
+ *     assetsPath: 'https://my-server-path/assets',
+ *
+ *     // Enable debounce only if the browser does not support
+ *     // WASM SIMD in order to retain an acceptable frame rate.
+ *     debounce: !isWasmSimdSupported,
+ *
+ *     pipeline: Pipeline.WebGL2,
+ *   });
+ *   await blurBackground.loadModel();
+ *
+ *   const track = await createLocalVideoTrack({
  *     // Increasing the capture resolution decreases the output FPS
  *     // especially on browsers that do not support SIMD
  *     // such as desktop Safari and iOS browsers, or on Chrome
  *     // with capture resolutions above 640x480 for webgl2.
  *     width: 640,
  *     height: 480,
+ *
  *     // Any frame rate above 24 fps on desktop browsers increase CPU
  *     // usage without noticeable increase in quality.
  *     frameRate: 24
- *   }).then(track => {
- *     track.addProcessor(blurBackground, {
- *       inputFrameBufferType: 'video',
- *       outputFrameBufferContextType: 'webgl2',
- *     });
  *   });
- * });
+ *   track.addProcessor(virtualBackground, {
+ *     inputFrameBufferType: 'video',
+ *     outputFrameBufferContextType: 'webgl2',
+ *   });
+ * })();
  * ```
  */
 var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
@@ -608,7 +586,7 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
 }(BackgroundProcessor_1.BackgroundProcessor));
 exports.GaussianBlurBackgroundProcessor = GaussianBlurBackgroundProcessor;
 
-},{"../../constants":1,"../../types":16,"./BackgroundProcessor":4}],6:[function(require,module,exports){
+},{"../../constants":1,"../../types":15,"./BackgroundProcessor":4}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -641,40 +619,44 @@ var types_1 = require("../../types");
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
  * import { Pipeline, VirtualBackgroundProcessor } from '@twilio/video-processors';
+ * import { simd } from 'wasm-feature-detect';
  *
- * let virtualBackground;
+ * let virtualBackground: VirtualBackgroundProcessor;
  * const img = new Image();
  *
- * img.onload = () => {
+ * img.onload = async () => {
+ *   const isWasmSimdSupported = await simd();
+ *
  *   virtualBackground = new VirtualBackgroundProcessor({
  *     assetsPath: 'https://my-server-path/assets',
  *     backgroundImage: img,
+ *
+ *     // Enable debounce only if the browser does not support
+ *     // WASM SIMD in order to retain an acceptable frame rate.
+ *     debounce: !isWasmSimdSupported,
+ *
  *     pipeline: Pipeline.WebGL2,
- *
- *     // Desktop Safari and iOS browsers do not support SIMD.
- *     // Set debounce to true to achieve an acceptable performance.
- *     debounce: isSafari(),
  *   });
+ *   await virtualBackground.loadModel();
  *
- *   virtualBackground.loadModel().then(() => {
- *     createLocalVideoTrack({
- *       // Increasing the capture resolution decreases the output FPS
- *       // especially on browsers that do not support SIMD
- *       // such as desktop Safari and iOS browsers, or on Chrome
- *       // with capture resolutions above 640x480 for webgl2.
- *       width: 640,
- *       height: 480,
- *       // Any frame rate above 24 fps on desktop browsers increase CPU
- *       // usage without noticeable increase in quality.
- *       frameRate: 24
- *     }).then(track => {
- *       track.addProcessor(virtualBackground, {
- *         inputFrameBufferType: 'video',
- *         outputFrameBufferContextType: 'webgl2',
- *       });
- *     });
+ *   const track = await createLocalVideoTrack({
+ *     // Increasing the capture resolution decreases the output FPS
+ *     // especially on browsers that do not support SIMD
+ *     // such as desktop Safari and iOS browsers, or on Chrome
+ *     // with capture resolutions above 640x480 for webgl2.
+ *     width: 640,
+ *     height: 480,
+ *
+ *     // Any frame rate above 24 fps on desktop browsers increase CPU
+ *     // usage without noticeable increase in quality.
+ *     frameRate: 24
+ *   });
+ *   track.addProcessor(virtualBackground, {
+ *     inputFrameBufferType: 'video',
+ *     outputFrameBufferContextType: 'webgl2',
  *   });
  * };
+ *
  * img.src = '/background.jpg';
  * ```
  */
@@ -795,7 +777,7 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
 }(BackgroundProcessor_1.BackgroundProcessor));
 exports.VirtualBackgroundProcessor = VirtualBackgroundProcessor;
 
-},{"../../types":16,"./BackgroundProcessor":4}],7:[function(require,module,exports){
+},{"../../types":15,"./BackgroundProcessor":4}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.inputResolutions = void 0;
@@ -808,44 +790,8 @@ exports.inputResolutions = {
 
 },{}],8:[function(require,module,exports){
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readPixelsAsync = exports.createTexture = exports.compileShader = exports.createProgram = exports.createPiplelineStageProgram = exports.glsl = void 0;
+exports.createTexture = exports.compileShader = exports.createProgram = exports.createPiplelineStageProgram = exports.glsl = void 0;
 /**
  * Use it along with boyswan.glsl-literal VSCode extension
  * to get GLSL syntax highlighting.
@@ -903,66 +849,6 @@ function createTexture(gl, internalformat, width, height, minFilter, magFilter) 
     return texture;
 }
 exports.createTexture = createTexture;
-function readPixelsAsync(gl, x, y, width, height, format, type, dest) {
-    return __awaiter(this, void 0, void 0, function () {
-        var buf;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    buf = gl.createBuffer();
-                    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buf);
-                    gl.bufferData(gl.PIXEL_PACK_BUFFER, dest.byteLength, gl.STREAM_READ);
-                    gl.readPixels(x, y, width, height, format, type, 0);
-                    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-                    return [4 /*yield*/, getBufferSubDataAsync(gl, gl.PIXEL_PACK_BUFFER, buf, 0, dest)];
-                case 1:
-                    _a.sent();
-                    gl.deleteBuffer(buf);
-                    return [2 /*return*/, dest];
-            }
-        });
-    });
-}
-exports.readPixelsAsync = readPixelsAsync;
-function getBufferSubDataAsync(gl, target, buffer, srcByteOffset, dstBuffer, dstOffset, length) {
-    return __awaiter(this, void 0, void 0, function () {
-        var sync, res;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-                    gl.flush();
-                    return [4 /*yield*/, clientWaitAsync(gl, sync)];
-                case 1:
-                    res = _a.sent();
-                    gl.deleteSync(sync);
-                    if (res !== gl.WAIT_FAILED) {
-                        gl.bindBuffer(target, buffer);
-                        gl.getBufferSubData(target, srcByteOffset, dstBuffer, dstOffset, length);
-                        gl.bindBuffer(target, null);
-                    }
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-function clientWaitAsync(gl, sync) {
-    return new Promise(function (resolve) {
-        function test() {
-            var res = gl.clientWaitSync(sync, 0, 0);
-            if (res === gl.WAIT_FAILED) {
-                resolve(res);
-                return;
-            }
-            if (res === gl.TIMEOUT_EXPIRED) {
-                requestAnimationFrame(test);
-                return;
-            }
-            resolve(res);
-        }
-        requestAnimationFrame(test);
-    });
-}
 
 },{}],9:[function(require,module,exports){
 "use strict";
@@ -977,7 +863,7 @@ exports.buildWebGL2Pipeline = void 0;
 var webgl2Pipeline_1 = require("./pipelines/webgl2Pipeline");
 Object.defineProperty(exports, "buildWebGL2Pipeline", { enumerable: true, get: function () { return webgl2Pipeline_1.buildWebGL2Pipeline; } });
 
-},{"./pipelines/webgl2Pipeline":15}],10:[function(require,module,exports){
+},{"./pipelines/webgl2Pipeline":14}],10:[function(require,module,exports){
 "use strict";
 var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cooked, raw) {
     if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
@@ -1216,11 +1102,21 @@ var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cook
     return cooked;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildJointBilateralFilterStage = void 0;
+exports.buildFastBilateralFilterStage = void 0;
 var segmentationHelper_1 = require("../helpers/segmentationHelper");
 var webglHelper_1 = require("../helpers/webglHelper");
-function buildJointBilateralFilterStage(gl, vertexShader, positionBuffer, texCoordBuffer, inputTexture, segmentationConfig, outputTexture, canvas) {
-    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      float coeff = -0.5 / (sigma * sigma * 4.0 + 1.0e-6);\n      return exp((x * x) * coeff);\n    }\n\n    void main() {\n      vec2 centerCoord = v_texCoord;\n      vec3 centerColor = texture(u_inputFrame, centerCoord).rgb;\n      float newVal = 0.0;\n\n      float spaceWeight = 0.0;\n      float colorWeight = 0.0;\n      float totalWeight = 0.0;\n\n      vec2 leftTopCoord = vec2(centerCoord + vec2(-u_radius, -u_radius) * u_texelSize);\n      vec2 rightTopCoord = vec2(centerCoord + vec2(u_radius, -u_radius) * u_texelSize);\n      vec2 leftBottomCoord = vec2(centerCoord + vec2(-u_radius, u_radius) * u_texelSize);\n      vec2 rightBottomCoord = vec2(centerCoord + vec2(u_radius, u_radius) * u_texelSize);\n\n      float leftTopSegAlpha = texture(u_segmentationMask, leftTopCoord).a;\n      float rightTopSegAlpha = texture(u_segmentationMask, rightTopCoord).a;\n      float leftBottomSegAlpha = texture(u_segmentationMask, leftBottomCoord).a;\n      float rightBottomSegAlpha = texture(u_segmentationMask, rightBottomCoord).a;\n      float totalSegAlpha = leftTopSegAlpha + rightTopSegAlpha + leftBottomSegAlpha + rightBottomSegAlpha;\n\n      if (totalSegAlpha <= 0.0) {\n        outColor = vec4(vec3(0.0), 0.0);\n      } else if (totalSegAlpha >= 4.0) {\n        outColor = vec4(vec3(0.0), 1.0);\n      } else {\n        for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {\n          for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {\n            vec2 shift = vec2(j, i) * u_texelSize;\n            vec2 coord = vec2(centerCoord + shift);\n            vec3 frameColor = texture(u_inputFrame, coord).rgb;\n            float outVal = texture(u_segmentationMask, coord).a;\n\n            spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);\n            colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);\n            totalWeight += spaceWeight * colorWeight;\n\n            newVal += spaceWeight * colorWeight * outVal;\n          }\n        }\n        newVal /= totalWeight;\n\n        outColor = vec4(vec3(0.0), newVal);\n      }\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      float coeff = -0.5 / (sigma * sigma * 4.0 + 1.0e-6);\n      return exp((x * x) * coeff);\n    }\n\n    void main() {\n      vec2 centerCoord = v_texCoord;\n      vec3 centerColor = texture(u_inputFrame, centerCoord).rgb;\n      float newVal = 0.0;\n\n      float spaceWeight = 0.0;\n      float colorWeight = 0.0;\n      float totalWeight = 0.0;\n\n      vec2 leftTopCoord = vec2(centerCoord + vec2(-u_radius, -u_radius) * u_texelSize);\n      vec2 rightTopCoord = vec2(centerCoord + vec2(u_radius, -u_radius) * u_texelSize);\n      vec2 leftBottomCoord = vec2(centerCoord + vec2(-u_radius, u_radius) * u_texelSize);\n      vec2 rightBottomCoord = vec2(centerCoord + vec2(u_radius, u_radius) * u_texelSize);\n\n      float leftTopSegAlpha = texture(u_segmentationMask, leftTopCoord).a;\n      float rightTopSegAlpha = texture(u_segmentationMask, rightTopCoord).a;\n      float leftBottomSegAlpha = texture(u_segmentationMask, leftBottomCoord).a;\n      float rightBottomSegAlpha = texture(u_segmentationMask, rightBottomCoord).a;\n      float totalSegAlpha = leftTopSegAlpha + rightTopSegAlpha + leftBottomSegAlpha + rightBottomSegAlpha;\n\n      if (totalSegAlpha <= 0.0) {\n        outColor = vec4(vec3(0.0), 0.0);\n      } else if (totalSegAlpha >= 4.0) {\n        outColor = vec4(vec3(0.0), 1.0);\n      } else {\n        for (float i = -u_radius + u_offset; i <= u_radius; i += u_step) {\n          for (float j = -u_radius + u_offset; j <= u_radius; j += u_step) {\n            vec2 shift = vec2(j, i) * u_texelSize;\n            vec2 coord = vec2(centerCoord + shift);\n            vec3 frameColor = texture(u_inputFrame, coord).rgb;\n            float outVal = texture(u_segmentationMask, coord).a;\n\n            spaceWeight = gaussian(distance(centerCoord, coord), u_sigmaTexel);\n            colorWeight = gaussian(distance(centerColor, frameColor), u_sigmaColor);\n            totalWeight += spaceWeight * colorWeight;\n\n            newVal += spaceWeight * colorWeight * outVal;\n          }\n        }\n        newVal /= totalWeight;\n\n        outColor = vec4(vec3(0.0), newVal);\n      }\n    }\n  "])));
+function buildFastBilateralFilterStage(gl, vertexShader, positionBuffer, texCoordBuffer, inputTexture, segmentationConfig, outputTexture, canvas) {
+    // NOTE(mmalavalli): This is a faster approximation of the joint bilateral filter.
+    // For a given pixel, instead of calculating the space and color weights of all
+    // the pixels within the filter kernel, which would have a complexity of O(r^2),
+    // we calculate the space and color weights of only those pixels which form two
+    // diagonal lines between the two pairs of opposite corners of the filter kernel,
+    // which would have a complexity of O(r). This improves the overall complexity
+    // of this stage from O(w x h x r^2) to O(w x h x r), where:
+    // w => width of the output video frame
+    // h => height of the output video frame
+    // r => radius of the joint bilateral filter kernel
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      return exp(-0.5 * x * x / sigma / sigma);\n    }\n\n    float calculateSpaceWeight(vec2 coord) {\n      float x = distance(v_texCoord, coord);\n      float sigma = u_sigmaTexel;\n      return gaussian(x, sigma);\n    }\n\n    float calculateColorWeight(vec2 coord) {\n      vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 coordColor = texture(u_inputFrame, coord).rgb;\n      float x = distance(centerColor, coordColor);\n      float sigma = u_sigmaColor;\n      return gaussian(x, sigma);\n    }\n\n    void main() {\n      vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;\n      float newVal = 0.0;\n      float totalWeight = 0.0;\n\n      vec2 leftTopCoord = vec2(v_texCoord + vec2(-u_radius, -u_radius) * u_texelSize);\n      vec2 rightTopCoord = vec2(v_texCoord + vec2(u_radius, -u_radius) * u_texelSize);\n      vec2 leftBottomCoord = vec2(v_texCoord + vec2(-u_radius, u_radius) * u_texelSize);\n      vec2 rightBottomCoord = vec2(v_texCoord + vec2(u_radius, u_radius) * u_texelSize);\n\n      float leftTopSegAlpha = texture(u_segmentationMask, leftTopCoord).a;\n      float rightTopSegAlpha = texture(u_segmentationMask, rightTopCoord).a;\n      float leftBottomSegAlpha = texture(u_segmentationMask, leftBottomCoord).a;\n      float rightBottomSegAlpha = texture(u_segmentationMask, rightBottomCoord).a;\n      float totalSegAlpha = leftTopSegAlpha + rightTopSegAlpha + leftBottomSegAlpha + rightBottomSegAlpha;\n\n      if (totalSegAlpha <= 0.0) {\n        newVal = 0.0;\n      } else if (totalSegAlpha >= 4.0) {\n        newVal = 1.0;\n      } else {\n        for (float i = 0.0; i <= u_radius - u_offset; i += u_step) {\n          vec2 shift = vec2(i, i) * u_texelSize;\n          vec2 coord = vec2(v_texCoord + shift);\n          float spaceWeight = calculateSpaceWeight(coord);\n          float colorWeight = calculateColorWeight(coord);\n          float weight = spaceWeight * colorWeight;\n          float alpha = texture(u_segmentationMask, coord).a;\n          totalWeight += weight;\n          newVal += weight * alpha;\n\n          if (i != 0.0) {\n            shift = vec2(i, -i) * u_texelSize;\n            coord = vec2(v_texCoord + shift);\n            colorWeight = calculateColorWeight(coord);\n            weight = spaceWeight * colorWeight;\n            alpha = texture(u_segmentationMask, coord).a;\n            totalWeight += weight;\n            newVal += weight * texture(u_segmentationMask, coord).a;\n            \n            shift = vec2(-i, i) * u_texelSize;\n            coord = vec2(v_texCoord + shift);\n            colorWeight = calculateColorWeight(coord);\n            weight = spaceWeight * colorWeight;\n            alpha = texture(u_segmentationMask, coord).a;\n            totalWeight += weight;\n            newVal += weight * texture(u_segmentationMask, coord).a;\n            \n            shift = vec2(-i, -i) * u_texelSize;\n            coord = vec2(v_texCoord + shift);\n            colorWeight = calculateColorWeight(coord);\n            weight = spaceWeight * colorWeight;\n            alpha = texture(u_segmentationMask, coord).a;\n            totalWeight += weight;\n            newVal += weight * texture(u_segmentationMask, coord).a;          \n          }\n        }\n        newVal /= totalWeight;\n      }\n\n      outColor = vec4(vec3(0.0), newVal);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n    uniform sampler2D u_segmentationMask;\n    uniform vec2 u_texelSize;\n    uniform float u_step;\n    uniform float u_radius;\n    uniform float u_offset;\n    uniform float u_sigmaTexel;\n    uniform float u_sigmaColor;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    float gaussian(float x, float sigma) {\n      return exp(-0.5 * x * x / sigma / sigma);\n    }\n\n    float calculateSpaceWeight(vec2 coord) {\n      float x = distance(v_texCoord, coord);\n      float sigma = u_sigmaTexel;\n      return gaussian(x, sigma);\n    }\n\n    float calculateColorWeight(vec2 coord) {\n      vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;\n      vec3 coordColor = texture(u_inputFrame, coord).rgb;\n      float x = distance(centerColor, coordColor);\n      float sigma = u_sigmaColor;\n      return gaussian(x, sigma);\n    }\n\n    void main() {\n      vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;\n      float newVal = 0.0;\n      float totalWeight = 0.0;\n\n      vec2 leftTopCoord = vec2(v_texCoord + vec2(-u_radius, -u_radius) * u_texelSize);\n      vec2 rightTopCoord = vec2(v_texCoord + vec2(u_radius, -u_radius) * u_texelSize);\n      vec2 leftBottomCoord = vec2(v_texCoord + vec2(-u_radius, u_radius) * u_texelSize);\n      vec2 rightBottomCoord = vec2(v_texCoord + vec2(u_radius, u_radius) * u_texelSize);\n\n      float leftTopSegAlpha = texture(u_segmentationMask, leftTopCoord).a;\n      float rightTopSegAlpha = texture(u_segmentationMask, rightTopCoord).a;\n      float leftBottomSegAlpha = texture(u_segmentationMask, leftBottomCoord).a;\n      float rightBottomSegAlpha = texture(u_segmentationMask, rightBottomCoord).a;\n      float totalSegAlpha = leftTopSegAlpha + rightTopSegAlpha + leftBottomSegAlpha + rightBottomSegAlpha;\n\n      if (totalSegAlpha <= 0.0) {\n        newVal = 0.0;\n      } else if (totalSegAlpha >= 4.0) {\n        newVal = 1.0;\n      } else {\n        for (float i = 0.0; i <= u_radius - u_offset; i += u_step) {\n          vec2 shift = vec2(i, i) * u_texelSize;\n          vec2 coord = vec2(v_texCoord + shift);\n          float spaceWeight = calculateSpaceWeight(coord);\n          float colorWeight = calculateColorWeight(coord);\n          float weight = spaceWeight * colorWeight;\n          float alpha = texture(u_segmentationMask, coord).a;\n          totalWeight += weight;\n          newVal += weight * alpha;\n\n          if (i != 0.0) {\n            shift = vec2(i, -i) * u_texelSize;\n            coord = vec2(v_texCoord + shift);\n            colorWeight = calculateColorWeight(coord);\n            weight = spaceWeight * colorWeight;\n            alpha = texture(u_segmentationMask, coord).a;\n            totalWeight += weight;\n            newVal += weight * texture(u_segmentationMask, coord).a;\n            \n            shift = vec2(-i, i) * u_texelSize;\n            coord = vec2(v_texCoord + shift);\n            colorWeight = calculateColorWeight(coord);\n            weight = spaceWeight * colorWeight;\n            alpha = texture(u_segmentationMask, coord).a;\n            totalWeight += weight;\n            newVal += weight * texture(u_segmentationMask, coord).a;\n            \n            shift = vec2(-i, -i) * u_texelSize;\n            coord = vec2(v_texCoord + shift);\n            colorWeight = calculateColorWeight(coord);\n            weight = spaceWeight * colorWeight;\n            alpha = texture(u_segmentationMask, coord).a;\n            totalWeight += weight;\n            newVal += weight * texture(u_segmentationMask, coord).a;          \n          }\n        }\n        newVal /= totalWeight;\n      }\n\n      outColor = vec4(vec3(0.0), newVal);\n    }\n  "])));
     var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], segmentationWidth = _a[0], segmentationHeight = _a[1];
     var outputWidth = canvas.width, outputHeight = canvas.height;
     var texelWidth = 1 / outputWidth;
@@ -1279,7 +1175,7 @@ function buildJointBilateralFilterStage(gl, vertexShader, positionBuffer, texCoo
     }
     return { render: render, updateSigmaSpace: updateSigmaSpace, updateSigmaColor: updateSigmaColor, cleanUp: cleanUp };
 }
-exports.buildJointBilateralFilterStage = buildJointBilateralFilterStage;
+exports.buildFastBilateralFilterStage = buildFastBilateralFilterStage;
 var templateObject_1;
 
 },{"../helpers/segmentationHelper":7,"../helpers/webglHelper":8}],13:[function(require,module,exports){
@@ -1292,28 +1188,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildLoadSegmentationStage = void 0;
 var segmentationHelper_1 = require("../helpers/segmentationHelper");
 var webglHelper_1 = require("../helpers/webglHelper");
-function buildLoadSegmentationStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite, outputTexture) {
-    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).r;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).r;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "
-        // TFLite memory will be accessed as float32
-    ])));
-    // TFLite memory will be accessed as float32
-    var tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
+function buildLoadSegmentationStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, outputTexture) {
+    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).a;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputSegmentation;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      float segmentation = texture(u_inputSegmentation, v_texCoord).a;\n      outColor = vec4(vec3(0.0), segmentation);\n    }\n  "])));
     var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], segmentationWidth = _a[0], segmentationHeight = _a[1];
     var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
     var inputLocation = gl.getUniformLocation(program, 'u_inputSegmentation');
-    var inputTexture = (0, webglHelper_1.createTexture)(gl, gl.R32F, segmentationWidth, segmentationHeight);
+    var inputTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, segmentationWidth, segmentationHeight);
     var frameBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, outputTexture, 0);
     gl.useProgram(program);
     gl.uniform1i(inputLocation, 1);
-    function render() {
+    function render(segmentationData) {
         gl.viewport(0, 0, segmentationWidth, segmentationHeight);
         gl.useProgram(program);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, segmentationWidth, segmentationHeight, gl.RED, gl.FLOAT, tflite.HEAPF32, tfliteOutputMemoryOffset);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, segmentationWidth, segmentationHeight, gl.RGBA, gl.UNSIGNED_BYTE, segmentationData);
         gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
@@ -1329,60 +1221,6 @@ exports.buildLoadSegmentationStage = buildLoadSegmentationStage;
 var templateObject_1;
 
 },{"../helpers/segmentationHelper":7,"../helpers/webglHelper":8}],14:[function(require,module,exports){
-"use strict";
-var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cooked, raw) {
-    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-    return cooked;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildResizingStage = void 0;
-var segmentationHelper_1 = require("../helpers/segmentationHelper");
-var webglHelper_1 = require("../helpers/webglHelper");
-function buildResizingStage(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite) {
-    var fragmentShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      outColor = texture(u_inputFrame, v_texCoord);\n    }\n  "], ["#version 300 es\n\n    precision highp float;\n\n    uniform sampler2D u_inputFrame;\n\n    in vec2 v_texCoord;\n\n    out vec4 outColor;\n\n    void main() {\n      outColor = texture(u_inputFrame, v_texCoord);\n    }\n  "
-        // TFLite memory will be accessed as float32
-    ])));
-    // TFLite memory will be accessed as float32
-    var tfliteInputMemoryOffset = tflite._getInputMemoryOffset() / 4;
-    var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], outputWidth = _a[0], outputHeight = _a[1];
-    var outputPixelCount = outputWidth * outputHeight;
-    var fragmentShader = (0, webglHelper_1.compileShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = (0, webglHelper_1.createPiplelineStageProgram)(gl, vertexShader, fragmentShader, positionBuffer, texCoordBuffer);
-    var inputFrameLocation = gl.getUniformLocation(program, 'u_inputFrame');
-    var outputTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, outputWidth, outputHeight);
-    var frameBuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, outputTexture, 0);
-    var outputPixels = new Uint8Array(outputPixelCount * 4);
-    gl.useProgram(program);
-    gl.uniform1i(inputFrameLocation, 0);
-    function render() {
-        gl.viewport(0, 0, outputWidth, outputHeight);
-        gl.useProgram(program);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        // Downloads pixels asynchronously from GPU while rendering the current frame
-        (0, webglHelper_1.readPixelsAsync)(gl, 0, 0, outputWidth, outputHeight, gl.RGBA, gl.UNSIGNED_BYTE, outputPixels);
-        for (var i = 0; i < outputPixelCount; i++) {
-            var tfliteIndex = tfliteInputMemoryOffset + i * 3;
-            var outputIndex = i * 4;
-            tflite.HEAPF32[tfliteIndex] = outputPixels[outputIndex] / 255;
-            tflite.HEAPF32[tfliteIndex + 1] = outputPixels[outputIndex + 1] / 255;
-            tflite.HEAPF32[tfliteIndex + 2] = outputPixels[outputIndex + 2] / 255;
-        }
-    }
-    function cleanUp() {
-        gl.deleteFramebuffer(frameBuffer);
-        gl.deleteTexture(outputTexture);
-        gl.deleteProgram(program);
-        gl.deleteShader(fragmentShader);
-    }
-    return { render: render, cleanUp: cleanUp };
-}
-exports.buildResizingStage = buildResizingStage;
-var templateObject_1;
-
-},{"../helpers/segmentationHelper":7,"../helpers/webglHelper":8}],15:[function(require,module,exports){
 "use strict";
 var __makeTemplateObject = (this && this.__makeTemplateObject) || function (cooked, raw) {
     if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
@@ -1430,13 +1268,12 @@ var segmentationHelper_1 = require("../helpers/segmentationHelper");
 var webglHelper_1 = require("../helpers/webglHelper");
 var backgroundBlurStage_1 = require("./backgroundBlurStage");
 var backgroundImageStage_1 = require("./backgroundImageStage");
-var jointBilateralFilterStage_1 = require("./jointBilateralFilterStage");
+var fastBilateralFilterStage_1 = require("./fastBilateralFilterStage");
 var loadSegmentationStage_1 = require("./loadSegmentationStage");
-var resizingStage_1 = require("./resizingStage");
-function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, segmentationConfig, canvas, tflite, benchmark, debounce) {
-    var shouldRunInference = true;
+function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, segmentationConfig, canvas, benchmark, debounce) {
+    var shouldUpscaleCurrentMask = true;
     var vertexShaderSource = (0, webglHelper_1.glsl)(templateObject_1 || (templateObject_1 = __makeTemplateObject(["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      gl_Position = vec4(a_position, 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "], ["#version 300 es\n\n    in vec2 a_position;\n    in vec2 a_texCoord;\n\n    out vec2 v_texCoord;\n\n    void main() {\n      gl_Position = vec4(a_position, 0.0, 1.0);\n      v_texCoord = a_texCoord;\n    }\n  "])));
-    var frameWidth = sourcePlayback.width, frameHeight = sourcePlayback.height;
+    var outputWidth = canvas.width, outputHeight = canvas.height;
     var _a = segmentationHelper_1.inputResolutions[segmentationConfig.inputResolution], segmentationWidth = _a[0], segmentationHeight = _a[1];
     var gl = canvas.getContext('webgl2');
     var vertexShader = (0, webglHelper_1.compileShader)(gl, gl.VERTEX_SHADER, vertexShaderSource);
@@ -1460,17 +1297,15 @@ function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     // TODO Rename segmentation and person mask to be more specific
     var segmentationTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, segmentationWidth, segmentationHeight);
-    var personMaskTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, frameWidth, frameHeight);
-    var resizingStage = (0, resizingStage_1.buildResizingStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite);
-    var loadSegmentationStage = (0, loadSegmentationStage_1.buildLoadSegmentationStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, tflite, segmentationTexture);
-    var jointBilateralFilterStage = (0, jointBilateralFilterStage_1.buildJointBilateralFilterStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationTexture, segmentationConfig, personMaskTexture, canvas);
+    var personMaskTexture = (0, webglHelper_1.createTexture)(gl, gl.RGBA8, outputWidth, outputHeight);
+    var loadSegmentationStage = (0, loadSegmentationStage_1.buildLoadSegmentationStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationConfig, segmentationTexture);
+    var fastBilateralFilterStage = (0, fastBilateralFilterStage_1.buildFastBilateralFilterStage)(gl, vertexShader, positionBuffer, texCoordBuffer, segmentationTexture, segmentationConfig, personMaskTexture, canvas);
     var backgroundStage = backgroundConfig.type === 'blur'
         ? (0, backgroundBlurStage_1.buildBackgroundBlurStage)(gl, vertexShader, positionBuffer, texCoordBuffer, personMaskTexture, canvas)
         : (0, backgroundImageStage_1.buildBackgroundImageStage)(gl, positionBuffer, texCoordBuffer, personMaskTexture, backgroundImage, canvas);
-    function render() {
+    function sampleInputFrame() {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                benchmark.start('inputImageResizeDelay');
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 gl.activeTexture(gl.TEXTURE0);
@@ -1479,39 +1314,51 @@ function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, 
                 // video texture
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourcePlayback.htmlElement);
                 gl.bindVertexArray(vertexArray);
-                resizingStage.render();
-                benchmark.end('inputImageResizeDelay');
-                benchmark.start('segmentationDelay');
-                if (shouldRunInference) {
-                    tflite._runInference();
-                }
-                if (debounce) {
-                    shouldRunInference = !shouldRunInference;
-                }
-                benchmark.end('segmentationDelay');
+                return [2 /*return*/];
+            });
+        });
+    }
+    function render(segmentationData) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
                 benchmark.start('imageCompositionDelay');
-                loadSegmentationStage.render();
-                jointBilateralFilterStage.render();
+                if (shouldUpscaleCurrentMask) {
+                    loadSegmentationStage.render(segmentationData);
+                }
+                fastBilateralFilterStage.render();
                 backgroundStage.render();
+                if (debounce) {
+                    shouldUpscaleCurrentMask = !shouldUpscaleCurrentMask;
+                }
                 benchmark.end('imageCompositionDelay');
                 return [2 /*return*/];
             });
         });
     }
     function updatePostProcessingConfig(postProcessingConfig) {
-        jointBilateralFilterStage.updateSigmaSpace(postProcessingConfig.jointBilateralFilter.sigmaSpace);
-        jointBilateralFilterStage.updateSigmaColor(postProcessingConfig.jointBilateralFilter.sigmaColor);
+        var blendMode = postProcessingConfig.blendMode, coverage = postProcessingConfig.coverage, lightWrapping = postProcessingConfig.lightWrapping, _a = postProcessingConfig.jointBilateralFilter, jointBilateralFilter = _a === void 0 ? {} : _a;
+        var sigmaColor = jointBilateralFilter.sigmaColor, sigmaSpace = jointBilateralFilter.sigmaSpace;
+        if (typeof sigmaColor === 'number') {
+            fastBilateralFilterStage.updateSigmaColor(sigmaColor);
+        }
+        if (typeof sigmaSpace === 'number') {
+            fastBilateralFilterStage.updateSigmaSpace(sigmaSpace);
+        }
+        if (Array.isArray(coverage)) {
+            if (backgroundConfig.type === 'blur' || backgroundConfig.type === 'image') {
+                backgroundStage.updateCoverage(coverage);
+            }
+        }
         if (backgroundConfig.type === 'image') {
             var backgroundImageStage = backgroundStage;
-            backgroundImageStage.updateCoverage(postProcessingConfig.coverage);
-            backgroundImageStage.updateLightWrapping(postProcessingConfig.lightWrapping);
-            backgroundImageStage.updateBlendMode(postProcessingConfig.blendMode);
+            if (typeof lightWrapping === 'number') {
+                backgroundImageStage.updateLightWrapping(lightWrapping);
+            }
+            if (typeof blendMode === 'string') {
+                backgroundImageStage.updateBlendMode(blendMode);
+            }
         }
-        else if (backgroundConfig.type === 'blur') {
-            var backgroundBlurStage = backgroundStage;
-            backgroundBlurStage.updateCoverage(postProcessingConfig.coverage);
-        }
-        else {
+        else if (backgroundConfig.type !== 'blur') {
             // TODO Handle no background in a separate pipeline path
             var backgroundImageStage = backgroundStage;
             backgroundImageStage.updateCoverage([0, 0.9999]);
@@ -1520,9 +1367,8 @@ function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, 
     }
     function cleanUp() {
         backgroundStage.cleanUp();
-        jointBilateralFilterStage.cleanUp();
+        fastBilateralFilterStage.cleanUp();
         loadSegmentationStage.cleanUp();
-        resizingStage.cleanUp();
         gl.deleteTexture(personMaskTexture);
         gl.deleteTexture(segmentationTexture);
         gl.deleteTexture(inputFrameTexture);
@@ -1531,12 +1377,12 @@ function buildWebGL2Pipeline(sourcePlayback, backgroundImage, backgroundConfig, 
         gl.deleteVertexArray(vertexArray);
         gl.deleteShader(vertexShader);
     }
-    return { render: render, updatePostProcessingConfig: updatePostProcessingConfig, cleanUp: cleanUp };
+    return { render: render, sampleInputFrame: sampleInputFrame, updatePostProcessingConfig: updatePostProcessingConfig, cleanUp: cleanUp };
 }
 exports.buildWebGL2Pipeline = buildWebGL2Pipeline;
 var templateObject_1;
 
-},{"../helpers/segmentationHelper":7,"../helpers/webglHelper":8,"./backgroundBlurStage":10,"./backgroundImageStage":11,"./jointBilateralFilterStage":12,"./loadSegmentationStage":13,"./resizingStage":14}],16:[function(require,module,exports){
+},{"../helpers/segmentationHelper":7,"../helpers/webglHelper":8,"./backgroundBlurStage":10,"./backgroundImageStage":11,"./fastBilateralFilterStage":12,"./loadSegmentationStage":13}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Pipeline = exports.ImageFit = exports.WebGL2PipelineType = void 0;
@@ -1594,7 +1440,7 @@ var Pipeline;
     Pipeline["WebGL2"] = "WebGL2";
 })(Pipeline || (exports.Pipeline = Pipeline = {}));
 
-},{}],17:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -1674,15 +1520,190 @@ var Benchmark = /** @class */ (function () {
 }());
 exports.Benchmark = Benchmark;
 
+},{}],17:[function(require,module,exports){
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TwilioTFLite = void 0;
+var loadedScripts = new Set();
+var model;
+/**
+ * @private
+ */
+var TwilioTFLite = /** @class */ (function () {
+    function TwilioTFLite() {
+        this._inputBuffer = null;
+        this._isSimdEnabled = null;
+        this._tflite = null;
+    }
+    Object.defineProperty(TwilioTFLite.prototype, "isSimdEnabled", {
+        get: function () {
+            return this._isSimdEnabled;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    TwilioTFLite.prototype.initialize = function (assetsPath, modelName, moduleLoaderName, moduleSimdLoaderName) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, modelResponse, _b, tflite, modelBufferOffset;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        if (this._tflite) {
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, Promise.all([
+                                this._loadWasmModule(assetsPath, moduleLoaderName, moduleSimdLoaderName),
+                                fetch("".concat(assetsPath).concat(modelName)),
+                            ])];
+                    case 1:
+                        _a = _c.sent(), modelResponse = _a[1];
+                        _b = model;
+                        if (_b) return [3 /*break*/, 3];
+                        return [4 /*yield*/, modelResponse.arrayBuffer()];
+                    case 2:
+                        _b = (_c.sent());
+                        _c.label = 3;
+                    case 3:
+                        model = _b;
+                        tflite = this._tflite;
+                        modelBufferOffset = tflite._getModelBufferMemoryOffset();
+                        tflite.HEAPU8.set(new Uint8Array(model), modelBufferOffset);
+                        tflite._loadModel(model.byteLength);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    TwilioTFLite.prototype.loadInputBuffer = function (inputBuffer) {
+        var tflite = this._tflite;
+        var height = tflite._getInputHeight();
+        var width = tflite._getInputWidth();
+        var pixels = width * height;
+        var tfliteInputMemoryOffset = tflite._getInputMemoryOffset() / 4;
+        for (var i = 0; i < pixels; i++) {
+            var curTFLiteOffset = tfliteInputMemoryOffset + i * 3;
+            var curImageBufferOffset = i * 4;
+            tflite.HEAPF32[curTFLiteOffset] = inputBuffer[curImageBufferOffset] / 255;
+            tflite.HEAPF32[curTFLiteOffset + 1] = inputBuffer[curImageBufferOffset + 1] / 255;
+            tflite.HEAPF32[curTFLiteOffset + 2] = inputBuffer[curImageBufferOffset + 2] / 255;
+        }
+        this._inputBuffer = inputBuffer;
+    };
+    TwilioTFLite.prototype.runInference = function () {
+        var tflite = this._tflite;
+        var height = tflite._getInputHeight();
+        var width = tflite._getInputWidth();
+        var pixels = width * height;
+        var tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
+        tflite._runInference();
+        var inputBuffer = this._inputBuffer || new Uint8ClampedArray(pixels * 4);
+        for (var i = 0; i < pixels; i++) {
+            inputBuffer[i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
+        }
+        return inputBuffer;
+    };
+    TwilioTFLite.prototype._loadScript = function (path) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                if (loadedScripts.has(path)) {
+                    return [2 /*return*/];
+                }
+                return [2 /*return*/, new Promise(function (resolve, reject) {
+                        var script = document.createElement('script');
+                        script.onload = function () {
+                            loadedScripts.add(path);
+                            resolve();
+                        };
+                        script.onerror = function () {
+                            reject();
+                        };
+                        document.head.append(script);
+                        script.src = path;
+                    })];
+            });
+        });
+    };
+    TwilioTFLite.prototype._loadWasmModule = function (assetsPath, moduleLoaderName, moduleSimdLoaderName) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, _b, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        _d.trys.push([0, 3, , 6]);
+                        return [4 /*yield*/, this._loadScript("".concat(assetsPath).concat(moduleSimdLoaderName))];
+                    case 1:
+                        _d.sent();
+                        _a = this;
+                        return [4 /*yield*/, createTwilioTFLiteSIMDModule()];
+                    case 2:
+                        _a._tflite = _d.sent();
+                        this._isSimdEnabled = true;
+                        return [3 /*break*/, 6];
+                    case 3:
+                        _b = _d.sent();
+                        return [4 /*yield*/, this._loadScript("".concat(assetsPath).concat(moduleLoaderName))];
+                    case 4:
+                        _d.sent();
+                        _c = this;
+                        return [4 /*yield*/, createTwilioTFLiteModule()];
+                    case 5:
+                        _c._tflite = _d.sent();
+                        this._isSimdEnabled = false;
+                        return [3 /*break*/, 6];
+                    case 6: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    return TwilioTFLite;
+}());
+exports.TwilioTFLite = TwilioTFLite;
+
 },{}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isSupported = exports.isBrowserSupported = void 0;
+exports.isSupported = exports.isChromiumImageBitmap = exports.isBrowserSupported = void 0;
 /**
  * @private
  */
 function getCanvas() {
-    return typeof window.OffscreenCanvas !== 'undefined' ? new window.OffscreenCanvas(1, 1) : document.createElement('canvas');
+    return typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
 }
 /**
  * @private
@@ -1696,6 +1717,15 @@ function isBrowserSupported() {
     }
 }
 exports.isBrowserSupported = isBrowserSupported;
+/**
+ * @private
+ */
+function isChromiumImageBitmap() {
+    return typeof chrome === 'object'
+        && /Chrome/.test(navigator.userAgent)
+        && typeof createImageBitmap === 'function';
+}
+exports.isChromiumImageBitmap = isChromiumImageBitmap;
 /**
  * Check if the current browser is officially supported by twilio-video-procesors.js.
  * This is set to `true` for browsers that supports canvas
@@ -1721,6 +1751,6 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '2.1.0';
+exports.version = '2.2.0-rc1';
 
 },{}]},{},[2]);
