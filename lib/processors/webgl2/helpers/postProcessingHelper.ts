@@ -1,3 +1,3 @@
-export type FastBilateralFilterConfig = {
+export type BilateralFilterConfig = {
   sigmaSpace?: number
 }
