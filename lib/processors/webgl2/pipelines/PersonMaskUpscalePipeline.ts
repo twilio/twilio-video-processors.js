@@ -1,6 +1,6 @@
 import { Dimensions } from '../../../types';
-import { FastBilateralFilterConfig } from '../helpers/postProcessingHelper';
-import { FastBilateralFilterStage } from './FastBilateralFilterStage';
+import { BilateralFilterConfig } from '../helpers/postProcessingHelper';
+import { SinglePassBilateralFilterStage } from './SinglePassBilateralFilterStage';
 import { WebGL2Pipeline } from './WebGL2Pipeline';
 
 export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
@@ -22,26 +22,42 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
       inputCanvas
     ))
 
-    this.addStage(new FastBilateralFilterStage(
+    this.addStage(new SinglePassBilateralFilterStage(
       glOut,
+      'horizontal',
+      'texture',
       inputDimensions,
-      outputDimensions
+      outputDimensions,
+      1,
+      2
+    ))
+
+    this.addStage(new SinglePassBilateralFilterStage(
+      glOut,
+      'vertical',
+      'canvas',
+      inputDimensions,
+      outputDimensions,
+      2
     ))
   }
 
-  updateFastBilateralFilterConfig(config: FastBilateralFilterConfig) {
+  updateFastBilateralFilterConfig(config: BilateralFilterConfig) {
     const [
       /* inputStage */,
-      fastBilateralFilterStage
+      ...bilateralFilterStages
     ] = this._stages as [
       any,
-      FastBilateralFilterStage
+      SinglePassBilateralFilterStage
     ]
-
     const { sigmaSpace } = config
     if (typeof sigmaSpace === 'number') {
-      fastBilateralFilterStage.updateSigmaColor(0.1)
-      fastBilateralFilterStage.updateSigmaSpace(sigmaSpace)
+      bilateralFilterStages.forEach(
+        (stage: SinglePassBilateralFilterStage) => {
+          stage.updateSigmaColor(0.1)
+          stage.updateSigmaSpace(sigmaSpace)
+        }
+      )
     }
   }
 }

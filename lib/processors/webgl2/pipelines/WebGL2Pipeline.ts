@@ -25,7 +25,7 @@ interface OutputConfig {
 
 interface UniformVarInfo {
   name: string
-  type: 'float' | 'int' | 'uint'
+  type: 'float' | 'int' | 'uint' | 'float:v'
   values: number[]
 }
 
@@ -345,11 +345,20 @@ class WebGL2PipelineProcessingStage implements Pipeline.Stage {
           name
         )
 
-      // @ts-ignore
-      _glOut[`uniform${values.length}${type[0]}`](
-        uniformVarLocation,
-        ...values
-      )
+      const isVector = type.split(':')[1] === 'v';
+      if (isVector) {
+        // @ts-ignore
+        _glOut[`uniform1${type[0]}v`](
+          uniformVarLocation,
+          values
+        )
+      } else {
+        // @ts-ignore
+        _glOut[`uniform${values.length}${type[0]}`](
+          uniformVarLocation,
+          ...values
+        )
+      }
     })
   }
 }
