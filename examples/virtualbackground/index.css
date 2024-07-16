@@ -8,30 +8,36 @@ body {
   height: 100%;
 }
 
-#stats {
+pre#stats {
   display: none;
-  position: fixed;
-  background-color: white;
-  top: 42px;
-  left: 22px;
+  position: absolute;
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.5);
+  top: 5px;
+  left: 5px;
   padding: 10px;
+  font-size: 0.7em;
+}
+
+div#backgrounds {
+  position: absolute;
+  top: 5px;
 }
 
 div.img-btn {
   cursor: pointer;
-  height: 65px;
-  width: 65px;
+  height: 50px;
+  width: 50px;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   border-radius: 10px;
-  opacity: 0.6;
   display: inline-block;
   border: 1px solid gray;
 }
 
 div.img-btn:hover {
-  opacity: 1;
+  opacity: 0.6;
   transform: scale(1.1);
   border: 2px solid black;
 }
@@ -52,8 +58,8 @@ div.row.thin-gutters {
   margin: 0 2px 0 2px;
 }
 
-div.row.thin-gutters > .col,
-div.row.thin-gutters > [class*="col-"] {
+div.row.thin-gutters>.col,
+div.row.thin-gutters>[class*="col-"] {
   padding: 8px 8px;
 }
 
@@ -68,7 +74,7 @@ div.card-block {
   max-width: 100%;
 }
 
-div.left-form > div.card > div.card-block {
+div.left-form>div.card>div.card-block {
   margin: 10px;
 }
 
@@ -76,7 +82,8 @@ div.left-form > div.card > div.card-block {
   margin: 5px;
 }
 
-div.col-sm-6, div.col-sm-6 {
+div.col-sm-6,
+div.col-sm-6 {
   max-height: fit-content;
   overflow: auto;
 }
@@ -86,11 +93,15 @@ div.video-container {
 }
 
 video {
-  width: 100%    !important;
-  height: auto   !important;
+  border-radius: 5px;
+  max-width: 1280px !important;
+  min-width: 640px !important;
+  height: auto !important;
+  object-fit: cover;
 }
 
-div.col-sm-8, div.col-sm-4 {
+div.col-sm-8,
+div.col-sm-4 {
   max-width: 100%;
   flex: 100%;
 }
