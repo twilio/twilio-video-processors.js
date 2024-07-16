@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 2.2.0-rc1
+/*! twilio-video-processors.js 2.2.0
 
 The following license applies to all parts of this software except as
 documented below.
@@ -1751,6 +1751,6 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '2.2.0-rc1';
+exports.version = '2.2.0';
 
 },{}]},{},[2]);
