@@ -1,114 +1,190 @@
-'use strict';
+const { bootstrap } = window;
 
-const { Video, VideoProcessors } = Twilio;
-const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported, Pipeline } = VideoProcessors;
-const { bootstrap, wasmFeatureDetect: { simd } } = window;
-
-const videoInput = document.querySelector('video#video-input');
-const errorMessage = document.querySelector('div.modal-body');
-const errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
-const stats = document.querySelector('#stats');
+const $backgrounds = document.querySelector('#backgrounds');
+const $errorMessage = document.querySelector('div.modal-body');
+const $errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
+const $stats = document.querySelector('#stats');
+const $videoInput = document.querySelector('video#video-input');
 
 const assetsPath = '';
+const bkgImages = new Map();
 
-const params = Object.fromEntries(new URLSearchParams(location.search).entries());
-const showStats = params.stats === 'true';
-const pipeline = params.pipeline;
-const [width, height] = (params.videoRes || `1280x720`).split('x').map(Number);
-const videoFps = Number(params.videoFps || '24');
-
-const addProcessorOptions = {
-  inputFrameBufferType: 'video',
-  outputFrameBufferContextType: pipeline === Pipeline.Canvas2D ? '2d' : 'webgl2',
+const defaultParams = {
+  capFramerate: '30',
+  capResolution: '1280x720',
+  debounce: 'false',
+  pipeline: 'WebGL2',
+  maskBlurRadiusCanvas2D: '4',
+  maskBlurRadiusWebGL2: '8',
 };
 
-const captureConfig = {
-  width,
-  height,
-  frameRate: videoFps,
+const params = {
+  ...defaultParams,
+  ...Object.fromEntries(
+    new URLSearchParams(location.search)
+      .entries()
+  )
 };
 
-videoInput.style.maxWidth = `${captureConfig.width}px`;
-
-let isWasmSimdSupported;
-let videoTrack;
-let gaussianBlurProcessor;
-let virtualBackgroundProcessor;
-
-if(!isSupported){
-  errorMessage.textContent = 'This browser is not supported.';
-  errorModal.show();
-}
-
-const loadImage = (name) =>
-  new Promise((resolve) => {
-    const image = new Image();
-    image.src = `backgrounds/${name}.jpg`;
-    image.onload = () => resolve(image);
-  });
-
-Video.createLocalVideoTrack(captureConfig).then((track) => {
-  track.attach(videoInput);
-  return videoTrack = track;
+const promisifyLoader = (
+  $element,
+  src,
+) => new Promise((resolve, reject) => {
+  $element.src = src;
+  $element.onload = () => resolve($element);
+  $element.onerror = reject;
 });
 
-const setProcessor = (processor, track) => {
-  if (track.processor) {
-    track.removeProcessor(track.processor);
-  }
-  if (processor) {
-    track.addProcessor(processor, addProcessorOptions);
-  }
-};
+const loadImage = async (name) => {
+  const bkgImage = bkgImages.get(name) || await promisifyLoader(
+    new Image(),
+    `backgrounds/${name}.jpg`,
+    false,
+  );
+  bkgImages.set(name, bkgImage);
+  return bkgImage;
+}
 
-const handleButtonClick = async bg => {
-  if (!gaussianBlurProcessor) {
-    isWasmSimdSupported = await simd();
-    gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
-      assetsPath,
-      debounce: !isWasmSimdSupported,
-      pipeline,
-    });
-    await gaussianBlurProcessor.loadModel();
-  }
-  if (!virtualBackgroundProcessor) {
-    const backgroundImage = await loadImage('living_room');
-    virtualBackgroundProcessor = new VirtualBackgroundProcessor({
-      assetsPath,
-      backgroundImage,
-      debounce: !isWasmSimdSupported,
-      pipeline,
-    });
-    await virtualBackgroundProcessor.loadModel();
-  }
-  if (bg === 'none') {
-    setProcessor(null, videoTrack);
-  } else if (bg === 'blur') {
-    setProcessor(gaussianBlurProcessor, videoTrack);
-  } else {
-    virtualBackgroundProcessor.backgroundImage = await loadImage(bg);
-    setProcessor(virtualBackgroundProcessor, videoTrack);
-  }
-};
+params.maskBlurRadius = params.pipeline === 'WebGL2'
+  ? params.maskBlurRadiusWebGL2
+  : params.maskBlurRadiusCanvas2D;
 
-document.querySelectorAll('.img-btn').forEach(btn => btn.onclick = () => handleButtonClick(btn.id));
+(async ({
+  Video: { createLocalVideoTrack },
+  VideoProcessors: {
+    GaussianBlurBackgroundProcessor,
+    Pipeline: { Canvas2D, WebGL2 },
+    VirtualBackgroundProcessor,
+    isSupported,
+    version,
+  },
+}) => {
+  const {
+    capFramerate,
+    capResolution,
+    pipeline,
+    debounce,
+    maskBlurRadius,
+    stats = 'show',
+  } = params;
 
-setInterval(() => {
-  if (!videoTrack || !videoTrack.processor) {
-    stats.style.display = 'none';
-    return;
-  }
-  if (showStats) {
-    stats.style.display = 'block';
-  }
-  const b = videoTrack.processor._benchmark;
-  stats.innerText = `input fps: ${videoTrack.mediaStreamTrack.getSettings().frameRate}`;
-  stats.innerText += `\noutput fps: ${b.getRate('totalProcessingDelay').toFixed(2)}`;
-  ['segmentationDelay', 'inputImageResizeDelay', 'imageCompositionDelay', 'processFrameDelay', 'captureFrameDelay'].forEach(stat => {
-    try {
-      stats.innerText += `\n${stat}: ${b.getAverageDelay(stat).toFixed(2)}`;
-    } catch {
+  const addProcessorOptions = {
+    inputFrameBufferType: 'video',
+    outputFrameBufferContextType: {
+      [Canvas2D]: '2d',
+      [WebGL2]: 'webgl2',
+    }[pipeline],
+  };
 
+  const capDimensions = capResolution
+    .split('x')
+    .map(Number);
+
+  const captureConfig = {
+    frameRate: Number(capFramerate),
+    height: capDimensions[1],
+    width: capDimensions[0],
+  };
+
+  const processorOptions = {
+    assetsPath,
+    pipeline,
+    debounce: JSON.parse(debounce),
+    maskBlurRadius: Number(maskBlurRadius),
+  };
+
+  let videoTrack = null;
+  let gaussianBlurProcessor = null;
+  let virtualBackgroundProcessor = null;
+
+  if(!isSupported) {
+    $errorMessage.textContent = 'This browser is not supported.';
+    $errorModal.show();
+  }
+
+  videoTrack = await createLocalVideoTrack(captureConfig);
+  videoTrack.attach($videoInput);
+
+  $backgrounds.style.left = `${
+    $videoInput.clientLeft
+    + captureConfig.width
+    - $backgrounds.clientWidth
+    - 5
+  }px`;
+
+  const setProcessor = (track, processor) => {
+    if (track.processor === processor) {
+      return;
     }
-  });
-}, 1000);
+    if (track.processor) {
+      track.removeProcessor(track.processor);
+    }
+    if (processor) {
+      track.addProcessor(processor, addProcessorOptions);
+    }
+  };
+
+  const handleButtonClick = async (bg) => {
+    if (bg === 'none') {
+      setProcessor(videoTrack, null);
+    } else if (bg === 'blur') {
+      if (!gaussianBlurProcessor) {
+        gaussianBlurProcessor = new GaussianBlurBackgroundProcessor(processorOptions);
+        await gaussianBlurProcessor.loadModel();
+      }
+      setProcessor(videoTrack, gaussianBlurProcessor);
+    } else {
+      if (!virtualBackgroundProcessor) {
+        virtualBackgroundProcessor = new VirtualBackgroundProcessor({
+          backgroundImage: await loadImage(bg),
+          ...processorOptions,
+        });
+        await virtualBackgroundProcessor.loadModel();
+      } else {
+        virtualBackgroundProcessor.backgroundImage = await loadImage(bg);
+      }
+      setProcessor(videoTrack, virtualBackgroundProcessor);
+    }
+  };
+
+  $backgrounds.querySelectorAll('.img-btn').forEach((btn) =>
+    btn.onclick = () => handleButtonClick(btn.id));
+
+  if (stats === 'advanced' || stats === 'show') {
+    $stats.style.display = 'block';
+    setInterval(async () => {
+      if (!videoTrack) {
+        return;
+      }
+      const { frameRate, height, width } = videoTrack.mediaStreamTrack.getSettings();
+      $stats.innerText = `Sdk version: ${version}`;
+      $stats.innerText += `\nPipeline: ${params.pipeline}`;
+      $stats.innerText += `\nCapture dimensions (in): ${width} x ${height}`;
+      $stats.innerText += `\nFrame rate (in): ${frameRate.toFixed(2)} fps`;
+
+      if (!videoTrack.processor) {
+        return;
+      }
+      const { processor: { _benchmark: b } } = videoTrack;
+      [
+        ['Frame rate (out)', 'totalProcessingDelay', 'fps', 'getRate'],
+        ...(stats === 'show' ? [] : [
+          ['Capture delay', 'captureFrameDelay'],
+          ['Resize delay', 'inputImageResizeDelay'],
+          ['Segmentation delay ', 'segmentationDelay'],
+          ['Composition delay', 'imageCompositionDelay'],
+          ['Frame processing delay', 'processFrameDelay'],
+          ['Total processing delay', 'totalProcessingDelay'],
+        ])
+      ].forEach(([name, stat, unit = 'ms', getStat = 'getAverageDelay']) => {
+        try {
+          $stats.innerText += `\n${name}: ${b[getStat](stat).toFixed(2)} ${unit}`;
+        } catch {
+          /* noop */
+        }
+      });
+    }, 1000);
+  }
+
+  window.videoTrack = videoTrack;
+})(Twilio);

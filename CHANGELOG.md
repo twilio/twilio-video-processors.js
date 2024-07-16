@@ -1,11 +1,23 @@
-2.2.0 (in progress)
-===================
+2.2.0 (July 16, 2024)
+=====================
 
-#### Performance Improvements
+Performance Improvements
+------------------------
+
+* The WebGL2 pipeline now has an overall higher output frame rate, even for 720p (HD) video.
+
+Changes
+-------
+
+* `BackgroundProcessorOptions.debounce` is now set to `false` by default.
+* `BackgroundProcessorOptions.maskBlurRadius` is now set to `8` as the default for the `WebGL2` pipeline, and `4` for the `Canvas2D` pipeline.
+
+Bug Fixes
+---------
 
 * Fixed trailing effect of the person mask in both Canvas2D and WebGL2 pipelines.
+* Fixed a bug where changing the `maskBlurRadius` value on the `VideoProcessor` was not working.
 * TFLite module is loaded and initialized only once, no matter how many VideoProcessor instances are created.
-* Better performance with 720p (HD) LocalVideoTracks due to improvements in the WebGL2 pipeline.
 
 2.1.0 (December 12, 2023)
 =========================
