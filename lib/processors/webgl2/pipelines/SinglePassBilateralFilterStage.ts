@@ -12,6 +12,15 @@ function createSpaceWeights(
   })
 }
 
+function createColorWeights(
+  sigma: number
+): number[] {
+  return '0'.repeat(256).split('').map((zero, i) => {
+    const x = i / 255;
+    return Math.exp(-0.5 * x * x / sigma / sigma)
+  })
+}
+
 /**
  * @private
  */
@@ -47,28 +56,22 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
           uniform vec2 u_texelSize;
           uniform float u_direction;
           uniform float u_radius;
-          uniform float u_sigmaTexel;
-          uniform float u_sigmaColor;
+          uniform float u_step;
           uniform float u_spaceWeights[128];
+          uniform float u_colorWeights[256];
       
           in vec2 v_texCoord;
 
           out vec4 outColor;
       
-          float gaussian(float x, float sigma) {
-            return exp(-0.5 * x * x / sigma / sigma);
-          }
-      
-          float calculateColorWeight(vec2 coord) {
-            vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;
+          float calculateColorWeight(vec2 coord, vec3 centerColor) {
             vec3 coordColor = texture(u_inputFrame, coord).rgb;
             float x = distance(centerColor, coordColor);
-            float sigma = u_sigmaColor;
-            return gaussian(x, sigma);
+            return u_colorWeights[int(x * 255.0)];
           }
 
-          float edgePixelsAverageAlpha() {
-            float totalAlpha = texture(u_segmentationMask, v_texCoord).a;
+          float edgePixelsAverageAlpha(float outAlpha) {
+            float totalAlpha = outAlpha;
             float totalPixels = 1.0;
 
             for (float i = -u_radius; u_radius > 0.0 && i <= u_radius; i += u_radius) {
@@ -84,23 +87,23 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
           }
 
           void main() {
-            float averageAlpha = edgePixelsAverageAlpha();
+            vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;
+            float outAlpha = texture(u_segmentationMask, v_texCoord).a;
+            float averageAlpha = edgePixelsAverageAlpha(outAlpha);
+            float totalWeight = 1.0;
 
             if (averageAlpha == 0.0 || averageAlpha == 1.0) {
               outColor = vec4(vec3(0.0), averageAlpha);
               return;
             }
 
-            float outAlpha = texture(u_segmentationMask, v_texCoord).a;
-            float totalWeight = 1.0;
-
-            for (float i = 1.0; i <= u_radius; i++) {
+            for (float i = 1.0; i <= u_radius; i += u_step) {
               float x = (1.0 - u_direction) * i;
               float y = u_direction * i;
               vec2 shift = vec2(x, y) * u_texelSize;
               vec2 coord = vec2(v_texCoord + shift);
               float spaceWeight = u_spaceWeights[int(i - 1.0)];
-              float colorWeight = calculateColorWeight(coord);
+              float colorWeight = calculateColorWeight(coord, centerColor);
               float weight = spaceWeight * colorWeight;
               float alpha = texture(u_segmentationMask, coord).a;
               totalWeight += weight;
@@ -108,7 +111,7 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
   
               shift = vec2(-x, -y) * u_texelSize;
               coord = vec2(v_texCoord + shift);
-              colorWeight = calculateColorWeight(coord);
+              colorWeight = calculateColorWeight(coord, centerColor);
               weight = spaceWeight * colorWeight;
               alpha = texture(u_segmentationMask, coord).a;
               totalWeight += weight;
@@ -153,9 +156,11 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
   updateSigmaColor(sigmaColor: number): void {
     this._setUniformVars([
       {
-        name: 'u_sigmaColor',
-        type: 'float',
-        values: [sigmaColor]
+        name: 'u_colorWeights',
+        type: 'float:v',
+        values: createColorWeights(
+          sigmaColor
+        )
       }
     ])
   }
@@ -176,6 +181,10 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
       outputHeight / inputHeight
     )
 
+    const step = Math.floor(
+      0.5 * sigmaSpace / Math.log(sigmaSpace)
+    )
+
     const sigmaTexel = Math.max(
       1 / outputWidth,
       1 / outputHeight
@@ -194,11 +203,6 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
         values: [sigmaSpace]
       },
       {
-        name: 'u_sigmaTexel',
-        type: 'float',
-        values: [sigmaTexel]
-      },
-      {
         name: 'u_spaceWeights',
         type: 'float:v',
         values: createSpaceWeights(
@@ -207,6 +211,11 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
           texelSize
         )
       },
+      {
+        name: 'u_step',
+        type: 'float',
+        values: [step]
+      }
     ])
   }
 }

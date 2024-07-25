@@ -42,7 +42,7 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
     ))
   }
 
-  updateFastBilateralFilterConfig(config: BilateralFilterConfig) {
+  updateBilateralFilterConfig(config: BilateralFilterConfig) {
     const [
       /* inputStage */,
       ...bilateralFilterStages

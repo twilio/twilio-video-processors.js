@@ -159,7 +159,7 @@ export abstract class BackgroundProcessor extends Processor {
     }
     if (this._maskBlurRadius !== radius) {
       this._maskBlurRadius = radius;
-      this._personMaskUpscalePipeline?.updateFastBilateralFilterConfig({
+      this._personMaskUpscalePipeline?.updateBilateralFilterConfig({
         sigmaSpace: this._maskBlurRadius
       });
     }
@@ -342,7 +342,7 @@ export abstract class BackgroundProcessor extends Processor {
       this._inferenceDimensions,
       this._webgl2Canvas
     );
-    this._personMaskUpscalePipeline?.updateFastBilateralFilterConfig({
+    this._personMaskUpscalePipeline?.updateBilateralFilterConfig({
       sigmaSpace: this._maskBlurRadius
     });
   }
