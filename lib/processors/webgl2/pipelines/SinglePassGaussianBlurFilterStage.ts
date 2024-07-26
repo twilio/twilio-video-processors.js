@@ -56,9 +56,7 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
               totalWeight += weight;
     
               if (i != 0.0) {
-                x = (1.0 - u_direction) * -i;
-                y = u_direction * -i;
-                shift = vec2(x, y) * u_texelSize;
+                shift = vec2(-x, -y) * u_texelSize;
                 coord = vec2(v_texCoord + shift);
                 newColor += weight * texture(u_inputTexture, coord).rgb;
                 totalWeight += weight;
