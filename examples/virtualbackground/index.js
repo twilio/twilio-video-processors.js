@@ -13,9 +13,8 @@ const defaultParams = {
   capFramerate: '30',
   capResolution: '1280x720',
   debounce: 'false',
-  pipeline: 'WebGL2',
-  maskBlurRadiusCanvas2D: '4',
-  maskBlurRadiusWebGL2: '8',
+  maskBlurRadius: '8',
+  stats: 'show'
 };
 
 const params = {
@@ -45,15 +44,10 @@ const loadImage = async (name) => {
   return bkgImage;
 }
 
-params.maskBlurRadius = params.pipeline === 'WebGL2'
-  ? params.maskBlurRadiusWebGL2
-  : params.maskBlurRadiusCanvas2D;
-
 (async ({
   Video: { createLocalVideoTrack },
   VideoProcessors: {
     GaussianBlurBackgroundProcessor,
-    Pipeline: { Canvas2D, WebGL2 },
     VirtualBackgroundProcessor,
     isSupported,
     version,
@@ -62,18 +56,14 @@ params.maskBlurRadius = params.pipeline === 'WebGL2'
   const {
     capFramerate,
     capResolution,
-    pipeline,
     debounce,
     maskBlurRadius,
-    stats = 'show',
+    stats,
   } = params;
 
   const addProcessorOptions = {
-    inputFrameBufferType: 'video',
-    outputFrameBufferContextType: {
-      [Canvas2D]: '2d',
-      [WebGL2]: 'webgl2',
-    }[pipeline],
+    inputFrameBufferType: 'videoframe',
+    outputFrameBufferContextType: 'bitmaprenderer',
   };
 
   const capDimensions = capResolution
@@ -88,7 +78,6 @@ params.maskBlurRadius = params.pipeline === 'WebGL2'
 
   const processorOptions = {
     assetsPath,
-    pipeline,
     debounce: JSON.parse(debounce),
     maskBlurRadius: Number(maskBlurRadius),
   };

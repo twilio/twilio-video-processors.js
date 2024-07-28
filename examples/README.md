@@ -11,6 +11,5 @@ Open `http://localhost:3000` in a Chrome tab. The app captures your camera upon 
 - `capFramerate` - Choose video capture frame rate (default: 30)
 - `capResolution=wxh` - Choose video capture resolution (default: 1280x720)
 - `debounce=true|false` - Whether to skip processing every other frame (default: false)
-- `maskBlurRadius` - Radius of the mask blur filter (default: 8 for WebGL2, 4 for Canvas2D)
-- `pipeline=Canvas2D|WebGL2` - Choose the canvas or webgl pipeline (default: WebGL2)
+- `maskBlurRadius` - Radius of the mask blur filter (default: 8)
 - `stats=advanced|hide|show` - Show performance benchmarks (default: show)

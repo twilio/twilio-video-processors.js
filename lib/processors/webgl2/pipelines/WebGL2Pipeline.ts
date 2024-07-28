@@ -34,18 +34,13 @@ interface UniformVarInfo {
  */
 class WebGL2PipelineInputStage implements Pipeline.Stage {
   private _glOut: WebGL2RenderingContext
-  private _inputFrame: OffscreenCanvas | HTMLCanvasElement
   private _inputFrameTexture: WebGLTexture
   private _inputTexture: WebGLTexture | null
   private _inputTextureData: ImageData | null
 
-  constructor(
-    glOut: WebGL2RenderingContext,
-    inputFrame: OffscreenCanvas | HTMLCanvasElement
-  ) {
-    const { height, width } = inputFrame
+  constructor(glOut: WebGL2RenderingContext) {
+    const { height, width } = glOut.canvas
     this._glOut = glOut
-    this._inputFrame = inputFrame
     this._inputFrameTexture = createTexture(
       glOut,
       glOut.RGBA8,
@@ -68,35 +63,36 @@ class WebGL2PipelineInputStage implements Pipeline.Stage {
     _glOut.deleteTexture(_inputTexture)
   }
 
-  render(): void {
+  render(inputFrame?: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame): void {
     const {
       _glOut,
-      _inputFrame,
       _inputFrameTexture,
       _inputTextureData
     } = this
 
-    const { height, width } = _inputFrame
+    const { height, width } = _glOut.canvas;
     _glOut.viewport(0, 0, width, height)
     _glOut.clearColor(0, 0, 0, 0)
     _glOut.clear(_glOut.COLOR_BUFFER_BIT)
-    _glOut.activeTexture(_glOut.TEXTURE0)
 
-    _glOut.bindTexture(
-      _glOut.TEXTURE_2D,
-      _inputFrameTexture
-    )
-    _glOut.texSubImage2D(
-      _glOut.TEXTURE_2D,
-      0,
-      0,
-      0,
-      width,
-      height,
-      _glOut.RGBA,
-      _glOut.UNSIGNED_BYTE,
-      _inputFrame
-    )
+    if (inputFrame) {
+      _glOut.activeTexture(_glOut.TEXTURE0)
+      _glOut.bindTexture(
+        _glOut.TEXTURE_2D,
+        _inputFrameTexture
+      )
+      _glOut.texSubImage2D(
+        _glOut.TEXTURE_2D,
+        0,
+        0,
+        0,
+        width,
+        height,
+        _glOut.RGBA,
+        _glOut.UNSIGNED_BYTE,
+        inputFrame
+      )
+    }
 
     if (!_inputTextureData) {
       return
@@ -375,6 +371,15 @@ export class WebGL2Pipeline extends Pipeline {
     this._stages.forEach(
       (stage) => stage.cleanUp()
     )
+  }
+
+  render(inputFrame?: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame): void {
+    const [inputStage, ...otherStages] = this._stages;
+    inputStage.render(inputFrame);
+    otherStages.forEach(
+      (stage) => (stage as WebGL2PipelineProcessingStage)
+        .render()
+    );
   }
 
   setInputTextureData(inputTextureData: ImageData): void {

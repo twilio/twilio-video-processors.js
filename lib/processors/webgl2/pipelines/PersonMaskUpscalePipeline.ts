@@ -5,7 +5,6 @@ import { WebGL2Pipeline } from './WebGL2Pipeline';
 
 export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
   constructor(
-    inputCanvas: OffscreenCanvas | HTMLCanvasElement,
     inputDimensions: Dimensions,
     outputCanvas: OffscreenCanvas | HTMLCanvasElement
   ) {
@@ -17,10 +16,7 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
       width: outputCanvas.width
     }
 
-    this.addStage(new WebGL2Pipeline.InputStage(
-      glOut,
-      inputCanvas
-    ))
+    this.addStage(new WebGL2Pipeline.InputStage(glOut))
 
     this.addStage(new SinglePassBilateralFilterStage(
       glOut,
