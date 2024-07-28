@@ -17,8 +17,8 @@ const [width, height] = (params.videoRes || `1280x720`).split('x').map(Number);
 const videoFps = Number(params.videoFps || '24');
 
 const addProcessorOptions = {
-  inputFrameBufferType: 'video',
-  outputFrameBufferContextType: '2d',
+  inputFrameBufferType: 'videoframe',
+  outputFrameBufferContextType: 'bitmaprenderer',
 };
 
 const captureConfig = {

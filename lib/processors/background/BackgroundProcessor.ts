@@ -91,8 +91,8 @@ export abstract class BackgroundProcessor extends Processor {
   private static _tflite: TwilioTFLite | null = null;
 
   protected _backgroundImage: HTMLImageElement | null = null;
-  protected _outputCanvas: HTMLCanvasElement | null = null;
-  protected _outputContext: CanvasRenderingContext2D | null = null;
+  protected _outputCanvas: OffscreenCanvas | HTMLCanvasElement | null = null;
+  protected _outputContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null = null;
   protected _personMaskUpscalePipeline: PersonMaskUpscalePipeline | null = null;
   protected _webgl2Canvas: OffscreenCanvas | HTMLCanvasElement;
 
@@ -110,6 +110,8 @@ export abstract class BackgroundProcessor extends Processor {
   // tslint:disable-next-line no-unused-variable
   private _isSimdEnabled: boolean | null;
   private _maskBlurRadius: number;
+  private _outputFrameBuffer: HTMLCanvasElement | null;
+  private _outputFrameBufferContext: CanvasRenderingContext2D | ImageBitmapRenderingContext | null;
 
   constructor(options: BackgroundProcessorOptions) {
     super();
@@ -139,6 +141,8 @@ export abstract class BackgroundProcessor extends Processor {
     this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
     this._inputFrameContext = this._inputFrameCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
     this._maskBlurRadius = typeof options.maskBlurRadius === 'number' ? options.maskBlurRadius : MASK_BLUR_RADIUS;
+    this._outputFrameBuffer = null;
+    this._outputFrameBufferContext = null;
     this._webgl2Canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
   }
 
@@ -206,7 +210,7 @@ export abstract class BackgroundProcessor extends Processor {
    * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
    */
   async processFrame(
-    inputFrameBuffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement,
+    inputFrameBuffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame,
     outputFrameBuffer: HTMLCanvasElement
   ): Promise<void> {
     if (!BackgroundProcessor._tflite) {
@@ -228,20 +232,42 @@ export abstract class BackgroundProcessor extends Processor {
       height: captureHeight
     } = inputFrameBuffer instanceof HTMLVideoElement
       ? { width: inputFrameBuffer.videoWidth, height: inputFrameBuffer.videoHeight }
-      : inputFrameBuffer;
+      : typeof VideoFrame === 'function' && inputFrameBuffer instanceof VideoFrame
+        ? { width: inputFrameBuffer.displayWidth, height: inputFrameBuffer.displayHeight }
+        : inputFrameBuffer as (OffscreenCanvas | HTMLCanvasElement);
 
     const {
       height: outputHeight,
       width: outputWidth
     } = outputFrameBuffer;
 
-    if (this._outputCanvas !== outputFrameBuffer) {
-      this._outputCanvas = outputFrameBuffer;
-      this._outputContext = this._outputCanvas.getContext('2d');
+    let shouldCleanUpPersonMaskUpscalePipeline = false;
+    if (this._outputFrameBuffer !== outputFrameBuffer) {
+      this._outputFrameBuffer = outputFrameBuffer;
+      this._outputFrameBufferContext = outputFrameBuffer.getContext('2d');
+      if (this._outputFrameBufferContext) {
+        this._outputCanvas = outputFrameBuffer;
+        this._outputContext = this._outputFrameBufferContext;
+      } else {
+        this._outputFrameBufferContext = outputFrameBuffer.getContext('bitmaprenderer');
+        this._outputCanvas ||= typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
+        this._outputContext ||= this._outputCanvas.getContext('2d');
+      }
+    }
+    if (this._webgl2Canvas.width !== outputWidth) {
       this._webgl2Canvas.width = outputWidth;
+      this._outputCanvas!.width = outputWidth;
+      shouldCleanUpPersonMaskUpscalePipeline = true;
+    }
+    if (this._webgl2Canvas.height !== outputHeight) {
       this._webgl2Canvas.height = outputHeight;
+      this._outputCanvas!.height = outputHeight;
+      shouldCleanUpPersonMaskUpscalePipeline = true;
+    }
+    if (shouldCleanUpPersonMaskUpscalePipeline) {
       this._cleanupPersonMaskUpscalePipeline();
     }
+
     // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
     if (this._inputFrameCanvas.width !== captureWidth) {
       this._inputFrameCanvas.width = captureWidth;
@@ -256,7 +282,7 @@ export abstract class BackgroundProcessor extends Processor {
       this._inferenceInputCanvas.height = inferenceHeight;
     }
 
-    let inputFrame: OffscreenCanvas | HTMLCanvasElement;
+    let inputFrame: OffscreenCanvas | HTMLCanvasElement | VideoFrame;
     if (inputFrameBuffer instanceof HTMLVideoElement) {
       this._inputFrameContext.drawImage(inputFrameBuffer, 0, 0);
       inputFrame = this._inputFrameCanvas;
@@ -264,7 +290,7 @@ export abstract class BackgroundProcessor extends Processor {
       inputFrame = inputFrameBuffer;
     }
     if (!this._personMaskUpscalePipeline) {
-      this._createPersonMaskUpscalePipeline(inputFrame);
+      this._createPersonMaskUpscalePipeline();
     }
 
     const personMask = await this._createPersonMask(inputFrame);
@@ -277,10 +303,10 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.start('imageCompositionDelay');
     if (!this._debounce || this._currentMask || !isCanvasBlurSupported) {
       this._personMaskUpscalePipeline?.setInputTextureData(personMask);
-      this._personMaskUpscalePipeline?.render();
+      this._personMaskUpscalePipeline?.render(inputFrame);
     }
 
-    const ctx = this._outputContext as CanvasRenderingContext2D;
+    const ctx = this._outputContext!;
     ctx.save();
     ctx.filter = 'none';
     ctx.globalCompositeOperation = 'copy';
@@ -290,6 +316,22 @@ export abstract class BackgroundProcessor extends Processor {
     ctx.globalCompositeOperation = 'destination-over';
     this._setBackground(inputFrame);
     ctx.restore();
+
+    if (typeof VideoFrame === 'function' && inputFrame instanceof VideoFrame) {
+      inputFrame.close();
+    }
+    const {
+      _outputCanvas: outputCanvas,
+      _outputFrameBufferContext: outputFrameBufferContext
+    } = this;
+
+    if (outputFrameBufferContext instanceof ImageBitmapRenderingContext) {
+      const outputBitmap = this._outputCanvas instanceof OffscreenCanvas
+        ? (outputCanvas as OffscreenCanvas).transferToImageBitmap()
+        : await createImageBitmap(outputCanvas!);
+      outputFrameBufferContext.transferFromImageBitmap(outputBitmap);
+    }
+
     this._benchmark.end('imageCompositionDelay');
 
     this._benchmark.end('processFrameDelay');
@@ -301,14 +343,14 @@ export abstract class BackgroundProcessor extends Processor {
     this._benchmark.start('captureFrameDelay');
   }
 
-  protected abstract _setBackground(inputFrame?: OffscreenCanvas | HTMLCanvasElement): void;
+  protected abstract _setBackground(inputFrame?: OffscreenCanvas | HTMLCanvasElement | VideoFrame): void;
 
   private _cleanupPersonMaskUpscalePipeline(): void {
     this._personMaskUpscalePipeline?.cleanUp();
     this._personMaskUpscalePipeline = null;
   }
 
-  private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement): Promise<ImageData> {
+  private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement | VideoFrame): Promise<ImageData> {
     const { height, width } = this._inferenceDimensions;
     const stages = {
       inference: {
@@ -336,9 +378,8 @@ export abstract class BackgroundProcessor extends Processor {
     return this._currentMask || new ImageData(personMaskBuffer, width, height);
   }
 
-  private _createPersonMaskUpscalePipeline(inputFrame: OffscreenCanvas | HTMLCanvasElement): void {
+  private _createPersonMaskUpscalePipeline(): void {
     this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
-      inputFrame,
       this._inferenceDimensions,
       this._webgl2Canvas
     );
@@ -347,7 +388,7 @@ export abstract class BackgroundProcessor extends Processor {
     });
   }
 
-  private async _resizeInputFrame(inputFrame: OffscreenCanvas | HTMLCanvasElement): Promise<void> {
+  private async _resizeInputFrame(inputFrame: OffscreenCanvas | HTMLCanvasElement | VideoFrame): Promise<void> {
     const {
       _inferenceInputCanvas: {
         width: resizeWidth,

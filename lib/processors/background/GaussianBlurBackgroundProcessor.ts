@@ -103,7 +103,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
     this._gaussianBlurFilterPipeline?.updateRadius(this._blurFilterRadius);
   }
 
-  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement): void {
+  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement | VideoFrame): void {
     const {
       _outputContext: ctx,
       _blurFilterRadius: radius,
@@ -121,7 +121,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       this._gaussianBlurFilterPipeline = new GaussianBlurFilterPipeline(canvas);
       this._gaussianBlurFilterPipeline.updateRadius(radius);
     }
-    this._gaussianBlurFilterPipeline?.render();
+    this._gaussianBlurFilterPipeline!.render();
     ctx.drawImage(canvas, 0, 0);
   }
 }
