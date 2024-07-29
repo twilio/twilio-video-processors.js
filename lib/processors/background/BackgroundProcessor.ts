@@ -1,19 +1,8 @@
-import { Processor } from '../Processor';
+import { MASK_BLUR_RADIUS } from '../../constants';
 import { Benchmark } from '../../utils/Benchmark';
-import { TwilioTFLite } from '../../utils/TwilioTFLite';
-import { isCanvasBlurSupported, isChromiumImageBitmap } from '../../utils/support';
-import { Dimensions } from '../../types';
-import { PersonMaskUpscalePipeline } from '../webgl2';
-
-import {
-  MASK_BLUR_RADIUS,
-  MODEL_NAME,
-  TFLITE_LOADER_NAME,
-  TFLITE_SIMD_LOADER_NAME,
-  WASM_INFERENCE_DIMENSIONS,
-} from '../../constants';
-
-type InputResizeMode = 'canvas' | 'image-bitmap';
+import { InputFrame } from '../../types';
+import { Processor } from '../Processor';
+import { BackgroundProcessorPipeline } from './pipelines/backgroundprocessorpipeline';
 
 /**
  * @private
@@ -51,30 +40,6 @@ export interface BackgroundProcessorOptions {
   assetsPath: string;
 
   /**
-   * Whether to skip processing every other frame to improve the output frame rate, but reducing accuracy in the process.
-   * @default
-   * ```html
-   * true
-   * ```
-   */
-  debounce?: boolean;
-
-  /**
-   * @private
-   */
-  deferInputResize?: boolean;
-
-  /**
-   * @private
-   */
-  inferenceDimensions?: Dimensions;
-
-  /**
-   * @private
-   */
-  inputResizeMode?: InputResizeMode;
-
-  /**
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
@@ -87,63 +52,39 @@ export interface BackgroundProcessorOptions {
 /**
  * @private
  */
-export abstract class BackgroundProcessor extends Processor {
-  private static _tflite: TwilioTFLite | null = null;
+export class BackgroundProcessor extends Processor {
+  protected readonly _assetsPath: string;
+  protected readonly _backgroundProcessorPipeline: BackgroundProcessorPipeline;
 
-  protected _backgroundImage: HTMLImageElement | null = null;
-  protected _outputCanvas: OffscreenCanvas | HTMLCanvasElement | null = null;
-  protected _outputContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null = null;
-  protected _personMaskUpscalePipeline: PersonMaskUpscalePipeline | null = null;
-  protected _webgl2Canvas: OffscreenCanvas | HTMLCanvasElement;
+  private readonly _benchmark: Benchmark;
+  private readonly _inputFrameCanvas: OffscreenCanvas = new OffscreenCanvas(1, 1);
+  private readonly _inputFrameContext: OffscreenCanvasRenderingContext2D = this._inputFrameCanvas.getContext('2d', { willReadFrequently: true })!;
+  private _isSimdEnabled: boolean | null = null;
+  private _maskBlurRadius: number = MASK_BLUR_RADIUS;
+  private _outputFrameBuffer: HTMLCanvasElement | null = null;
+  private _outputFrameBufferContext: CanvasRenderingContext2D | ImageBitmapRenderingContext | null = null;
 
-  private _assetsPath: string;
-  private _benchmark: Benchmark;
-  private _currentMask: ImageData | null;
-  private _debounce: boolean;
-  private _deferInputResize: boolean;
-  private _inferenceDimensions: Dimensions = WASM_INFERENCE_DIMENSIONS;
-  private _inferenceInputCanvas: OffscreenCanvas | HTMLCanvasElement;
-  private _inferenceInputContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
-  private _inputFrameCanvas: OffscreenCanvas | HTMLCanvasElement;
-  private _inputFrameContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
-  private _inputResizeMode: InputResizeMode;
-  // tslint:disable-next-line no-unused-variable
-  private _isSimdEnabled: boolean | null;
-  private _maskBlurRadius: number;
-  private _outputFrameBuffer: HTMLCanvasElement | null;
-  private _outputFrameBufferContext: CanvasRenderingContext2D | ImageBitmapRenderingContext | null;
-
-  constructor(options: BackgroundProcessorOptions) {
+  protected constructor(
+    backgroundProcessorPipeline: BackgroundProcessorPipeline,
+    options: BackgroundProcessorOptions
+  ) {
     super();
 
-    if (typeof options.assetsPath !== 'string') {
-      throw new Error('assetsPath parameter is missing');
+    const {
+      assetsPath,
+      maskBlurRadius = this._maskBlurRadius
+    } = options;
+
+    if (typeof assetsPath !== 'string') {
+      throw new Error('assetsPath parameter must be a string');
     }
-    let assetsPath = options.assetsPath;
-    if (assetsPath && assetsPath[assetsPath.length - 1] !== '/') {
-      assetsPath += '/';
-    }
 
-    this._assetsPath = assetsPath;
-    this._debounce = typeof options.debounce === 'boolean' ? options.debounce : true;
-    this._deferInputResize = typeof options.deferInputResize === 'boolean' ? options.deferInputResize : false;
-    this._inferenceDimensions = options.inferenceDimensions! || this._inferenceDimensions;
-
-    this._inputResizeMode = typeof options.inputResizeMode === 'string'
-      ? options.inputResizeMode
-      : (isChromiumImageBitmap() ? 'image-bitmap' : 'canvas');
-
-    this._benchmark = new Benchmark();
-    this._currentMask = null;
-    this._isSimdEnabled = null;
-    this._inferenceInputCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
-    this._inferenceInputContext = this._inferenceInputCanvas.getContext('2d', { willReadFrequently: true }) as OffscreenCanvasRenderingContext2D;
-    this._inputFrameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
-    this._inputFrameContext = this._inputFrameCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-    this._maskBlurRadius = typeof options.maskBlurRadius === 'number' ? options.maskBlurRadius : MASK_BLUR_RADIUS;
-    this._outputFrameBuffer = null;
-    this._outputFrameBufferContext = null;
-    this._webgl2Canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
+    this._assetsPath = assetsPath.replace(/([^/])$/, '$1/');
+    this._backgroundProcessorPipeline = backgroundProcessorPipeline;
+    // TODO(mmalavalli): Remove the ts-ignore after refactoring to support web workers.
+    // @ts-ignore
+    this._benchmark = this._backgroundProcessorPipeline._benchmark;
+    this.maskBlurRadius = maskBlurRadius;
   }
 
   /**
@@ -163,9 +104,11 @@ export abstract class BackgroundProcessor extends Processor {
     }
     if (this._maskBlurRadius !== radius) {
       this._maskBlurRadius = radius;
-      this._personMaskUpscalePipeline?.updateBilateralFilterConfig({
-        sigmaSpace: this._maskBlurRadius
-      });
+      this._backgroundProcessorPipeline
+        .setMaskBlurRadius(this._maskBlurRadius)
+        .catch(() => {
+          /* noop */
+        });
     }
   }
 
@@ -175,18 +118,9 @@ export abstract class BackgroundProcessor extends Processor {
    * video frames are processed correctly.
    */
   async loadModel(): Promise<void> {
-    let { _tflite: tflite } = BackgroundProcessor;
-    if (!tflite) {
-      tflite = new TwilioTFLite();
-      await tflite.initialize(
-        this._assetsPath,
-        MODEL_NAME,
-        TFLITE_LOADER_NAME,
-        TFLITE_SIMD_LOADER_NAME,
-      );
-      BackgroundProcessor._tflite = tflite;
-    }
-    this._isSimdEnabled = tflite.isSimdEnabled;
+    this._isSimdEnabled = await this
+      ._backgroundProcessorPipeline
+      .loadTwilioTFLite();
   }
 
   /**
@@ -197,15 +131,18 @@ export abstract class BackgroundProcessor extends Processor {
    * <br/>
    * <br/>
    * [OffscreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas) - Good for canvas-related processing
-   * that can be rendered off screen. Only works when using [[Pipeline.Canvas2D]].
+   * that can be rendered off screen.
    * <br/>
    * <br/>
    * [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement) - This is recommended on browsers
-   * that doesn't support `OffscreenCanvas`, or if you need to render the frame on the screen. Only works when using [[Pipeline.Canvas2D]].
+   * that doesn't support `OffscreenCanvas`, or if you need to render the frame on the screen.
    * <br/>
    * <br/>
-   * [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement) - Recommended when using [[Pipeline.WebGL2]] but
-   * works for both [[Pipeline.Canvas2D]] and [[Pipeline.WebGL2]].
+   * [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement)
+   * <br/>
+   * <br/>
+   * [VideoFrame](https://developer.mozilla.org/en-US/docs/Web/API/VideoFrame) - Recommended on browsers that support the
+   * [Insertable Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Insertable_Streams_for_MediaStreamTrack_API).
    * <br/>
    * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
    */
@@ -213,19 +150,20 @@ export abstract class BackgroundProcessor extends Processor {
     inputFrameBuffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame,
     outputFrameBuffer: HTMLCanvasElement
   ): Promise<void> {
-    if (!BackgroundProcessor._tflite) {
-      return;
-    }
     if (!inputFrameBuffer || !outputFrameBuffer) {
       throw new Error('Missing input or output frame buffer');
     }
-    this._benchmark.end('captureFrameDelay');
-    this._benchmark.start('processFrameDelay');
 
     const {
-      width: inferenceWidth,
-      height: inferenceHeight
-    } = this._inferenceDimensions;
+      _backgroundProcessorPipeline,
+      _benchmark,
+      _outputFrameBufferContext
+    } = this;
+
+    _benchmark.end('captureFrameDelay');
+    _benchmark.end('totalProcessingDelay');
+    _benchmark.start('totalProcessingDelay');
+    _benchmark.start('processFrameDelay');
 
     const {
       width: captureWidth,
@@ -236,179 +174,45 @@ export abstract class BackgroundProcessor extends Processor {
         ? { width: inputFrameBuffer.displayWidth, height: inputFrameBuffer.displayHeight }
         : inputFrameBuffer as (OffscreenCanvas | HTMLCanvasElement);
 
-    const {
-      height: outputHeight,
-      width: outputWidth
-    } = outputFrameBuffer;
-
-    let shouldCleanUpPersonMaskUpscalePipeline = false;
     if (this._outputFrameBuffer !== outputFrameBuffer) {
       this._outputFrameBuffer = outputFrameBuffer;
-      this._outputFrameBufferContext = outputFrameBuffer.getContext('2d');
-      if (this._outputFrameBufferContext) {
-        this._outputCanvas = outputFrameBuffer;
-        this._outputContext = this._outputFrameBufferContext;
-      } else {
-        this._outputFrameBufferContext = outputFrameBuffer.getContext('bitmaprenderer');
-        this._outputCanvas ||= typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas');
-        this._outputContext ||= this._outputCanvas.getContext('2d');
-      }
+      this._outputFrameBufferContext = outputFrameBuffer.getContext('2d')
+        || outputFrameBuffer.getContext('bitmaprenderer');
     }
-    if (this._webgl2Canvas.width !== outputWidth) {
-      this._webgl2Canvas.width = outputWidth;
-      this._outputCanvas!.width = outputWidth;
-      shouldCleanUpPersonMaskUpscalePipeline = true;
-    }
-    if (this._webgl2Canvas.height !== outputHeight) {
-      this._webgl2Canvas.height = outputHeight;
-      this._outputCanvas!.height = outputHeight;
-      shouldCleanUpPersonMaskUpscalePipeline = true;
-    }
-    if (shouldCleanUpPersonMaskUpscalePipeline) {
-      this._cleanupPersonMaskUpscalePipeline();
-    }
-
-    // Only set the canvas' dimensions if they have changed to prevent unnecessary redraw
     if (this._inputFrameCanvas.width !== captureWidth) {
       this._inputFrameCanvas.width = captureWidth;
     }
     if (this._inputFrameCanvas.height !== captureHeight) {
       this._inputFrameCanvas.height = captureHeight;
     }
-    if (this._inferenceInputCanvas.width !== inferenceWidth) {
-      this._inferenceInputCanvas.width = inferenceWidth;
-    }
-    if (this._inferenceInputCanvas.height !== inferenceHeight) {
-      this._inferenceInputCanvas.height = inferenceHeight;
-    }
 
-    let inputFrame: OffscreenCanvas | HTMLCanvasElement | VideoFrame;
+    let inputFrame: InputFrame;
     if (inputFrameBuffer instanceof HTMLVideoElement) {
-      this._inputFrameContext.drawImage(inputFrameBuffer, 0, 0);
+      this._inputFrameContext.drawImage(
+        inputFrameBuffer,
+        0,
+        0
+      );
       inputFrame = this._inputFrameCanvas;
     } else {
       inputFrame = inputFrameBuffer;
     }
-    if (!this._personMaskUpscalePipeline) {
-      this._createPersonMaskUpscalePipeline();
+
+    const outputFrame = await _backgroundProcessorPipeline.render(inputFrame);
+
+    if (_outputFrameBufferContext instanceof ImageBitmapRenderingContext) {
+      _outputFrameBufferContext.transferFromImageBitmap(
+        outputFrame && outputFrame.transferToImageBitmap()
+      );
+    } else if (_outputFrameBufferContext instanceof CanvasRenderingContext2D && outputFrame) {
+      _outputFrameBufferContext.drawImage(
+        outputFrame,
+        0,
+        0
+      );
     }
 
-    const personMask = await this._createPersonMask(inputFrame);
-    if (this._debounce) {
-      this._currentMask = this._currentMask === personMask
-        ? null
-        : personMask;
-    }
-
-    this._benchmark.start('imageCompositionDelay');
-    if (!this._debounce || this._currentMask || !isCanvasBlurSupported) {
-      this._personMaskUpscalePipeline?.setInputTextureData(personMask);
-      this._personMaskUpscalePipeline?.render(inputFrame);
-    }
-
-    const ctx = this._outputContext!;
-    ctx.save();
-    ctx.filter = 'none';
-    ctx.globalCompositeOperation = 'copy';
-    ctx.drawImage(this._webgl2Canvas, 0, 0, outputWidth, outputHeight);
-    ctx.globalCompositeOperation = 'source-in';
-    ctx.drawImage(inputFrame, 0, 0, outputWidth, outputHeight);
-    ctx.globalCompositeOperation = 'destination-over';
-    this._setBackground(inputFrame);
-    ctx.restore();
-
-    if (typeof VideoFrame === 'function' && inputFrame instanceof VideoFrame) {
-      inputFrame.close();
-    }
-    const {
-      _outputCanvas: outputCanvas,
-      _outputFrameBufferContext: outputFrameBufferContext
-    } = this;
-
-    if (outputFrameBufferContext instanceof ImageBitmapRenderingContext) {
-      const outputBitmap = this._outputCanvas instanceof OffscreenCanvas
-        ? (outputCanvas as OffscreenCanvas).transferToImageBitmap()
-        : await createImageBitmap(outputCanvas!);
-      outputFrameBufferContext.transferFromImageBitmap(outputBitmap);
-    }
-
-    this._benchmark.end('imageCompositionDelay');
-
-    this._benchmark.end('processFrameDelay');
-    this._benchmark.end('totalProcessingDelay');
-
-    // NOTE (csantos): Start the benchmark from here so we can include the delay from the Video sdk
-    // for a more accurate fps
-    this._benchmark.start('totalProcessingDelay');
-    this._benchmark.start('captureFrameDelay');
-  }
-
-  protected abstract _setBackground(inputFrame?: OffscreenCanvas | HTMLCanvasElement | VideoFrame): void;
-
-  private _cleanupPersonMaskUpscalePipeline(): void {
-    this._personMaskUpscalePipeline?.cleanUp();
-    this._personMaskUpscalePipeline = null;
-  }
-
-  private async _createPersonMask(inputFrame: OffscreenCanvas | HTMLCanvasElement | VideoFrame): Promise<ImageData> {
-    const { height, width } = this._inferenceDimensions;
-    const stages = {
-      inference: {
-        false: () => BackgroundProcessor._tflite!.runInference(),
-        true: () => this._currentMask!.data
-      },
-      resize: {
-        false: async () => this._resizeInputFrame(inputFrame),
-        true: async () => { /* noop */ }
-      }
-    };
-    const shouldDebounce = !!this._currentMask;
-    const inferenceStage = stages.inference[`${shouldDebounce}`];
-    const resizeStage = stages.resize[`${shouldDebounce}`];
-
-    this._benchmark.start('inputImageResizeDelay');
-    const resizePromise = resizeStage();
-    if (!this._deferInputResize) {
-      await resizePromise;
-    }
-    this._benchmark.end('inputImageResizeDelay');
-    this._benchmark.start('segmentationDelay');
-    const personMaskBuffer = inferenceStage();
-    this._benchmark.end('segmentationDelay');
-    return this._currentMask || new ImageData(personMaskBuffer, width, height);
-  }
-
-  private _createPersonMaskUpscalePipeline(): void {
-    this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
-      this._inferenceDimensions,
-      this._webgl2Canvas
-    );
-    this._personMaskUpscalePipeline?.updateBilateralFilterConfig({
-      sigmaSpace: this._maskBlurRadius
-    });
-  }
-
-  private async _resizeInputFrame(inputFrame: OffscreenCanvas | HTMLCanvasElement | VideoFrame): Promise<void> {
-    const {
-      _inferenceInputCanvas: {
-        width: resizeWidth,
-        height: resizeHeight
-      },
-      _inferenceInputContext: ctx,
-      _inputResizeMode: resizeMode
-    } = this;
-    if (resizeMode === 'image-bitmap') {
-      const resizedInputFrameBitmap = await createImageBitmap(inputFrame, {
-        resizeWidth,
-        resizeHeight,
-        resizeQuality: 'pixelated'
-      });
-      ctx.drawImage(resizedInputFrameBitmap, 0, 0, resizeWidth, resizeHeight);
-      resizedInputFrameBitmap.close();
-    } else {
-      ctx.drawImage(inputFrame, 0, 0, resizeWidth, resizeHeight);
-    }
-    const imageData = ctx.getImageData(0, 0, resizeWidth, resizeHeight);
-    BackgroundProcessor._tflite!.loadInputBuffer(imageData.data);
+    _benchmark.end('processFrameDelay');
+    _benchmark.start('captureFrameDelay');
   }
 }
