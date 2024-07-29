@@ -29,6 +29,18 @@ export interface Dimensions {
 }
 
 /**
+ * @private
+ */
+export type BilateralFilterConfig = {
+  sigmaSpace?: number
+};
+
+/**
+ * @private
+ */
+export type InputFrame = OffscreenCanvas | HTMLCanvasElement | VideoFrame;
+
+/**
  * ImageFit specifies the positioning of an image inside a viewport.
  */
 export enum ImageFit {

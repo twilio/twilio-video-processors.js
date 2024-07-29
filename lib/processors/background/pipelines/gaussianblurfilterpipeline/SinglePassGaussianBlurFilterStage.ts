@@ -1,4 +1,4 @@
-import { WebGL2Pipeline } from './WebGL2Pipeline'
+import { WebGL2Pipeline } from '../../../pipelines';
 
 /**
  * @private
@@ -14,7 +14,7 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
     const {
       height,
       width
-    } = glOut.canvas
+    } = glOut.canvas;
 
     super(
       {
@@ -29,19 +29,19 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
           uniform vec2 u_texelSize;
           uniform float u_direction;
           uniform float u_radius;
-      
+
           in vec2 v_texCoord;
 
           out vec4 outColor;
-          
+
           const float PI = 3.14159265359;
-      
+
           float gaussian(float x, float sigma) {
             float coefficient = 1.0 / sqrt(2.0 * PI) / sigma;
             float power = -0.5 * x * x / sigma / sigma;
             return coefficient * exp(power);
           }
-      
+
           void main() {
             vec3 newColor = vec3(0.0);
             float totalWeight = 0.0;
@@ -54,7 +54,7 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
               float weight = gaussian(i, u_radius);
               newColor += weight * texture(u_inputTexture, coord).rgb;
               totalWeight += weight;
-    
+
               if (i != 0.0) {
                 shift = vec2(-x, -y) * u_texelSize;
                 coord = vec2(v_texCoord + shift);
@@ -85,9 +85,9 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
           }
         ]
       }
-    )
+    );
 
-    this.updateRadius(0)
+    this.updateRadius(0);
   }
 
   updateRadius(radius: number): void {
@@ -97,6 +97,6 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
         type: 'float',
         values: [radius]
       }
-    ])
+    ]);
   }
 }
