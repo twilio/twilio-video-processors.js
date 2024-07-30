@@ -3,17 +3,15 @@ import { isCanvasBlurSupported } from '../../../../utils/support';
 import { GaussianBlurFilterPipeline } from '../gaussianblurfilterpipeline';
 import { BackgroundProcessorPipeline, BackgroundProcessorPipelineOptions } from './BackgroundProcessorPipeline';
 
-namespace GaussianBlurBackgroundProcessorPipeline {
-  export interface Options extends BackgroundProcessorPipelineOptions {
-    blurFilterRadius: number;
-  }
+export interface GaussianBlurBackgroundProcessorPipelineOptions extends BackgroundProcessorPipelineOptions {
+  blurFilterRadius: number;
 }
 
 export class GaussianBlurBackgroundProcessorPipeline extends BackgroundProcessorPipeline {
   private _blurFilterRadius: number;
   private _gaussianBlurFilterPipeline: GaussianBlurFilterPipeline | null;
 
-  constructor(options: GaussianBlurBackgroundProcessorPipeline.Options) {
+  constructor(options: GaussianBlurBackgroundProcessorPipelineOptions) {
     super(options);
 
     const {

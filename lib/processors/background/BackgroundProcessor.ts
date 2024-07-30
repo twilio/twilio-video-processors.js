@@ -2,7 +2,7 @@ import { MASK_BLUR_RADIUS } from '../../constants';
 import { Benchmark } from '../../utils/Benchmark';
 import { InputFrame } from '../../types';
 import { Processor } from '../Processor';
-import { BackgroundProcessorPipeline } from './pipelines/backgroundprocessorpipeline';
+import { BackgroundProcessorPipeline, BackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
 /**
  * @private
@@ -47,6 +47,15 @@ export interface BackgroundProcessorOptions {
    * ```
    */
   maskBlurRadius?: number;
+
+  /**
+   * Whether to use a web worker (Chrome only).
+   * @default
+   * ```html
+   * false
+   * ```
+   */
+  useWebWorker?: boolean;
 }
 
 /**
@@ -54,7 +63,7 @@ export interface BackgroundProcessorOptions {
  */
 export class BackgroundProcessor extends Processor {
   protected readonly _assetsPath: string;
-  protected readonly _backgroundProcessorPipeline: BackgroundProcessorPipeline;
+  protected readonly _backgroundProcessorPipeline: BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy;
 
   private readonly _benchmark: Benchmark;
   private readonly _inputFrameCanvas: OffscreenCanvas = new OffscreenCanvas(1, 1);
@@ -65,7 +74,7 @@ export class BackgroundProcessor extends Processor {
   private _outputFrameBufferContext: CanvasRenderingContext2D | ImageBitmapRenderingContext | null = null;
 
   protected constructor(
-    backgroundProcessorPipeline: BackgroundProcessorPipeline,
+    backgroundProcessorPipeline: BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy,
     options: BackgroundProcessorOptions
   ) {
     super();
@@ -83,7 +92,7 @@ export class BackgroundProcessor extends Processor {
     this._backgroundProcessorPipeline = backgroundProcessorPipeline;
     // TODO(mmalavalli): Remove the ts-ignore after refactoring to support web workers.
     // @ts-ignore
-    this._benchmark = this._backgroundProcessorPipeline._benchmark;
+    this._benchmark = this._backgroundProcessorPipeline._benchmark || new Benchmark();
     this.maskBlurRadius = maskBlurRadius;
   }
 
@@ -198,12 +207,21 @@ export class BackgroundProcessor extends Processor {
       inputFrame = inputFrameBuffer;
     }
 
-    const outputFrame = await _backgroundProcessorPipeline.render(inputFrame);
+    const outputFrame = _backgroundProcessorPipeline instanceof BackgroundProcessorPipeline
+      ? await (_backgroundProcessorPipeline as BackgroundProcessorPipeline)
+          .render(
+            inputFrame
+          )
+      : await (_backgroundProcessorPipeline as BackgroundProcessorPipelineProxy)
+          .render(
+            inputFrame as VideoFrame
+          );
 
     if (_outputFrameBufferContext instanceof ImageBitmapRenderingContext) {
-      _outputFrameBufferContext.transferFromImageBitmap(
-        outputFrame && outputFrame.transferToImageBitmap()
-      );
+      const outputBitmap = outputFrame instanceof OffscreenCanvas
+        ? outputFrame.transferToImageBitmap()
+        : outputFrame;
+      _outputFrameBufferContext.transferFromImageBitmap(outputBitmap);
     } else if (_outputFrameBufferContext instanceof CanvasRenderingContext2D && outputFrame) {
       _outputFrameBufferContext.drawImage(
         outputFrame,

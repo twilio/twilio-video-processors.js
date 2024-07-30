@@ -10,11 +10,12 @@ const assetsPath = '';
 const bkgImages = new Map();
 
 const defaultParams = {
+  blurFilterRadius: '15',
   capFramerate: '30',
   capResolution: '1280x720',
-  debounce: 'false',
   maskBlurRadius: '8',
-  stats: 'show'
+  stats: 'show',
+  useWebWorker: false,
 };
 
 const params = {
@@ -54,11 +55,12 @@ const loadImage = async (name) => {
   },
 }) => {
   const {
+    blurFilterRadius,
     capFramerate,
     capResolution,
-    debounce,
     maskBlurRadius,
     stats,
+    useWebWorker,
   } = params;
 
   const addProcessorOptions = {
@@ -78,8 +80,8 @@ const loadImage = async (name) => {
 
   const processorOptions = {
     assetsPath,
-    debounce: JSON.parse(debounce),
     maskBlurRadius: Number(maskBlurRadius),
+    useWebWorker,
   };
 
   let videoTrack = null;
@@ -118,7 +120,10 @@ const loadImage = async (name) => {
       setProcessor(videoTrack, null);
     } else if (bg === 'blur') {
       if (!gaussianBlurProcessor) {
-        gaussianBlurProcessor = new GaussianBlurBackgroundProcessor(processorOptions);
+        gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
+          blurFilterRadius: Number(blurFilterRadius),
+          ...processorOptions,
+        });
         await gaussianBlurProcessor.loadModel();
       }
       setProcessor(videoTrack, gaussianBlurProcessor);
