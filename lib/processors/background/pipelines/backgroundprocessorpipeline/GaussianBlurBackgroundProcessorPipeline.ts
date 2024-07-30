@@ -24,6 +24,9 @@ export class GaussianBlurBackgroundProcessorPipeline extends BackgroundProcessor
 
   async setBlurFilterRadius(radius: number): Promise<void> {
     this._blurFilterRadius = radius;
+    return this._gaussianBlurFilterPipeline?.updateRadius(
+      this._blurFilterRadius
+    );
   }
 
   protected _setBackground(
@@ -49,9 +52,9 @@ export class GaussianBlurBackgroundProcessorPipeline extends BackgroundProcessor
       this._gaussianBlurFilterPipeline = new GaussianBlurFilterPipeline(
         webgl2Canvas
       );
-      this._gaussianBlurFilterPipeline.updateRadius(
-        _blurFilterRadius
-      );
+      this.setBlurFilterRadius(_blurFilterRadius).catch(() => {
+        /* noop */
+      });
     }
     this._gaussianBlurFilterPipeline!.render();
     ctx.drawImage(

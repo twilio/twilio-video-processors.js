@@ -3,6 +3,16 @@ import { WebGL2Pipeline } from '../../../pipelines';
 /**
  * @private
  */
+function createGaussianBlurWeights(radius: number): number[] {
+  const coeff = 1.0 / Math.sqrt(2.0 * Math.PI) / radius;
+  return '0'.repeat(radius + 1).split('').map((zero, x) => {
+    return coeff * Math.exp(-0.5 * x * x / radius / radius);
+  });
+}
+
+/**
+ * @private
+ */
 export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.ProcessingStage {
   constructor(
     glOut: WebGL2RenderingContext,
@@ -29,38 +39,30 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
           uniform vec2 u_texelSize;
           uniform float u_direction;
           uniform float u_radius;
+          uniform float u_gaussianBlurWeights[128];
 
           in vec2 v_texCoord;
 
           out vec4 outColor;
 
-          const float PI = 3.14159265359;
-
-          float gaussian(float x, float sigma) {
-            float coefficient = 1.0 / sqrt(2.0 * PI) / sigma;
-            float power = -0.5 * x * x / sigma / sigma;
-            return coefficient * exp(power);
-          }
-
           void main() {
-            vec3 newColor = vec3(0.0);
-            float totalWeight = 0.0;
+            float totalWeight = u_gaussianBlurWeights[0];
+            vec3 newColor = totalWeight * texture(u_inputTexture, v_texCoord).rgb;
 
-            for (float i = 0.0; i <= u_radius; i += 1.0) {
+            for (float i = 1.0; i <= u_radius; i += 1.0) {
               float x = (1.0 - u_direction) * i;
               float y = u_direction * i;
+
               vec2 shift = vec2(x, y) * u_texelSize;
               vec2 coord = vec2(v_texCoord + shift);
-              float weight = gaussian(i, u_radius);
+              float weight = u_gaussianBlurWeights[int(i)];
               newColor += weight * texture(u_inputTexture, coord).rgb;
               totalWeight += weight;
 
-              if (i != 0.0) {
-                shift = vec2(-x, -y) * u_texelSize;
-                coord = vec2(v_texCoord + shift);
-                newColor += weight * texture(u_inputTexture, coord).rgb;
-                totalWeight += weight;
-              }
+              shift = vec2(-x, -y) * u_texelSize;
+              coord = vec2(v_texCoord + shift);
+              newColor += weight * texture(u_inputTexture, coord).rgb;
+              totalWeight += weight;
             }
 
             newColor /= totalWeight;
@@ -96,6 +98,11 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
         name: 'u_radius',
         type: 'float',
         values: [radius]
+      },
+      {
+        name: 'u_gaussianBlurWeights',
+        type: 'float:v',
+        values: createGaussianBlurWeights(radius)
       }
     ]);
   }

@@ -38,24 +38,15 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { Pipeline, VirtualBackgroundProcessor } from '@twilio/video-processors';
- * import { simd } from 'wasm-feature-detect';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
  *
  * let virtualBackground: VirtualBackgroundProcessor;
  * const img = new Image();
  *
  * img.onload = async () => {
- *   const isWasmSimdSupported = await simd();
- *
  *   virtualBackground = new VirtualBackgroundProcessor({
  *     assetsPath: 'https://my-server-path/assets',
- *     backgroundImage: img,
- *
- *     // Enable debounce only if the browser does not support
- *     // WASM SIMD in order to retain an acceptable frame rate.
- *     debounce: !isWasmSimdSupported,
- *
- *     pipeline: Pipeline.WebGL2,
+ *     backgroundImage: img
  *   });
  *   await virtualBackground.loadModel();
  *
@@ -72,8 +63,8 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *     frameRate: 24
  *   });
  *   track.addProcessor(virtualBackground, {
- *     inputFrameBufferType: 'video',
- *     outputFrameBufferContextType: 'webgl2',
+ *     inputFrameBufferType: 'videoframe',
+ *     outputFrameBufferContextType: 'bitmaprenderer'
  *   });
  * };
  *

@@ -1,6 +1,9 @@
 import { Dimensions } from '../../../../types';
 import { WebGL2Pipeline } from '../../../pipelines';
 
+/**
+ * @private
+ */
 function createSpaceWeights(
   radius: number,
   sigma: number,
@@ -12,6 +15,9 @@ function createSpaceWeights(
   });
 }
 
+/**
+ * @private
+ */
 function createColorWeights(
   sigma: number
 ): number[] {

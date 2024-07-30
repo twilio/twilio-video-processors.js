@@ -28,22 +28,13 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { Pipeline, GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
- * import { simd } from 'wasm-feature-detect';
+ * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
  *
  * let blurBackground: GaussianBlurBackgroundProcessor;
  *
  * (async() => {
- *   const isWasmSimdSupported = await simd();
- *
  *   blurBackground = new GaussianBlurBackgroundProcessor({
- *     assetsPath: 'https://my-server-path/assets',
- *
- *     // Enable debounce only if the browser does not support
- *     // WASM SIMD in order to retain an acceptable frame rate.
- *     debounce: !isWasmSimdSupported,
- *
- *     pipeline: Pipeline.WebGL2,
+ *     assetsPath: 'https://my-server-path/assets'
  *   });
  *   await blurBackground.loadModel();
  *
@@ -60,8 +51,8 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *     frameRate: 24
  *   });
  *   track.addProcessor(virtualBackground, {
- *     inputFrameBufferType: 'video',
- *     outputFrameBufferContextType: 'webgl2',
+ *     inputFrameBufferType: 'videoframe',
+ *     outputFrameBufferContextType: 'bitmaprenderer'
  *   });
  * })();
  * ```

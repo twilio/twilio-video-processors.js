@@ -39,9 +39,4 @@ export class VirtualBackgroundProcessorPipelineProxy extends BackgroundProcessor
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setFitType(fitType);
   }
-
-  async setMaskBlurRadius(radius: number): Promise<void> {
-    const pipelineWorker = await this._pipelineWorkerPromise;
-    return pipelineWorker.setMaskBlurRadius(radius);
-  }
 }
