@@ -1,10 +1,8 @@
 import { ImageFit } from '../../../../types';
 import { BackgroundProcessorPipeline, BackgroundProcessorPipelineOptions } from './BackgroundProcessorPipeline';
 
-namespace VirtualBackgroundProcessor {
-  export interface Options extends BackgroundProcessorPipelineOptions {
-    fitType: ImageFit;
-  }
+export interface VirtualBackgroundProcessorPipelineOptions extends BackgroundProcessorPipelineOptions {
+  fitType: ImageFit;
 }
 
 /**
@@ -14,7 +12,7 @@ export class VirtualBackgroundProcessorPipeline extends BackgroundProcessorPipel
   private _backgroundImage: ImageBitmap | null;
   private _fitType: ImageFit;
 
-  constructor(options: VirtualBackgroundProcessor.Options) {
+  constructor(options: VirtualBackgroundProcessorPipelineOptions) {
     super(options);
 
     const {

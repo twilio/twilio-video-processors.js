@@ -1,7 +1,8 @@
 import { ImageFit } from '../../types';
 import { MASK_BLUR_RADIUS } from '../../constants';
+import { isChromiumImageBitmap } from '../../utils/support';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
-import { VirtualBackgroundProcessorPipeline } from './pipelines/backgroundprocessorpipeline';
+import { VirtualBackgroundProcessorPipeline, VirtualBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
 /**
  * Options passed to [[VirtualBackgroundProcessor]] constructor.
@@ -92,14 +93,22 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
    */
   constructor(options: VirtualBackgroundProcessorOptions) {
     const {
-      assetsPath,
       backgroundImage,
       fitType = ImageFit.Fill,
-      maskBlurRadius = MASK_BLUR_RADIUS
+      maskBlurRadius = MASK_BLUR_RADIUS,
+      useWebWorker = false
     } = options;
 
-    const backgroundProcessorPipeline = new VirtualBackgroundProcessorPipeline({
-      assetsPath: assetsPath.replace(/([^/])$/, '$1/'),
+    const assetsPath = options
+      .assetsPath
+      .replace(/([^/])$/, '$1/');
+
+    const backgroundProcessorPipeline = new (
+      useWebWorker && isChromiumImageBitmap()
+        ? VirtualBackgroundProcessorPipelineProxy
+        : VirtualBackgroundProcessorPipeline
+    )({
+      assetsPath,
       fitType,
       maskBlurRadius
     });
@@ -132,7 +141,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     }
     this._backgroundImage = image;
     createImageBitmap(this._backgroundImage).then(
-      (imageBitmap) => (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline)
+      (imageBitmap) => (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline | VirtualBackgroundProcessorPipelineProxy)
         .setBackgroundImage(imageBitmap)
     ).catch(() => {
       /* noop */
@@ -156,7 +165,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       fitType = ImageFit.Fill;
     }
     this._fitType = fitType;
-    (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline)
+    (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline | VirtualBackgroundProcessorPipelineProxy)
       .setFitType(this._fitType)
       .catch(() => {
         /* noop */

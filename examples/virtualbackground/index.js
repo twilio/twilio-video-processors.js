@@ -2,7 +2,6 @@
 
 const { Video, VideoProcessors } = Twilio;
 const { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor, isSupported, Pipeline } = VideoProcessors;
-const { bootstrap, wasmFeatureDetect: { simd } } = window;
 
 const videoInput = document.querySelector('video#video-input');
 const errorMessage = document.querySelector('div.modal-body');
@@ -13,6 +12,7 @@ const assetsPath = '';
 
 const params = Object.fromEntries(new URLSearchParams(location.search).entries());
 const showStats = params.stats === 'true';
+const useWebWorker = params.useWebWorker === 'true';
 const [width, height] = (params.videoRes || `1280x720`).split('x').map(Number);
 const videoFps = Number(params.videoFps || '24');
 
@@ -62,10 +62,9 @@ const setProcessor = (processor, track) => {
 
 const handleButtonClick = async bg => {
   if (!gaussianBlurProcessor) {
-    isWasmSimdSupported = await simd();
     gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
       assetsPath,
-      debounce: !isWasmSimdSupported,
+      useWebWorker,
     });
     await gaussianBlurProcessor.loadModel();
   }
@@ -74,7 +73,7 @@ const handleButtonClick = async bg => {
     virtualBackgroundProcessor = new VirtualBackgroundProcessor({
       assetsPath,
       backgroundImage,
-      debounce: !isWasmSimdSupported,
+      useWebWorker,
     });
     await virtualBackgroundProcessor.loadModel();
   }

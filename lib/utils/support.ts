@@ -22,8 +22,7 @@ export function isBrowserSupported() {
  * @private
  */
 export function isChromiumImageBitmap() {
-  return typeof chrome === 'object'
-    && /Chrome/.test(navigator.userAgent)
+  return /Chrome/.test(navigator.userAgent)
     && typeof createImageBitmap === 'function';
 }
 

@@ -68,7 +68,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     return _twilioTFLite.isSimdEnabled!;
   }
 
-  async render(inputFrame: InputFrame): Promise<OffscreenCanvas | null> {
+  async render(inputFrame: InputFrame): Promise<OffscreenCanvas | ImageBitmap | null> {
     if (!BackgroundProcessorPipeline._twilioTFLite) {
       return null;
     }

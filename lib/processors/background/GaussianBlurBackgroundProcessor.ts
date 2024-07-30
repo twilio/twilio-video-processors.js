@@ -1,6 +1,7 @@
 import { BLUR_FILTER_RADIUS, MASK_BLUR_RADIUS } from '../../constants';
+import { isChromiumImageBitmap } from '../../utils/support';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
-import { GaussianBlurBackgroundProcessorPipeline } from './pipelines/backgroundprocessorpipeline';
+import { GaussianBlurBackgroundProcessorPipeline, GaussianBlurBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
 /**
  * Options passed to [[GaussianBlurBackgroundProcessor]] constructor.
@@ -77,13 +78,21 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
    */
   constructor(options: GaussianBlurBackgroundProcessorOptions) {
     const {
-      assetsPath,
       blurFilterRadius = BLUR_FILTER_RADIUS,
-      maskBlurRadius = MASK_BLUR_RADIUS
+      maskBlurRadius = MASK_BLUR_RADIUS,
+      useWebWorker = false
     } = options;
 
-    const backgroundProcessorPipeline = new GaussianBlurBackgroundProcessorPipeline({
-      assetsPath: assetsPath.replace(/([^/])$/, '$1/'),
+    const assetsPath = options
+      .assetsPath
+      .replace(/([^/])$/, '$1/');
+
+    const backgroundProcessorPipeline = new (
+      useWebWorker && isChromiumImageBitmap()
+        ? GaussianBlurBackgroundProcessorPipelineProxy
+        : GaussianBlurBackgroundProcessorPipeline
+    )({
+      assetsPath,
       blurFilterRadius,
       maskBlurRadius
     });
@@ -112,7 +121,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       radius = BLUR_FILTER_RADIUS;
     }
     this._blurFilterRadius = radius;
-    (this._backgroundProcessorPipeline as GaussianBlurBackgroundProcessorPipeline)
+    (this._backgroundProcessorPipeline as GaussianBlurBackgroundProcessorPipeline | GaussianBlurBackgroundProcessorPipelineProxy)
       .setBlurFilterRadius(this._blurFilterRadius)
       .catch(() => {
         /* noop */

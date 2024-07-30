@@ -1,5 +1,10 @@
+declare const WorkerGlobalScope: any;
 declare function createTwilioTFLiteModule(): Promise<any>;
 declare function createTwilioTFLiteSIMDModule(): Promise<any>;
+declare function importScripts(path: string): any;
+
+const isWebWorker = typeof WorkerGlobalScope !== 'undefined'
+  && self instanceof WorkerGlobalScope;
 
 const loadedScripts = new Set<string>();
 let model: ArrayBuffer;
@@ -75,6 +80,11 @@ export class TwilioTFLite {
 
   private async _loadScript(path: string): Promise<void> {
     if (loadedScripts.has(path)) {
+      return;
+    }
+    if (isWebWorker) {
+      importScripts(path);
+      loadedScripts.add(path);
       return;
     }
     return new Promise((resolve, reject) => {
