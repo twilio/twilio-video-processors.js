@@ -30,6 +30,12 @@ export class TwilioTFLite {
     if (this._tflite) {
       return;
     }
+    if (isWebWorker) {
+      // NOTE(mmalavalli): In a web worker, paths to other dependencies
+      // are determined relative to the assets path, so no need to append
+      // it to the file names of the dependencies.
+      assetsPath = '';
+    }
     const [, modelResponse]: [void, Response] = await Promise.all([
       this._loadWasmModule(
         assetsPath,

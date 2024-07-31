@@ -15,7 +15,7 @@ const defaultParams = {
   capResolution: '1280x720',
   maskBlurRadius: '8',
   stats: 'show',
-  useWebWorker: false,
+  useWebWorker: 'false',
 };
 
 const params = {
@@ -81,7 +81,7 @@ const loadImage = async (name) => {
   const processorOptions = {
     assetsPath,
     maskBlurRadius: Number(maskBlurRadius),
-    useWebWorker,
+    useWebWorker: JSON.parse(useWebWorker),
   };
 
   let videoTrack = null;
