@@ -10,7 +10,7 @@ export class PostProcessingStage implements Pipeline.Stage {
   private _maskBlurRadius: number;
   private readonly _outputContext: OffscreenCanvasRenderingContext2D;
   private _personMaskUpscalePipeline: PersonMaskUpscalePipeline | null = null;
-  private readonly _setBackground: (inputFrame?: InputFrame, webgl2Canvas?: OffscreenCanvas) => void;
+  private readonly _setBackground: (inputFrame?: InputFrame) => void;
   private readonly _webgl2Canvas: OffscreenCanvas;
 
   constructor(
@@ -18,7 +18,7 @@ export class PostProcessingStage implements Pipeline.Stage {
     webgl2Canvas: OffscreenCanvas,
     outputCanvas: OffscreenCanvas,
     maskBlurRadius: number,
-    setBackground: (inputFrame?: InputFrame, webgl2Canvas?: OffscreenCanvas) => void
+    setBackground: (inputFrame?: InputFrame) => void
   ) {
     this._inputDimensions = inputDimensions;
     this._maskBlurRadius = maskBlurRadius;
@@ -55,21 +55,14 @@ export class PostProcessingStage implements Pipeline.Stage {
     );
 
     _outputContext.save();
-    _outputContext.filter = 'none';
     _outputContext.globalCompositeOperation = 'copy';
     _outputContext.drawImage(
       _webgl2Canvas,
       0,
       0
     );
-    _outputContext.globalCompositeOperation = 'source-in';
-    _outputContext.drawImage(
-      inputFrame,
-      0,
-      0
-    );
     _outputContext.globalCompositeOperation = 'destination-over';
-    _setBackground(inputFrame, _webgl2Canvas);
+    _setBackground(inputFrame);
     _outputContext.restore();
   }
 

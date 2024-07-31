@@ -9,6 +9,7 @@ import { PostProcessingStage } from './PostProcessingStage';
 
 export interface BackgroundProcessorPipelineOptions {
   assetsPath: string;
+  deferInputFrameDownscale: boolean;
   maskBlurRadius: number;
 }
 
@@ -19,12 +20,12 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
   private static _twilioTFLite: TwilioTFLite | null = null;
 
   protected readonly _outputCanvas = new OffscreenCanvas(1, 1);
+  protected readonly _webgl2Canvas = new OffscreenCanvas(1, 1);
   private readonly _assetsPath: string;
   private readonly _benchmark = new Benchmark();
-  private readonly _deferInputFrameDownscale = false;
+  private _deferInputFrameDownscale: boolean;
   private readonly _inferenceInputCanvas = new OffscreenCanvas(WASM_INFERENCE_DIMENSIONS.width, WASM_INFERENCE_DIMENSIONS.height);
   private readonly _inputFrameDownscaleMode = isChromiumImageBitmap() ? 'image-bitmap' : 'canvas';
-  private readonly _webgl2Canvas = new OffscreenCanvas(1, 1);
 
   protected constructor(
     options: BackgroundProcessorPipelineOptions
@@ -33,10 +34,12 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
 
     const {
       assetsPath,
+      deferInputFrameDownscale,
       maskBlurRadius
     } = options;
 
     this._assetsPath = assetsPath;
+    this._deferInputFrameDownscale = deferInputFrameDownscale;
 
     this.addStage(new InputFrameDowscaleStage(
       this._inferenceInputCanvas,
@@ -48,8 +51,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       this._webgl2Canvas,
       this._outputCanvas,
       maskBlurRadius,
-      (inputFrame?: InputFrame, webgl2Canvas?: OffscreenCanvas): void =>
-        this._setBackground(inputFrame, webgl2Canvas)
+      (inputFrame?: InputFrame): void => this._setBackground(inputFrame)
     ));
   }
 
@@ -146,13 +148,14 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     return this._outputCanvas;
   }
 
+  async setDeferInputFrameDownscale(defer: boolean): Promise<void> {
+    this._deferInputFrameDownscale = defer;
+  }
+
   async setMaskBlurRadius(radius: number): Promise<void> {
     (this._stages[1] as PostProcessingStage)
       .updateMaskBlurRadius(radius);
   }
 
-  protected abstract _setBackground(
-    inputFrame?: InputFrame,
-    webgl2Canvas?: OffscreenCanvas
-  ): void;
+  protected abstract _setBackground(inputFrame?: InputFrame): void;
 }

@@ -29,13 +29,11 @@ export class GaussianBlurBackgroundProcessorPipeline extends BackgroundProcessor
     );
   }
 
-  protected _setBackground(
-    inputFrame: InputFrame,
-    webgl2Canvas: OffscreenCanvas
-  ): void {
+  protected _setBackground(inputFrame: InputFrame): void {
     const {
+      _blurFilterRadius,
       _outputCanvas,
-      _blurFilterRadius
+      _webgl2Canvas
     } = this;
 
     const ctx = _outputCanvas.getContext('2d')!;
@@ -46,11 +44,12 @@ export class GaussianBlurBackgroundProcessorPipeline extends BackgroundProcessor
         0,
         0
       );
+      ctx.filter = 'none';
       return;
     }
     if (!this._gaussianBlurFilterPipeline) {
       this._gaussianBlurFilterPipeline = new GaussianBlurFilterPipeline(
-        webgl2Canvas
+        _webgl2Canvas
       );
       this.setBlurFilterRadius(_blurFilterRadius).catch(() => {
         /* noop */
@@ -58,7 +57,7 @@ export class GaussianBlurBackgroundProcessorPipeline extends BackgroundProcessor
     }
     this._gaussianBlurFilterPipeline!.render();
     ctx.drawImage(
-      webgl2Canvas,
+      _webgl2Canvas,
       0,
       0
     );

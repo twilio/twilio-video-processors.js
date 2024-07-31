@@ -99,7 +99,7 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
             float totalWeight = 1.0;
 
             if (averageAlpha == 0.0 || averageAlpha == 1.0) {
-              outColor = vec4(vec3(0.0), averageAlpha);
+              outColor = vec4(averageAlpha * centerColor, averageAlpha);
               return;
             }
 
@@ -125,7 +125,7 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
             }
 
             outAlpha /= totalWeight;
-            outColor = vec4(vec3(0.0), outAlpha);
+            outColor = vec4(outAlpha * centerColor, outAlpha);
           }
         `,
         glOut,

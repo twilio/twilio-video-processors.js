@@ -13,6 +13,7 @@ const defaultParams = {
   blurFilterRadius: '15',
   capFramerate: '30',
   capResolution: '1280x720',
+  deferInputFrameDownscale: 'false',
   maskBlurRadius: '8',
   stats: 'show',
   useWebWorker: 'false',
@@ -58,6 +59,7 @@ const loadImage = async (name) => {
     blurFilterRadius,
     capFramerate,
     capResolution,
+    deferInputFrameDownscale,
     maskBlurRadius,
     stats,
     useWebWorker,
@@ -80,6 +82,7 @@ const loadImage = async (name) => {
 
   const processorOptions = {
     assetsPath,
+    deferInputFrameDownscale: JSON.parse(deferInputFrameDownscale),
     maskBlurRadius: Number(maskBlurRadius),
     useWebWorker: JSON.parse(useWebWorker),
   };

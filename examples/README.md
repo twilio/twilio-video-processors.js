@@ -11,6 +11,7 @@ Open `http://localhost:3000` in a Chrome tab. The app captures your camera upon 
 - `blurFilterRadius` - Radius of the background blur filter (default: 15)
 - `capFramerate` - Choose video capture frame rate (default: 30)
 - `capResolution=wxh` - Choose video capture resolution (default: 1280x720)
+- `deferInputFrameDownscale=true|false` - **(Chrome only)** Whether to calculate the person mask without waiting for the input frame to be downscaled (default: false)
 - `maskBlurRadius` - Radius of the mask blur filter (default: 8)
 - `stats=advanced|hide|show` - Show performance benchmarks (default: show)
-- `useWebWorker=true|false` - Whether to use a web worker for background replacement (Chrome only)
+- `useWebWorker=true|false` - **(Chrome only)** Whether to use a web worker for background replacement (default: false)

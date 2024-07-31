@@ -23,6 +23,11 @@ export class BackgroundProcessorPipelineProxy {
     return outputFrame as ImageBitmap | null;
   }
 
+  async setDeferInputFrameDownscale(defer: boolean): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setDeferInputFrameDownscale(defer);
+  }
+
   async setMaskBlurRadius(radius: number): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setMaskBlurRadius(radius);

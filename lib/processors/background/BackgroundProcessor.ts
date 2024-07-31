@@ -40,6 +40,19 @@ export interface BackgroundProcessorOptions {
   assetsPath: string;
 
   /**
+   * Whether the pipeline should calculate the person mask without
+   * waiting for the current input frame to be downscaled. Setting
+   * this to true will potentially increase the output frame rate at
+   * the expense of a slight trailing effect around the person mask
+   * (Chrome only).
+   * @default
+   * ```html
+   * false
+   * ```
+   */
+  deferInputFrameDownscale?: boolean;
+
+  /**
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
@@ -66,6 +79,7 @@ export class BackgroundProcessor extends Processor {
   protected readonly _backgroundProcessorPipeline: BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy;
 
   private readonly _benchmark: Benchmark;
+  private _deferInputFrameDownscale: boolean = false;
   private readonly _inputFrameCanvas: OffscreenCanvas = new OffscreenCanvas(1, 1);
   private readonly _inputFrameContext: OffscreenCanvasRenderingContext2D = this._inputFrameCanvas.getContext('2d', { willReadFrequently: true })!;
   private _isSimdEnabled: boolean | null = null;
@@ -81,6 +95,7 @@ export class BackgroundProcessor extends Processor {
 
     const {
       assetsPath,
+      deferInputFrameDownscale = this._deferInputFrameDownscale,
       maskBlurRadius = this._maskBlurRadius
     } = options;
 
@@ -93,7 +108,36 @@ export class BackgroundProcessor extends Processor {
     // TODO(mmalavalli): Remove the ts-ignore after refactoring to support web workers.
     // @ts-ignore
     this._benchmark = this._backgroundProcessorPipeline._benchmark || new Benchmark();
+    this.deferInputFrameDownscale = deferInputFrameDownscale;
     this.maskBlurRadius = maskBlurRadius;
+  }
+
+  /**
+   * Whether the pipeline is calculating the person mask without
+   * waiting for the current input frame to be downscaled (Chrome only).
+   */
+  get deferInputFrameDownscale(): boolean {
+    return this._deferInputFrameDownscale;
+  }
+
+  /**
+   * Toggle whether the pipeline should calculate the person mask
+   * without waiting for the current input frame to be downscaled
+   * (Chrome only).
+   */
+  set deferInputFrameDownscale(defer: boolean) {
+    if (typeof defer !== 'boolean') {
+      console.warn('Provided deferInputFrameDownscale is not a boolean.');
+      defer = this._deferInputFrameDownscale;
+    }
+    if (this._deferInputFrameDownscale !== defer) {
+      this._deferInputFrameDownscale = defer;
+      this._backgroundProcessorPipeline.setDeferInputFrameDownscale(
+        this._deferInputFrameDownscale
+      ).catch(() => {
+        /* noop */
+      });
+    }
   }
 
   /**

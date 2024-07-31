@@ -85,6 +85,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
   constructor(options: VirtualBackgroundProcessorOptions) {
     const {
       backgroundImage,
+      deferInputFrameDownscale = false,
       fitType = ImageFit.Fill,
       maskBlurRadius = MASK_BLUR_RADIUS,
       useWebWorker = false
@@ -100,6 +101,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
         : VirtualBackgroundProcessorPipeline
     )({
       assetsPath,
+      deferInputFrameDownscale,
       fitType,
       maskBlurRadius
     });

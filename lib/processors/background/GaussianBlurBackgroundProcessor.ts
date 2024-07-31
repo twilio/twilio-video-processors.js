@@ -70,6 +70,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
   constructor(options: GaussianBlurBackgroundProcessorOptions) {
     const {
       blurFilterRadius = BLUR_FILTER_RADIUS,
+      deferInputFrameDownscale = false,
       maskBlurRadius = MASK_BLUR_RADIUS,
       useWebWorker = false
     } = options;
@@ -85,6 +86,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
     )({
       assetsPath,
       blurFilterRadius,
+      deferInputFrameDownscale,
       maskBlurRadius
     });
 
