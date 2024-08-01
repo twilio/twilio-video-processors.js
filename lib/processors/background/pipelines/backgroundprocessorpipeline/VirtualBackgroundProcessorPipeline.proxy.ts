@@ -20,14 +20,6 @@ export class VirtualBackgroundProcessorPipelineProxy extends BackgroundProcessor
     this._pipelineWorkerPromise = pipelineWorkerPromise;
   }
 
-  async render(inputFrame: VideoFrame): Promise<ImageBitmap | null> {
-    const pipelineWorker = await this._pipelineWorkerPromise;
-    const outputFrame = await pipelineWorker.render(
-      transfer(inputFrame, [inputFrame])
-    );
-    return outputFrame as (ImageBitmap | null);
-  }
-
   async setBackgroundImage(backgroundImage: ImageBitmap): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setBackgroundImage(

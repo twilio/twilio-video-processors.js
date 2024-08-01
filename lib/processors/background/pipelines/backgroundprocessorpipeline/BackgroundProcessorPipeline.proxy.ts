@@ -1,8 +1,10 @@
 import { Remote, transfer } from 'comlink';
+import { Benchmark } from '../../../../utils/Benchmark';
 import { BackgroundProcessorPipeline } from './BackgroundProcessorPipeline';
 
 export class BackgroundProcessorPipelineProxy {
   protected readonly _pipelineWorkerPromise: Promise<Remote<BackgroundProcessorPipeline>>;
+  private readonly _benchmark: Benchmark = new Benchmark();
 
   protected constructor(
     pipelineWorkerPromise: Promise<Remote<BackgroundProcessorPipeline>>
@@ -20,6 +22,8 @@ export class BackgroundProcessorPipelineProxy {
     const outputFrame = await pipelineWorker.render(
       transfer(inputFrame, [inputFrame])
     );
+    // @ts-ignore
+    this._benchmark.merge(await pipelineWorker._benchmark);
     return outputFrame as ImageBitmap | null;
   }
 

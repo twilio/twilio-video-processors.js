@@ -19,14 +19,6 @@ export class GaussianBlurBackgroundProcessorPipelineProxy extends BackgroundProc
     this._pipelineWorkerPromise = pipelineWorkerPromise;
   }
 
-  async render(inputFrame: VideoFrame): Promise<ImageBitmap | null> {
-    const pipelineWorker = await this._pipelineWorkerPromise;
-    const outputFrame = await pipelineWorker.render(
-      transfer(inputFrame, [inputFrame])
-    );
-    return outputFrame as (ImageBitmap | null);
-  }
-
   async setBlurFilterRadius(radius: number): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setBlurFilterRadius(radius);

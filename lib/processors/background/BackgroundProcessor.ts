@@ -105,9 +105,8 @@ export class BackgroundProcessor extends Processor {
 
     this._assetsPath = assetsPath.replace(/([^/])$/, '$1/');
     this._backgroundProcessorPipeline = backgroundProcessorPipeline;
-    // TODO(mmalavalli): Remove the ts-ignore after refactoring to support web workers.
     // @ts-ignore
-    this._benchmark = this._backgroundProcessorPipeline._benchmark || new Benchmark();
+    this._benchmark = this._backgroundProcessorPipeline._benchmark;
     this.deferInputFrameDownscale = deferInputFrameDownscale;
     this.maskBlurRadius = maskBlurRadius;
   }
