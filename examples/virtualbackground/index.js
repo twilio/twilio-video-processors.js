@@ -155,7 +155,6 @@ const loadImage = async (name) => {
       }
       const { frameRate, height, width } = videoTrack.mediaStreamTrack.getSettings();
       $stats.innerText = `Sdk version: ${version}`;
-      $stats.innerText += `\nPipeline: ${params.pipeline}`;
       $stats.innerText += `\nCapture dimensions (in): ${width} x ${height}`;
       $stats.innerText += `\nFrame rate (in): ${frameRate.toFixed(2)} fps`;
 
