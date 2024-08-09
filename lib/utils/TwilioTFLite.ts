@@ -1,5 +1,10 @@
+declare const WorkerGlobalScope: any;
 declare function createTwilioTFLiteModule(): Promise<any>;
 declare function createTwilioTFLiteSIMDModule(): Promise<any>;
+declare function importScripts(path: string): any;
+
+const isWebWorker = typeof WorkerGlobalScope !== 'undefined'
+  && self instanceof WorkerGlobalScope;
 
 const loadedScripts = new Set<string>();
 let model: ArrayBuffer;
@@ -24,6 +29,12 @@ export class TwilioTFLite {
   ): Promise<void> {
     if (this._tflite) {
       return;
+    }
+    if (isWebWorker) {
+      // NOTE(mmalavalli): In a web worker, paths to other dependencies
+      // are determined relative to the assets path, so no need to append
+      // it to the file names of the dependencies.
+      assetsPath = '';
     }
     const [, modelResponse]: [void, Response] = await Promise.all([
       this._loadWasmModule(
@@ -75,6 +86,11 @@ export class TwilioTFLite {
 
   private async _loadScript(path: string): Promise<void> {
     if (loadedScripts.has(path)) {
+      return;
+    }
+    if (isWebWorker) {
+      importScripts(path);
+      loadedScripts.add(path);
       return;
     }
     return new Promise((resolve, reject) => {

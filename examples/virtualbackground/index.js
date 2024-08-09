@@ -10,12 +10,13 @@ const assetsPath = '';
 const bkgImages = new Map();
 
 const defaultParams = {
+  blurFilterRadius: '15',
   capFramerate: '30',
   capResolution: '1280x720',
-  debounce: 'false',
-  pipeline: 'WebGL2',
-  maskBlurRadiusCanvas2D: '4',
-  maskBlurRadiusWebGL2: '8',
+  deferInputFrameDownscale: 'false',
+  maskBlurRadius: '8',
+  stats: 'show',
+  useWebWorker: 'true',
 };
 
 const params = {
@@ -45,35 +46,28 @@ const loadImage = async (name) => {
   return bkgImage;
 }
 
-params.maskBlurRadius = params.pipeline === 'WebGL2'
-  ? params.maskBlurRadiusWebGL2
-  : params.maskBlurRadiusCanvas2D;
-
 (async ({
   Video: { createLocalVideoTrack },
   VideoProcessors: {
     GaussianBlurBackgroundProcessor,
-    Pipeline: { Canvas2D, WebGL2 },
     VirtualBackgroundProcessor,
     isSupported,
     version,
   },
 }) => {
   const {
+    blurFilterRadius,
     capFramerate,
     capResolution,
-    pipeline,
-    debounce,
+    deferInputFrameDownscale,
     maskBlurRadius,
-    stats = 'show',
+    stats,
+    useWebWorker,
   } = params;
 
   const addProcessorOptions = {
-    inputFrameBufferType: 'video',
-    outputFrameBufferContextType: {
-      [Canvas2D]: '2d',
-      [WebGL2]: 'webgl2',
-    }[pipeline],
+    inputFrameBufferType: 'videoframe',
+    outputFrameBufferContextType: 'bitmaprenderer',
   };
 
   const capDimensions = capResolution
@@ -88,9 +82,9 @@ params.maskBlurRadius = params.pipeline === 'WebGL2'
 
   const processorOptions = {
     assetsPath,
-    pipeline,
-    debounce: JSON.parse(debounce),
+    deferInputFrameDownscale: JSON.parse(deferInputFrameDownscale),
     maskBlurRadius: Number(maskBlurRadius),
+    useWebWorker: JSON.parse(useWebWorker),
   };
 
   let videoTrack = null;
@@ -129,7 +123,10 @@ params.maskBlurRadius = params.pipeline === 'WebGL2'
       setProcessor(videoTrack, null);
     } else if (bg === 'blur') {
       if (!gaussianBlurProcessor) {
-        gaussianBlurProcessor = new GaussianBlurBackgroundProcessor(processorOptions);
+        gaussianBlurProcessor = new GaussianBlurBackgroundProcessor({
+          blurFilterRadius: Number(blurFilterRadius),
+          ...processorOptions,
+        });
         await gaussianBlurProcessor.loadModel();
       }
       setProcessor(videoTrack, gaussianBlurProcessor);
@@ -158,7 +155,6 @@ params.maskBlurRadius = params.pipeline === 'WebGL2'
       }
       const { frameRate, height, width } = videoTrack.mediaStreamTrack.getSettings();
       $stats.innerText = `Sdk version: ${version}`;
-      $stats.innerText += `\nPipeline: ${params.pipeline}`;
       $stats.innerText += `\nCapture dimensions (in): ${width} x ${height}`;
       $stats.innerText += `\nFrame rate (in): ${frameRate.toFixed(2)} fps`;
 

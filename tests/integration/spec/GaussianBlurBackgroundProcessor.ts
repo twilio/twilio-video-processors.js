@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { GaussianBlurBackgroundProcessor, GaussianBlurBackgroundProcessorOptions, Pipeline } from '../../../lib';
+import { GaussianBlurBackgroundProcessor, GaussianBlurBackgroundProcessorOptions } from '../../../lib';
 import { compareImages, getImageFromCanvas, loadImage } from '../util';
 
 describe('GaussianBlurBackgroundProcessor', function() {
@@ -9,7 +9,8 @@ describe('GaussianBlurBackgroundProcessor', function() {
     const options: GaussianBlurBackgroundProcessorOptions = {
       assetsPath: '',
       blurFilterRadius: 10,
-      maskBlurRadius: 3
+      maskBlurRadius: 3,
+      useWebWorker: false
     };
     const processor = new GaussianBlurBackgroundProcessor(options);
     assert.strictEqual(processor.blurFilterRadius, 10);
@@ -29,7 +30,12 @@ describe('GaussianBlurBackgroundProcessor', function() {
       outputCanvas.width = inputImage.width;
       inputCanvas.getContext('2d')!.drawImage(inputImage, 0, 0);
 
-      const processor = new GaussianBlurBackgroundProcessor({ ...options, assetsPath: '/assets' });
+      const processor = new GaussianBlurBackgroundProcessor({
+        ...options,
+        assetsPath: '/assets',
+        useWebWorker: false
+      });
+
       await processor.loadModel();
 
       const processCount = options.processCount || 1;
@@ -49,40 +55,30 @@ describe('GaussianBlurBackgroundProcessor', function() {
       return getImageFromCanvas(outputCanvas);
     };
 
-    describe('with Canvas2D pipeline', () => {
-      [{
-        name: 'using default configuration',
-        expectedImageName: 'blur_default',
-      },{
-        name: 'using non default blurFilterRadius',
-        expectedImageName: 'blur_filter_radius_30',
-        options: { blurFilterRadius: 30 },
-      },{
-        name: 'using non default maskBlurRadius',
-        expectedImageName: 'blur_mask_blur_100',
-        options: { maskBlurRadius: 100 },
-      }].forEach(({ name, options, expectedImageName }) => {
-        it(`when ${name}`, async () => {
-          const outputImageResult = await runTest({ ...options, pipeline: Pipeline.Canvas2D });
-          const expectedOutputImage = await loadImage(`/images/output/${expectedImageName}.png`);
-          await compareImages(outputImageResult, expectedOutputImage);
+    [{
+      name: 'using default configuration',
+      expectedImageName: 'blur_default',
+    },{
+      name: 'using non default blurFilterRadius',
+      expectedImageName: 'blur_filter_radius_30',
+      options: { blurFilterRadius: 30 },
+    },{
+      name: 'using non default maskBlurRadius',
+      expectedImageName: 'blur_mask_blur_100',
+      options: { maskBlurRadius: 100 },
+    }].forEach(({ name, options, expectedImageName }) => {
+      it(`when ${name}`, async () => {
+        const outputImageResult = await runTest(options);
+        const expectedOutputImage = await loadImage(`/images/output/${expectedImageName}.png`);
+        const Rembrandt = (window as any).Rembrandt;
+        // WebGL renders pixels with slight variation per run. Let's put some thresholds
+        // to account for those. See http://rembrandtjs.com for more information
+        await compareImages(outputImageResult, expectedOutputImage, {
+          thresholdType: Rembrandt.THRESHOLD_PERCENT,
+          maxThreshold: 0.01,
+          maxDelta: 20,
+          maxOffset: 0,
         });
-      });
-    });
-
-    it('with WebGL2 pipeline', async () => {
-      // It takes at about 5 process frame calls to render the GPU contents out to the canvas
-      const outputImageResult = await runTest({ processCount: 5 });
-      const expectedOutputImage = await loadImage('/images/output/blur_webgl.png');
-      const Rembrandt = (window as any).Rembrandt;
-
-      // WebGL renders pixels with slight variation per run. Let's put some thresholds
-      // to account for those. See http://rembrandtjs.com for more information
-      await compareImages(outputImageResult, expectedOutputImage, {
-        thresholdType: Rembrandt.THRESHOLD_PERCENT,
-        maxThreshold: 0.01,
-        maxDelta: 20,
-        maxOffset: 0,
       });
     });
   });
