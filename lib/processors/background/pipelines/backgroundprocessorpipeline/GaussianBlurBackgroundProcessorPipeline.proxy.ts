@@ -1,4 +1,4 @@
-import { Remote, transfer, wrap } from 'comlink';
+import { Remote, wrap } from 'comlink';
 import { TWILIO_GAUSSIAN_BLUR_BACKGROUND_PROCESSOR_PIPELINE_WORKER } from '../../../../constants';
 import { BackgroundProcessorPipelineProxy } from './BackgroundProcessorPipeline.proxy';
 import { GaussianBlurBackgroundProcessorPipeline, GaussianBlurBackgroundProcessorPipelineOptions } from './GaussianBlurBackgroundProcessorPipeline';

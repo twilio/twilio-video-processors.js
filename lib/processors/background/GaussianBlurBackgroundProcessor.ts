@@ -72,18 +72,18 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       blurFilterRadius = BLUR_FILTER_RADIUS,
       deferInputFrameDownscale = false,
       maskBlurRadius = MASK_BLUR_RADIUS,
-      useWebWorker = false
+      useWebWorker = true
     } = options;
 
     const assetsPath = options
       .assetsPath
       .replace(/([^/])$/, '$1/');
 
-    const backgroundProcessorPipeline = new (
-      useWebWorker && isChromiumImageBitmap()
-        ? GaussianBlurBackgroundProcessorPipelineProxy
-        : GaussianBlurBackgroundProcessorPipeline
-    )({
+    const BackgroundProcessorPipelineOrProxy = useWebWorker && isChromiumImageBitmap()
+      ? GaussianBlurBackgroundProcessorPipelineProxy
+      : GaussianBlurBackgroundProcessorPipeline;
+
+    const backgroundProcessorPipeline = new BackgroundProcessorPipelineOrProxy({
       assetsPath,
       blurFilterRadius,
       deferInputFrameDownscale,

@@ -65,7 +65,7 @@ export interface BackgroundProcessorOptions {
    * Whether to use a web worker (Chrome only).
    * @default
    * ```html
-   * false
+   * true
    * ```
    */
   useWebWorker?: boolean;

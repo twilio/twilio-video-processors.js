@@ -88,18 +88,18 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       deferInputFrameDownscale = false,
       fitType = ImageFit.Fill,
       maskBlurRadius = MASK_BLUR_RADIUS,
-      useWebWorker = false
+      useWebWorker = true
     } = options;
 
     const assetsPath = options
       .assetsPath
       .replace(/([^/])$/, '$1/');
 
-    const backgroundProcessorPipeline = new (
-      useWebWorker && isChromiumImageBitmap()
-        ? VirtualBackgroundProcessorPipelineProxy
-        : VirtualBackgroundProcessorPipeline
-    )({
+    const VirtualBackgroundProcessorPipelineOrProxy = useWebWorker && isChromiumImageBitmap()
+      ? VirtualBackgroundProcessorPipelineProxy
+      : VirtualBackgroundProcessorPipeline;
+
+    const backgroundProcessorPipeline = new VirtualBackgroundProcessorPipelineOrProxy({
       assetsPath,
       deferInputFrameDownscale,
       fitType,
@@ -153,7 +153,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
    */
   set fitType(fitType: ImageFit) {
     const validTypes = Object.keys(ImageFit);
-    if (!validTypes.includes(fitType as any)) {
+    if (!validTypes.includes(fitType as string)) {
       console.warn(`Valid fitType not found. Using '${ImageFit.Fill}' as default.`);
       fitType = ImageFit.Fill;
     }

@@ -1,7 +1,6 @@
 import * as assert from 'assert';
-import { ImageFit, VirtualBackgroundProcessor, VirtualBackgroundProcessorOptions } from '../../../lib/index';
-import { compareImages, getImageFromCanvas, loadImage, pause } from '../util';
-import { Pipeline } from '../../../lib/index';
+import { ImageFit, VirtualBackgroundProcessor, VirtualBackgroundProcessorOptions } from '../../../lib';
+import { compareImages, getImageFromCanvas, loadImage } from '../util';
 
 describe('VirtualBackgroundProcessor', function() {
   this.timeout(60000);
@@ -12,7 +11,8 @@ describe('VirtualBackgroundProcessor', function() {
       assetsPath: '',
       backgroundImage: img,
       fitType: ImageFit.Contain,
-      maskBlurRadius: 3
+      maskBlurRadius: 3,
+      useWebWorker: false
     };
     const processor = new VirtualBackgroundProcessor(options);
     assert.strictEqual(processor.maskBlurRadius, 3);
@@ -34,7 +34,13 @@ describe('VirtualBackgroundProcessor', function() {
       outputCanvas.width = inputImage.width;
       inputCanvas.getContext('2d')!.drawImage(inputImage, 0, 0);
 
-      const processor = new VirtualBackgroundProcessor({ ...options, assetsPath: '/assets', backgroundImage });
+      const processor = new VirtualBackgroundProcessor({
+        ...options,
+        assetsPath: '/assets',
+        backgroundImage,
+        useWebWorker: false
+      });
+
       await processor.loadModel();
 
       const processCount = options.processCount || 1;
@@ -44,7 +50,6 @@ describe('VirtualBackgroundProcessor', function() {
           if (counter >= processCount) {
             return resolve(null);
           }
-          console.log('rendering...');
           processor.processFrame(inputCanvas, outputCanvas).then(() => {
             counter++;
             setTimeout(render, 0);
@@ -56,52 +61,42 @@ describe('VirtualBackgroundProcessor', function() {
       return getImageFromCanvas(outputCanvas);
     };
 
-    describe('with Canvas2D pipeline', () => {
-      [{
-        name: 'using default configuration',
-        expectedImageName: 'background_default',
-      },{
-        name: 'fitType is None',
-        options: { fitType: ImageFit.None },
-        expectedImageName: 'background_none',
-      },{
-        name: 'fitType is Fill',
-        options: { fitType: ImageFit.Fill },
-        expectedImageName: 'background_fill',
-      },{
-        name: 'fitType is Cover',
-        options: { fitType: ImageFit.Cover },
-        expectedImageName: 'background_cover',
-      },{
-        name: 'fitType is Contain',
-        options: { fitType: ImageFit.Contain },
-        expectedImageName: 'background_contain',
-      },{
-        name: 'maskBlurRadius is not default',
-        options: { maskBlurRadius: 30 },
-        expectedImageName: 'background_mask_blur_30',
-      }].forEach(({ name, options, expectedImageName }) => {
-        it(`when ${name}`, async () => {
-          const outputImageResult = await runTest({ ...options, pipeline: Pipeline.Canvas2D });
-          const expectedOutputImage = await loadImage(`/images/output/${expectedImageName}.png`);
-          await compareImages(outputImageResult, expectedOutputImage);
+    [{
+      name: 'using default configuration',
+      expectedImageName: 'background_default',
+    },{
+      name: 'fitType is None',
+      options: { fitType: ImageFit.None },
+      expectedImageName: 'background_none',
+    },{
+      name: 'fitType is Fill',
+      options: { fitType: ImageFit.Fill },
+      expectedImageName: 'background_fill',
+    },{
+      name: 'fitType is Cover',
+      options: { fitType: ImageFit.Cover },
+      expectedImageName: 'background_cover',
+    },{
+      name: 'fitType is Contain',
+      options: { fitType: ImageFit.Contain },
+      expectedImageName: 'background_contain',
+    },{
+      name: 'maskBlurRadius is not default',
+      options: { maskBlurRadius: 30 },
+      expectedImageName: 'background_mask_blur_30',
+    }].forEach(({ name, options, expectedImageName }) => {
+      it(`when ${name}`, async () => {
+        const outputImageResult = await runTest(options);
+        const expectedOutputImage = await loadImage(`/images/output/${expectedImageName}.png`);
+        const Rembrandt = (window as any).Rembrandt;
+        // WebGL renders pixels with slight variation per run. Let's put some thresholds
+        // to account for those. See http://rembrandtjs.com for more information
+        await compareImages(outputImageResult, expectedOutputImage, {
+          thresholdType: Rembrandt.THRESHOLD_PERCENT,
+          maxThreshold: 0.01,
+          maxDelta: 20,
+          maxOffset: 0,
         });
-      });
-    });
-
-    it('with WebGL2 pipeline', async () => {
-      // It takes at about 5 process frame calls to render the GPU contents out to the canvas
-      const outputImageResult = await runTest({ processCount: 5 });
-      const expectedOutputImage = await loadImage('/images/output/background_webgl.png');
-      const Rembrandt = (window as any).Rembrandt;
-
-      // WebGL renders pixels with slight variation per run. Let's put some thresholds
-      // to account for those. See http://rembrandtjs.com for more information
-      await compareImages(outputImageResult, expectedOutputImage, {
-        thresholdType: Rembrandt.THRESHOLD_PERCENT,
-        maxThreshold: 0.01,
-        maxDelta: 20,
-        maxOffset: 0,
       });
     });
   });

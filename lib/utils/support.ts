@@ -1,5 +1,3 @@
-declare const chrome: any;
-
 /**
  * @private
  */
@@ -40,15 +38,15 @@ export const isCanvasBlurSupported = (() => {
   ]), 3, 3);
 
   const canvas = getCanvas();
-  const context = canvas.getContext('2d');
+  const context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   canvas.width = 3;
   canvas.height = 3;
-  context!.putImageData(inputImageData, 0, 0);
-  context!.filter = 'blur(1px)';
-  context!.drawImage(canvas, 0, 0);
+  context.putImageData(inputImageData, 0, 0);
+  context.filter = 'blur(1px)';
+  context.drawImage(canvas, 0, 0);
 
-  const { data } = context!.getImageData(0, 0, 3, 3);
+  const { data } = context.getImageData(0, 0, 3, 3);
   return data[0] > 0;
 })();
 

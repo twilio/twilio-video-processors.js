@@ -44,14 +44,12 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
     const [
       /* inputStage */,
       ...bilateralFilterStages
-    ] = this._stages as [
-      any,
-      SinglePassBilateralFilterStage
-    ];
+    ] = this._stages;
     const { sigmaSpace } = config;
+
     if (typeof sigmaSpace === 'number') {
-      bilateralFilterStages.forEach(
-        (stage: SinglePassBilateralFilterStage) => {
+      (bilateralFilterStages as SinglePassBilateralFilterStage[]).forEach(
+        (stage) => {
           stage.updateSigmaColor(0.1);
           stage.updateSigmaSpace(sigmaSpace);
         }

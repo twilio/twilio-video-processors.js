@@ -7,7 +7,7 @@
     createTwilioTFLiteModule: () => Promise<any>;
     createTwilioTFLiteSIMDModule: () => Promise<any>;
     OffscreenCanvas: typeof OffscreenCanvas;
-    Twilio: Object & { VideoProcessors?: any };
+    Twilio: object & { VideoProcessors?: any };
   }
 }
 

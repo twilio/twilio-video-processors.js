@@ -16,7 +16,7 @@ const defaultParams = {
   deferInputFrameDownscale: 'false',
   maskBlurRadius: '8',
   stats: 'show',
-  useWebWorker: 'false',
+  useWebWorker: 'true',
 };
 
 const params = {

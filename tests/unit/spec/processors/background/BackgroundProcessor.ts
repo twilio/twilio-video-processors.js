@@ -1,29 +1,24 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
 import { BackgroundProcessor } from '../../../../../lib/processors/background/BackgroundProcessor';
-import {
-  WASM_INFERENCE_DIMENSIONS,
-  MASK_BLUR_RADIUS,
-} from '../../../../../lib/constants';
+import { MASK_BLUR_RADIUS } from '../../../../../lib/constants';
 import { TwilioTFLite } from '../../../../../lib/utils/TwilioTFLite';
-import { WebGL2PipelineType } from '../../../../../lib/types';
+import { BackgroundProcessorPipeline } from '../../../../../lib/processors/background/pipelines/backgroundprocessorpipeline';
 
 class MyBackgroundProcessor extends BackgroundProcessor {
   tflite: TwilioTFLite;
 
   constructor(options?: any) {
-    super(options);
+    const backgroundProcessorPipelineStub = sinon.createStubInstance(BackgroundProcessorPipeline) as any;
+    backgroundProcessorPipelineStub.setMaskBlurRadius.returns(new Promise<void>(resolve => resolve()));
+    super(backgroundProcessorPipelineStub, options);
     // @ts-ignore
     BackgroundProcessor._tflite = new TwilioTFLite();
     // @ts-ignore
     this.tflite = BackgroundProcessor._tflite;
   }
 
-  protected _getWebGL2PipelineType(): WebGL2PipelineType {
-    return WebGL2PipelineType.Blur;
-  }
-
-  protected _setBackground(inputFrame: OffscreenCanvas): void {
+  protected _setBackground(inputFrame: any): void {
     /* noop */
   }
 }
@@ -42,48 +37,6 @@ describe('BackgroundProcessor', () => {
 
   it('should throw an error if options is not provided', () => {
     assert.throws(() => new MyBackgroundProcessor());
-  });
-
-  describe('createPersonMask', () => {
-    let processor: any;
-    let runInference: any;
-    let tflite: any;
-
-    [true, false].forEach((debounce) => {
-      describe(`when ${debounce ? '' : 'not '}in debounce mode`, () => {
-        beforeEach(async () => {
-          processor = new MyBackgroundProcessor({
-            assetsPath: '',
-            debounce
-          });
-          processor._currentMask = null;
-          processor._resizeInputFrame = sinon.stub();
-          tflite = processor.tflite!;
-          runInference = sinon.stub(tflite, 'runInference').returns(new ImageData(1, 1));
-          runInference.resetHistory();
-          const personMask = await processor._createPersonMask();
-          if (debounce) {
-            processor._currentMask = personMask;
-          }
-        });
-
-        it(`should run resizing and inference steps for the current input frame and ${debounce ? 'not ' : ''}the next input frame`, async () => {
-          sinon.assert.calledOnce(processor._resizeInputFrame);
-          sinon.assert.calledOnce(runInference);
-          processor._resizeInputFrame.resetHistory();
-          runInference.resetHistory();
-          await processor._createPersonMask();
-          if (debounce) {
-            sinon.assert.notCalled(processor._resizeInputFrame);
-            sinon.assert.notCalled(runInference);
-
-          } else {
-            sinon.assert.calledOnce(processor._resizeInputFrame);
-            sinon.assert.calledOnce(runInference);
-          }
-        });
-      });
-    });
   });
 
   describe('assetsPath', () => {
@@ -117,24 +70,6 @@ describe('BackgroundProcessor', () => {
     });
   });
 
-  describe('debounce', () => {
-    [
-      null,
-      undefined,
-      {},
-      { debounce: true },
-      { debounce: false }
-    ].forEach((option: any) => {
-      const useDefault = !option || !('debounce' in option);
-      const param = option ? JSON.stringify(option) : option;
-      it(`should set debounce to ${useDefault ? 'default' : option.debounce} if option is ${param}`, () => {
-        const processor: any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
-        const expected = useDefault ? true : option.debounce;
-        assert.deepStrictEqual(processor._debounce, expected);
-      });
-    });
-  });
-
   describe('maskBlurRadius', () => {
     [
       null,
@@ -162,47 +97,6 @@ describe('BackgroundProcessor', () => {
           assert.strictEqual(processor.maskBlurRadius, expected);
         });
       }
-    });
-  });
-
-  describe('pipeline', () => {
-    [
-      null,
-      undefined,
-      {},
-      { pipeline: 'Canvas2D' },
-      { pipeline: 'WebGL2' }
-    ].forEach((option: any) => {
-      const useDefault = !option || !('pipeline' in option);
-      const param = option ? JSON.stringify(option) : option;
-      it(`should set pipeline to ${useDefault ? 'default' : option.pipeline} if option is ${param}`, () => {
-        const processor: any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
-        const expected = useDefault ? 'WebGL2' : option.pipeline;
-        assert.deepStrictEqual(processor._pipeline, expected);
-      });
-    });
-  });
-
-  describe('inferenceDimensions', () => {
-    [
-      null,
-      undefined,
-      {},
-      { inferenceDimensions: null },
-      { inferenceDimensions: undefined },
-      { inferenceDimensions: {} },
-      { inferenceDimensions: { foo: 'foo' } },
-      { inferenceDimensions: { height: 0, width: 1 } },
-      { inferenceDimensions: { height: 1, width: 0 } },
-      { inferenceDimensions: { height: 1, width: 1 } }
-    ].forEach((option: any) => {
-      const useDefault = !option || !option.inferenceDimensions;
-      const param = option && option.inferenceDimensions ? JSON.stringify(option) : option;
-      it(`should set inferenceDimensions to ${useDefault ? 'default' : option.inferenceDimensions} if option is ${param}`, () => {
-        const processor: any = new MyBackgroundProcessor({ ...option, assetsPath: 'foo' });
-        const expected = useDefault ? WASM_INFERENCE_DIMENSIONS : option.inferenceDimensions;
-        assert.deepStrictEqual(processor._inferenceDimensions, expected);
-      });
     });
   });
 });

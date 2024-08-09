@@ -14,4 +14,4 @@ Open `http://localhost:3000` in a Chrome tab. The app captures your camera upon 
 - `deferInputFrameDownscale=true|false` - **(Chrome only)** Whether to calculate the person mask without waiting for the input frame to be downscaled (default: false)
 - `maskBlurRadius` - Radius of the mask blur filter (default: 8)
 - `stats=advanced|hide|show` - Show performance benchmarks (default: show)
-- `useWebWorker=true|false` - **(Chrome only)** Whether to use a web worker for background replacement (default: false)
+- `useWebWorker=true|false` - **(Chrome only)** Whether to use a web worker for background replacement (default: true)

@@ -1,6 +1,6 @@
 import * as assert from 'assert';
-import * as VideoProcessors from '../../../lib/index';
-import { GaussianBlurBackgroundProcessorOptions, VirtualBackgroundProcessorOptions } from '../../../lib/index';
+import * as VideoProcessors from '../../../lib';
+import { GaussianBlurBackgroundProcessorOptions, VirtualBackgroundProcessorOptions } from '../../../lib';
 
 describe('exports', () => {
   context('interfaces', () => {
@@ -28,18 +28,17 @@ describe('exports', () => {
       'GaussianBlurBackgroundProcessor',
       'ImageFit',
       'isSupported',
-      'Pipeline',
       'version',
       'VirtualBackgroundProcessor'
     ];
     let moduleExports: any;
     let windowExports: any;
-  
+
     beforeEach(() => {
       moduleExports = {...VideoProcessors};
       windowExports = {...window.Twilio.VideoProcessors};
     });
-  
+
     it('should have correct exports', () => {
       propertyNames.forEach((prop: string) => {
         assert(typeof moduleExports[prop] !== 'undefined');

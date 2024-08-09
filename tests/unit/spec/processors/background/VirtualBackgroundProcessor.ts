@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { VirtualBackgroundProcessor } from '../../../../../lib/processors/background/VirtualBackgroundProcessor';
+import { VirtualBackgroundProcessor } from '../../../../../lib';
 
 describe('VirtualBackgroundProcessor', () => {
   let consoleWarnStub: any;
@@ -104,7 +104,8 @@ describe('VirtualBackgroundProcessor', () => {
       expected: { x: 550, y: 0, w: 180, h: 720 }
     }].forEach(({ input, expected }) => {
       it(`should return correct position when parameters are ${JSON.stringify(input)}`, () => {
-        const output = (processor['_getFitPosition'] as any)(...input);
+        // @ts-ignore
+        const output = (processor._backgroundProcessorPipeline._getFitPosition as any)(...input);
         assert.deepStrictEqual(output, expected);
       });
     });
