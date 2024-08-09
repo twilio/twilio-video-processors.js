@@ -32,28 +32,17 @@ export class PostProcessingStage implements Pipeline.Stage {
     personMask: ImageData
   ): void {
     const {
-      _inputDimensions,
-      _maskBlurRadius,
       _outputContext,
       _setBackground,
       _webgl2Canvas
     } = this;
-
     if (!this._personMaskUpscalePipeline) {
-      this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
-        _inputDimensions,
-        _webgl2Canvas
-      );
-      this._personMaskUpscalePipeline.updateBilateralFilterConfig({
-        sigmaSpace: _maskBlurRadius
-      });
+      this.resetPersonMaskUpscalePipeline();
     }
-
-    this._personMaskUpscalePipeline.render(
+    this._personMaskUpscalePipeline!.render(
       inputFrame,
       personMask
     );
-
     _outputContext.save();
     _outputContext.globalCompositeOperation = 'copy';
     _outputContext.drawImage(
@@ -64,6 +53,22 @@ export class PostProcessingStage implements Pipeline.Stage {
     _outputContext.globalCompositeOperation = 'destination-over';
     _setBackground(inputFrame);
     _outputContext.restore();
+  }
+
+  resetPersonMaskUpscalePipeline(): void {
+    const {
+      _inputDimensions,
+      _maskBlurRadius,
+      _webgl2Canvas
+    } = this;
+    this._personMaskUpscalePipeline?.cleanUp();
+    this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
+      _inputDimensions,
+      _webgl2Canvas
+    );
+    this._personMaskUpscalePipeline.updateBilateralFilterConfig({
+      sigmaSpace: _maskBlurRadius
+    });
   }
 
   updateMaskBlurRadius(radius: number): void {

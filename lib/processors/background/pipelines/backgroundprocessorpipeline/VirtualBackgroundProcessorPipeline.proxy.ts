@@ -6,6 +6,9 @@ import { VirtualBackgroundProcessorPipeline, VirtualBackgroundProcessorPipelineO
 
 let VirtualBackgroundProcessorPipelineWorker: Remote<typeof VirtualBackgroundProcessorPipeline>;
 
+/**
+ * @private
+ */
 export class VirtualBackgroundProcessorPipelineProxy extends BackgroundProcessorPipelineProxy {
   protected readonly _pipelineWorkerPromise: Promise<Remote<VirtualBackgroundProcessorPipeline>>;
 

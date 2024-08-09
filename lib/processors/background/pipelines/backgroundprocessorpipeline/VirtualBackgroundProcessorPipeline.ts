@@ -1,6 +1,9 @@
 import { ImageFit } from '../../../../types';
 import { BackgroundProcessorPipeline, BackgroundProcessorPipelineOptions } from './BackgroundProcessorPipeline';
 
+/**
+ * @private
+ */
 export interface VirtualBackgroundProcessorPipelineOptions extends BackgroundProcessorPipelineOptions {
   fitType: ImageFit;
 }

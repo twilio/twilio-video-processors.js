@@ -3,7 +3,9 @@ import { resolve as resolvePath } from 'path';
 export default function(config: any) {
   const firefoxFlags = ['-headless'];
   const chromeFlags = [
+    '--headless',
     '--no-sandbox',
+    '--disable-gpu',
     '--remote-debugging-port=9222',
     '--use-fake-ui-for-media-stream',
     '--use-fake-device-for-media-stream',
@@ -109,7 +111,7 @@ export default function(config: any) {
     karmaTypescriptConfig: {
       coverageOptions: {
         exclude: [
-          /tests\/.*/,
+          /tests\/.*/
         ]
       },
       include: [

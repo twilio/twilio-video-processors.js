@@ -5,6 +5,9 @@ import { GaussianBlurBackgroundProcessorPipeline, GaussianBlurBackgroundProcesso
 
 let GaussianBlurBackgroundProcessorPipelineWorker: Remote<typeof GaussianBlurBackgroundProcessorPipeline>;
 
+/**
+ * @private
+ */
 export class GaussianBlurBackgroundProcessorPipelineProxy extends BackgroundProcessorPipelineProxy {
   protected readonly _pipelineWorkerPromise: Promise<Remote<GaussianBlurBackgroundProcessorPipeline>>;
 

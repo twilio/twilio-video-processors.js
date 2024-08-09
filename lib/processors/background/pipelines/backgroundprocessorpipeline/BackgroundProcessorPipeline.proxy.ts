@@ -2,6 +2,9 @@ import { Remote, transfer } from 'comlink';
 import { Benchmark } from '../../../../utils/Benchmark';
 import { BackgroundProcessorPipeline } from './BackgroundProcessorPipeline';
 
+/**
+ * @private
+ */
 export class BackgroundProcessorPipelineProxy {
   protected readonly _pipelineWorkerPromise: Promise<Remote<BackgroundProcessorPipeline>>;
   private readonly _benchmark: Benchmark = new Benchmark();

@@ -1,6 +1,9 @@
 import { expose, transfer } from 'comlink';
 import { GaussianBlurBackgroundProcessorPipeline } from './GaussianBlurBackgroundProcessorPipeline';
 
+/**
+ * @private
+ */
 export class GaussianBlurBackgroundProcessorPipelineWorker extends GaussianBlurBackgroundProcessorPipeline {
   async render(inputFrame: VideoFrame): Promise<ImageBitmap | null> {
     const outputFrame = await super.render(inputFrame);

@@ -1,6 +1,9 @@
 import { expose, transfer } from 'comlink';
 import { VirtualBackgroundProcessorPipeline } from './VirtualBackgroundProcessorPipeline';
 
+/**
+ * @private
+ */
 export class VirtualBackgroundProcessorPipelineWorker extends VirtualBackgroundProcessorPipeline {
   async render(inputFrame: VideoFrame): Promise<ImageBitmap | null> {
     const outputFrame = await super.render(inputFrame);

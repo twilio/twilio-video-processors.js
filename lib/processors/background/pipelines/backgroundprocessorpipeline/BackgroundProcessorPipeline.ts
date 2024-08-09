@@ -7,6 +7,9 @@ import { Pipeline } from '../../../pipelines';
 import { InputFrameDowscaleStage } from './InputFrameDownscaleStage';
 import { PostProcessingStage } from './PostProcessingStage';
 
+/**
+ * @private
+ */
 export interface BackgroundProcessorPipelineOptions {
   assetsPath: string;
   deferInputFrameDownscale: boolean;
@@ -26,9 +29,11 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
   private _deferInputFrameDownscale: boolean;
   private readonly _inferenceInputCanvas = new OffscreenCanvas(WASM_INFERENCE_DIMENSIONS.width, WASM_INFERENCE_DIMENSIONS.height);
   private readonly _inputFrameDownscaleMode = isChromiumImageBitmap() ? 'image-bitmap' : 'canvas';
+  private readonly _onResizeWebGL2Canvas: () => void;
 
   protected constructor(
-    options: BackgroundProcessorPipelineOptions
+    options: BackgroundProcessorPipelineOptions,
+    onResizeWebGL2Canvas = () => {}
   ) {
     super();
 
@@ -40,6 +45,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
 
     this._assetsPath = assetsPath;
     this._deferInputFrameDownscale = deferInputFrameDownscale;
+    this._onResizeWebGL2Canvas = onResizeWebGL2Canvas;
 
     this.addStage(new InputFrameDowscaleStage(
       this._inferenceInputCanvas,
@@ -105,13 +111,20 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       ? { height: inputFrame.displayHeight, width: inputFrame.displayWidth }
       : inputFrame as (OffscreenCanvas | HTMLCanvasElement);
 
+    let didResizeWebGL2Canvas = false;
     if (_outputCanvas.width !== width) {
       _outputCanvas.width = width;
       _webgl2Canvas.width = width;
+      didResizeWebGL2Canvas = true;
     }
     if (_outputCanvas.height !== height) {
       _outputCanvas.height = height;
       _webgl2Canvas.height = height;
+      didResizeWebGL2Canvas = true;
+    }
+    if (didResizeWebGL2Canvas) {
+      postProcessingStage.resetPersonMaskUpscalePipeline();
+      this._onResizeWebGL2Canvas();
     }
 
     _benchmark.start('inputImageResizeDelay');
