@@ -1,3 +1,27 @@
+3.0.0-preview.1 (August 13, 2024)
+=================================
+
+*This version works with `twilio-video` SDK versions `2.29.0` and above.*
+
+API Changes
+-----------
+
+* The VideoProcessors now run in web workers on Chromium-based browsers. Support for web workers on other supported browsers is upcoming. While adding a `VideoProcessor` to a `VideoTrack`, use the following `AddProcessorOptions`:
+  ```ts
+  videoTrack.addProcessor(processor, {
+    inputFrameBufferType: 'videoframe',
+    outputFrameBufferContextType: 'bitmaprenderer'
+  });
+  ```
+* The `Canvas2D` and `WebGL2` pipelines are replaced by a single hybrid pipeline. Therefore, the following APIs are no longer available:
+  * `BackgroundProcessorOptions.pipeline`
+  * `Pipeline` enum exported by `@twilio/video-processors`
+
+Performance Improvements
+------------------------
+
+*TODO(mmalavalli)*
+
 2.2.0 (July 16, 2024)
 =====================
 
