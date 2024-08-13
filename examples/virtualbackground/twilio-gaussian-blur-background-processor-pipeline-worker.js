@@ -53,580 +53,6 @@ exports.WASM_INFERENCE_DIMENSIONS = {
 
 },{}],2:[function(require,module,exports){
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.VirtualBackgroundProcessor = exports.version = exports.isSupported = exports.ImageFit = exports.GaussianBlurBackgroundProcessor = void 0;
-var GaussianBlurBackgroundProcessor_1 = require("./processors/background/GaussianBlurBackgroundProcessor");
-Object.defineProperty(exports, "GaussianBlurBackgroundProcessor", { enumerable: true, get: function () { return GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor; } });
-var VirtualBackgroundProcessor_1 = require("./processors/background/VirtualBackgroundProcessor");
-Object.defineProperty(exports, "VirtualBackgroundProcessor", { enumerable: true, get: function () { return VirtualBackgroundProcessor_1.VirtualBackgroundProcessor; } });
-var types_1 = require("./types");
-Object.defineProperty(exports, "ImageFit", { enumerable: true, get: function () { return types_1.ImageFit; } });
-var support_1 = require("./utils/support");
-Object.defineProperty(exports, "isSupported", { enumerable: true, get: function () { return support_1.isSupported; } });
-var version_1 = require("./utils/version");
-Object.defineProperty(exports, "version", { enumerable: true, get: function () { return version_1.version; } });
-if (typeof window !== 'undefined') {
-    window.Twilio = window.Twilio || {};
-    window.Twilio.VideoProcessors = __assign(__assign({}, window.Twilio.VideoProcessors), { GaussianBlurBackgroundProcessor: GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor, ImageFit: types_1.ImageFit, isSupported: support_1.isSupported, version: version_1.version, VirtualBackgroundProcessor: VirtualBackgroundProcessor_1.VirtualBackgroundProcessor });
-}
-
-},{"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./types":26,"./utils/support":29,"./utils/version":30}],3:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Processor = void 0;
-/**
- * @private
- * The [[Processor]] is an abstract class for building your own custom processors.
- */
-var Processor = /** @class */ (function () {
-    function Processor() {
-    }
-    return Processor;
-}());
-exports.Processor = Processor;
-
-},{}],4:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BackgroundProcessor = void 0;
-var constants_1 = require("../../constants");
-var Processor_1 = require("../Processor");
-var backgroundprocessorpipeline_1 = require("./pipelines/backgroundprocessorpipeline");
-/**
- * @private
- */
-var BackgroundProcessor = /** @class */ (function (_super) {
-    __extends(BackgroundProcessor, _super);
-    function BackgroundProcessor(backgroundProcessorPipeline, options) {
-        var _this = _super.call(this) || this;
-        _this._deferInputFrameDownscale = false;
-        _this._inputFrameCanvas = new OffscreenCanvas(1, 1);
-        _this._inputFrameContext = _this._inputFrameCanvas.getContext('2d', { willReadFrequently: true });
-        _this._isSimdEnabled = null;
-        _this._maskBlurRadius = constants_1.MASK_BLUR_RADIUS;
-        _this._outputFrameBuffer = null;
-        _this._outputFrameBufferContext = null;
-        var assetsPath = options.assetsPath, _a = options.deferInputFrameDownscale, deferInputFrameDownscale = _a === void 0 ? _this._deferInputFrameDownscale : _a, _b = options.maskBlurRadius, maskBlurRadius = _b === void 0 ? _this._maskBlurRadius : _b;
-        if (typeof assetsPath !== 'string') {
-            throw new Error('assetsPath parameter must be a string');
-        }
-        _this._assetsPath = assetsPath.replace(/([^/])$/, '$1/');
-        _this._backgroundProcessorPipeline = backgroundProcessorPipeline;
-        // @ts-ignore
-        _this._benchmark = _this._backgroundProcessorPipeline._benchmark;
-        _this.deferInputFrameDownscale = deferInputFrameDownscale;
-        _this.maskBlurRadius = maskBlurRadius;
-        return _this;
-    }
-    Object.defineProperty(BackgroundProcessor.prototype, "deferInputFrameDownscale", {
-        /**
-         * Whether the pipeline is calculating the person mask without
-         * waiting for the current input frame to be downscaled (Chrome only).
-         */
-        get: function () {
-            return this._deferInputFrameDownscale;
-        },
-        /**
-         * Toggle whether the pipeline should calculate the person mask
-         * without waiting for the current input frame to be downscaled
-         * (Chrome only).
-         */
-        set: function (defer) {
-            if (typeof defer !== 'boolean') {
-                console.warn('Provided deferInputFrameDownscale is not a boolean.');
-                defer = this._deferInputFrameDownscale;
-            }
-            if (this._deferInputFrameDownscale !== defer) {
-                this._deferInputFrameDownscale = defer;
-                this._backgroundProcessorPipeline.setDeferInputFrameDownscale(this._deferInputFrameDownscale).catch(function () {
-                    /* noop */
-                });
-            }
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BackgroundProcessor.prototype, "maskBlurRadius", {
-        /**
-         * The current blur radius when smoothing out the edges of the person's mask.
-         */
-        get: function () {
-            return this._maskBlurRadius;
-        },
-        /**
-         * Set a new blur radius to be used when smoothing out the edges of the person's mask.
-         */
-        set: function (radius) {
-            if (typeof radius !== 'number' || radius < 0) {
-                console.warn("Valid mask blur radius not found. Using ".concat(constants_1.MASK_BLUR_RADIUS, " as default."));
-                radius = constants_1.MASK_BLUR_RADIUS;
-            }
-            if (this._maskBlurRadius !== radius) {
-                this._maskBlurRadius = radius;
-                this._backgroundProcessorPipeline
-                    .setMaskBlurRadius(this._maskBlurRadius)
-                    .catch(function () {
-                    /* noop */
-                });
-            }
-        },
-        enumerable: false,
-        configurable: true
-    });
-    /**
-     * Load the segmentation model.
-     * Call this method before attaching the processor to ensure
-     * video frames are processed correctly.
-     */
-    BackgroundProcessor.prototype.loadModel = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = this;
-                        return [4 /*yield*/, this
-                                ._backgroundProcessorPipeline
-                                .loadTwilioTFLite()];
-                    case 1:
-                        _a._isSimdEnabled = _b.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    /**
-     * Apply a transform to the background of an input video frame and leaving
-     * the foreground (person(s)) untouched. Any exception detected will
-     * result in the frame being dropped.
-     * @param inputFrameBuffer - The source of the input frame to process.
-     * <br/>
-     * <br/>
-     * [OffscreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas) - Good for canvas-related processing
-     * that can be rendered off screen.
-     * <br/>
-     * <br/>
-     * [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement) - This is recommended on browsers
-     * that doesn't support `OffscreenCanvas`, or if you need to render the frame on the screen.
-     * <br/>
-     * <br/>
-     * [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement)
-     * <br/>
-     * <br/>
-     * [VideoFrame](https://developer.mozilla.org/en-US/docs/Web/API/VideoFrame) - Recommended on browsers that support the
-     * [Insertable Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Insertable_Streams_for_MediaStreamTrack_API).
-     * <br/>
-     * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
-     */
-    BackgroundProcessor.prototype.processFrame = function (inputFrameBuffer, outputFrameBuffer) {
-        return __awaiter(this, void 0, void 0, function () {
-            var _a, _backgroundProcessorPipeline, _benchmark, _outputFrameBufferContext, _b, captureWidth, captureHeight, inputFrame, outputFrame, _c, outputBitmap;
-            return __generator(this, function (_d) {
-                switch (_d.label) {
-                    case 0:
-                        if (!inputFrameBuffer || !outputFrameBuffer) {
-                            throw new Error('Missing input or output frame buffer');
-                        }
-                        _a = this, _backgroundProcessorPipeline = _a._backgroundProcessorPipeline, _benchmark = _a._benchmark, _outputFrameBufferContext = _a._outputFrameBufferContext;
-                        _benchmark.end('captureFrameDelay');
-                        _benchmark.end('totalProcessingDelay');
-                        _benchmark.start('totalProcessingDelay');
-                        _benchmark.start('processFrameDelay');
-                        _b = inputFrameBuffer instanceof HTMLVideoElement
-                            ? { width: inputFrameBuffer.videoWidth, height: inputFrameBuffer.videoHeight }
-                            : typeof VideoFrame === 'function' && inputFrameBuffer instanceof VideoFrame
-                                ? { width: inputFrameBuffer.displayWidth, height: inputFrameBuffer.displayHeight }
-                                : inputFrameBuffer, captureWidth = _b.width, captureHeight = _b.height;
-                        if (this._outputFrameBuffer !== outputFrameBuffer) {
-                            this._outputFrameBuffer = outputFrameBuffer;
-                            this._outputFrameBufferContext = outputFrameBuffer.getContext('2d')
-                                || outputFrameBuffer.getContext('bitmaprenderer');
-                        }
-                        if (this._inputFrameCanvas.width !== captureWidth) {
-                            this._inputFrameCanvas.width = captureWidth;
-                        }
-                        if (this._inputFrameCanvas.height !== captureHeight) {
-                            this._inputFrameCanvas.height = captureHeight;
-                        }
-                        if (inputFrameBuffer instanceof HTMLVideoElement) {
-                            this._inputFrameContext.drawImage(inputFrameBuffer, 0, 0);
-                            inputFrame = this._inputFrameCanvas;
-                        }
-                        else {
-                            inputFrame = inputFrameBuffer;
-                        }
-                        if (!(_backgroundProcessorPipeline instanceof backgroundprocessorpipeline_1.BackgroundProcessorPipeline)) return [3 /*break*/, 2];
-                        return [4 /*yield*/, _backgroundProcessorPipeline
-                                .render(inputFrame)];
-                    case 1:
-                        _c = _d.sent();
-                        return [3 /*break*/, 4];
-                    case 2: return [4 /*yield*/, _backgroundProcessorPipeline
-                            .render(inputFrame)];
-                    case 3:
-                        _c = _d.sent();
-                        _d.label = 4;
-                    case 4:
-                        outputFrame = _c;
-                        if (_outputFrameBufferContext instanceof ImageBitmapRenderingContext) {
-                            outputBitmap = outputFrame instanceof OffscreenCanvas
-                                ? outputFrame.transferToImageBitmap()
-                                : outputFrame;
-                            _outputFrameBufferContext.transferFromImageBitmap(outputBitmap);
-                        }
-                        else if (_outputFrameBufferContext instanceof CanvasRenderingContext2D && outputFrame) {
-                            _outputFrameBufferContext.drawImage(outputFrame, 0, 0);
-                        }
-                        _benchmark.end('processFrameDelay');
-                        _benchmark.start('captureFrameDelay');
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    return BackgroundProcessor;
-}(Processor_1.Processor));
-exports.BackgroundProcessor = BackgroundProcessor;
-
-},{"../../constants":1,"../Processor":3,"./pipelines/backgroundprocessorpipeline":15}],5:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GaussianBlurBackgroundProcessor = void 0;
-var constants_1 = require("../../constants");
-var support_1 = require("../../utils/support");
-var BackgroundProcessor_1 = require("./BackgroundProcessor");
-var backgroundprocessorpipeline_1 = require("./pipelines/backgroundprocessorpipeline");
-/**
- * The GaussianBlurBackgroundProcessor, when added to a VideoTrack,
- * applies a gaussian blur filter on the background in each video frame
- * and leaves the foreground (person(s)) untouched. Each instance of
- * GaussianBlurBackgroundProcessor should be added to only one VideoTrack
- * at a time to prevent overlapping of image data from multiple VideoTracks.
- *
- * @example
- *
- * ```ts
- * import { createLocalVideoTrack } from 'twilio-video';
- * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
- *
- * let blurBackground: GaussianBlurBackgroundProcessor;
- *
- * (async() => {
- *   blurBackground = new GaussianBlurBackgroundProcessor({
- *     assetsPath: 'https://my-server-path/assets'
- *   });
- *   await blurBackground.loadModel();
- *
- *   const track = await createLocalVideoTrack({
- *     // Increasing the capture resolution decreases the output FPS
- *     // especially on browsers that do not support SIMD
- *     // such as desktop Safari and iOS browsers, or on Chrome
- *     // with capture resolutions above 640x480 for webgl2.
- *     width: 640,
- *     height: 480,
- *
- *     // Any frame rate above 24 fps on desktop browsers increase CPU
- *     // usage without noticeable increase in quality.
- *     frameRate: 24
- *   });
- *   track.addProcessor(virtualBackground, {
- *     inputFrameBufferType: 'videoframe',
- *     outputFrameBufferContextType: 'bitmaprenderer'
- *   });
- * })();
- * ```
- */
-var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
-    __extends(GaussianBlurBackgroundProcessor, _super);
-    /**
-     * Construct a GaussianBlurBackgroundProcessor. Default values will be used for
-     * any missing properties in [[GaussianBlurBackgroundProcessorOptions]], and
-     * invalid properties will be ignored.
-     */
-    function GaussianBlurBackgroundProcessor(options) {
-        var _this = this;
-        var _a = options.blurFilterRadius, blurFilterRadius = _a === void 0 ? constants_1.BLUR_FILTER_RADIUS : _a, _b = options.deferInputFrameDownscale, deferInputFrameDownscale = _b === void 0 ? false : _b, _c = options.maskBlurRadius, maskBlurRadius = _c === void 0 ? constants_1.MASK_BLUR_RADIUS : _c, _d = options.useWebWorker, useWebWorker = _d === void 0 ? true : _d;
-        var assetsPath = options
-            .assetsPath
-            .replace(/([^/])$/, '$1/');
-        var BackgroundProcessorPipelineOrProxy = useWebWorker && (0, support_1.isChromiumImageBitmap)()
-            ? backgroundprocessorpipeline_1.GaussianBlurBackgroundProcessorPipelineProxy
-            : backgroundprocessorpipeline_1.GaussianBlurBackgroundProcessorPipeline;
-        var backgroundProcessorPipeline = new BackgroundProcessorPipelineOrProxy({
-            assetsPath: assetsPath,
-            blurFilterRadius: blurFilterRadius,
-            deferInputFrameDownscale: deferInputFrameDownscale,
-            maskBlurRadius: maskBlurRadius
-        });
-        _this = _super.call(this, backgroundProcessorPipeline, options) || this;
-        _this._blurFilterRadius = constants_1.BLUR_FILTER_RADIUS;
-        // tslint:disable-next-line no-unused-variable
-        _this._name = 'GaussianBlurBackgroundProcessor';
-        _this.blurFilterRadius = options.blurFilterRadius;
-        return _this;
-    }
-    Object.defineProperty(GaussianBlurBackgroundProcessor.prototype, "blurFilterRadius", {
-        /**
-         * The current background blur filter radius in pixels.
-         */
-        get: function () {
-            return this._blurFilterRadius;
-        },
-        /**
-         * Set a new background blur filter radius in pixels.
-         */
-        set: function (radius) {
-            if (!radius) {
-                console.warn("Valid blur filter radius not found. Using ".concat(constants_1.BLUR_FILTER_RADIUS, " as default."));
-                radius = constants_1.BLUR_FILTER_RADIUS;
-            }
-            this._blurFilterRadius = radius;
-            this._backgroundProcessorPipeline
-                .setBlurFilterRadius(this._blurFilterRadius)
-                .catch(function () {
-                /* noop */
-            });
-        },
-        enumerable: false,
-        configurable: true
-    });
-    return GaussianBlurBackgroundProcessor;
-}(BackgroundProcessor_1.BackgroundProcessor));
-exports.GaussianBlurBackgroundProcessor = GaussianBlurBackgroundProcessor;
-
-},{"../../constants":1,"../../utils/support":29,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],6:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.VirtualBackgroundProcessor = void 0;
-var types_1 = require("../../types");
-var constants_1 = require("../../constants");
-var support_1 = require("../../utils/support");
-var BackgroundProcessor_1 = require("./BackgroundProcessor");
-var backgroundprocessorpipeline_1 = require("./pipelines/backgroundprocessorpipeline");
-/**
- * The VirtualBackgroundProcessor, when added to a VideoTrack,
- * replaces the background in each video frame with a given image,
- * and leaves the foreground (person(s)) untouched. Each instance of
- * VirtualBackgroundProcessor should be added to only one VideoTrack
- * at a time to prevent overlapping of image data from multiple VideoTracks.
- *
- * @example
- *
- * ```ts
- * import { createLocalVideoTrack } from 'twilio-video';
- * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
- *
- * let virtualBackground: VirtualBackgroundProcessor;
- * const img = new Image();
- *
- * img.onload = async () => {
- *   virtualBackground = new VirtualBackgroundProcessor({
- *     assetsPath: 'https://my-server-path/assets',
- *     backgroundImage: img
- *   });
- *   await virtualBackground.loadModel();
- *
- *   const track = await createLocalVideoTrack({
- *     // Increasing the capture resolution decreases the output FPS
- *     // especially on browsers that do not support SIMD
- *     // such as desktop Safari and iOS browsers, or on Chrome
- *     // with capture resolutions above 640x480 for webgl2.
- *     width: 640,
- *     height: 480,
- *
- *     // Any frame rate above 24 fps on desktop browsers increase CPU
- *     // usage without noticeable increase in quality.
- *     frameRate: 24
- *   });
- *   track.addProcessor(virtualBackground, {
- *     inputFrameBufferType: 'videoframe',
- *     outputFrameBufferContextType: 'bitmaprenderer'
- *   });
- * };
- *
- * img.src = '/background.jpg';
- * ```
- */
-var VirtualBackgroundProcessor = /** @class */ (function (_super) {
-    __extends(VirtualBackgroundProcessor, _super);
-    /**
-     * Construct a VirtualBackgroundProcessor. Default values will be used for
-     * any missing optional properties in [[VirtualBackgroundProcessorOptions]],
-     * and invalid properties will be ignored.
-     */
-    function VirtualBackgroundProcessor(options) {
-        var _this = this;
-        var backgroundImage = options.backgroundImage, _a = options.deferInputFrameDownscale, deferInputFrameDownscale = _a === void 0 ? false : _a, _b = options.fitType, fitType = _b === void 0 ? types_1.ImageFit.Fill : _b, _c = options.maskBlurRadius, maskBlurRadius = _c === void 0 ? constants_1.MASK_BLUR_RADIUS : _c, _d = options.useWebWorker, useWebWorker = _d === void 0 ? true : _d;
-        var assetsPath = options
-            .assetsPath
-            .replace(/([^/])$/, '$1/');
-        var VirtualBackgroundProcessorPipelineOrProxy = useWebWorker && (0, support_1.isChromiumImageBitmap)()
-            ? backgroundprocessorpipeline_1.VirtualBackgroundProcessorPipelineProxy
-            : backgroundprocessorpipeline_1.VirtualBackgroundProcessorPipeline;
-        var backgroundProcessorPipeline = new VirtualBackgroundProcessorPipelineOrProxy({
-            assetsPath: assetsPath,
-            deferInputFrameDownscale: deferInputFrameDownscale,
-            fitType: fitType,
-            maskBlurRadius: maskBlurRadius
-        });
-        _this = _super.call(this, backgroundProcessorPipeline, options) || this;
-        // tslint:disable-next-line no-unused-variable
-        _this._name = 'VirtualBackgroundProcessor';
-        _this.backgroundImage = backgroundImage;
-        _this.fitType = fitType;
-        return _this;
-    }
-    Object.defineProperty(VirtualBackgroundProcessor.prototype, "backgroundImage", {
-        /**
-         * The HTMLImageElement representing the current background image.
-         */
-        get: function () {
-            return this._backgroundImage;
-        },
-        /**
-         * Set an HTMLImageElement as the new background image.
-         * An error will be raised if the image hasn't been fully loaded yet. Additionally, the image must follow
-         * [security guidelines](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image)
-         * when loading the image from a different origin. Failing to do so will result to an empty output frame.
-         */
-        set: function (image) {
-            var _this = this;
-            if (!image || !image.complete || !image.naturalHeight) {
-                throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
-            }
-            this._backgroundImage = image;
-            createImageBitmap(this._backgroundImage).then(function (imageBitmap) { return _this._backgroundProcessorPipeline
-                .setBackgroundImage(imageBitmap); }).catch(function () {
-                /* noop */
-            });
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(VirtualBackgroundProcessor.prototype, "fitType", {
-        /**
-         * The current [[ImageFit]] for positioning of the background image in the viewport.
-         */
-        get: function () {
-            return this._fitType;
-        },
-        /**
-         * Set a new [[ImageFit]] to be used for positioning the background image in the viewport.
-         */
-        set: function (fitType) {
-            var validTypes = Object.keys(types_1.ImageFit);
-            if (!validTypes.includes(fitType)) {
-                console.warn("Valid fitType not found. Using '".concat(types_1.ImageFit.Fill, "' as default."));
-                fitType = types_1.ImageFit.Fill;
-            }
-            this._fitType = fitType;
-            this._backgroundProcessorPipeline
-                .setFitType(this._fitType)
-                .catch(function () {
-                /* noop */
-            });
-        },
-        enumerable: false,
-        configurable: true
-    });
-    return VirtualBackgroundProcessor;
-}(BackgroundProcessor_1.BackgroundProcessor));
-exports.VirtualBackgroundProcessor = VirtualBackgroundProcessor;
-
-},{"../../constants":1,"../../types":26,"../../utils/support":29,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],7:[function(require,module,exports){
-"use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -808,122 +234,7 @@ var BackgroundProcessorPipeline = /** @class */ (function (_super) {
 }(pipelines_1.Pipeline));
 exports.BackgroundProcessorPipeline = BackgroundProcessorPipeline;
 
-},{"../../../../constants":1,"../../../../utils/Benchmark":27,"../../../../utils/TwilioTFLite":28,"../../../../utils/support":29,"../../../pipelines":21,"./InputFrameDownscaleStage":11,"./PostProcessingStage":12}],8:[function(require,module,exports){
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BackgroundProcessorPipelineProxy = void 0;
-var comlink_1 = require("comlink");
-var Benchmark_1 = require("../../../../utils/Benchmark");
-/**
- * @private
- */
-var BackgroundProcessorPipelineProxy = /** @class */ (function () {
-    function BackgroundProcessorPipelineProxy(pipelineWorkerPromise) {
-        this._benchmark = new Benchmark_1.Benchmark();
-        this._pipelineWorkerPromise = pipelineWorkerPromise;
-    }
-    BackgroundProcessorPipelineProxy.prototype.loadTwilioTFLite = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var pipelineWorker;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this._pipelineWorkerPromise];
-                    case 1:
-                        pipelineWorker = _a.sent();
-                        return [2 /*return*/, pipelineWorker.loadTwilioTFLite()];
-                }
-            });
-        });
-    };
-    BackgroundProcessorPipelineProxy.prototype.render = function (inputFrame) {
-        return __awaiter(this, void 0, void 0, function () {
-            var pipelineWorker, outputFrame, _a, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
-                    case 0: return [4 /*yield*/, this._pipelineWorkerPromise];
-                    case 1:
-                        pipelineWorker = _c.sent();
-                        return [4 /*yield*/, pipelineWorker.render((0, comlink_1.transfer)(inputFrame, [inputFrame]))];
-                    case 2:
-                        outputFrame = _c.sent();
-                        // @ts-ignore
-                        _b = (_a = this._benchmark).merge;
-                        return [4 /*yield*/, pipelineWorker._benchmark];
-                    case 3:
-                        // @ts-ignore
-                        _b.apply(_a, [_c.sent()]);
-                        return [2 /*return*/, outputFrame];
-                }
-            });
-        });
-    };
-    BackgroundProcessorPipelineProxy.prototype.setDeferInputFrameDownscale = function (defer) {
-        return __awaiter(this, void 0, void 0, function () {
-            var pipelineWorker;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this._pipelineWorkerPromise];
-                    case 1:
-                        pipelineWorker = _a.sent();
-                        return [2 /*return*/, pipelineWorker.setDeferInputFrameDownscale(defer)];
-                }
-            });
-        });
-    };
-    BackgroundProcessorPipelineProxy.prototype.setMaskBlurRadius = function (radius) {
-        return __awaiter(this, void 0, void 0, function () {
-            var pipelineWorker;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this._pipelineWorkerPromise];
-                    case 1:
-                        pipelineWorker = _a.sent();
-                        return [2 /*return*/, pipelineWorker.setMaskBlurRadius(radius)];
-                }
-            });
-        });
-    };
-    return BackgroundProcessorPipelineProxy;
-}());
-exports.BackgroundProcessorPipelineProxy = BackgroundProcessorPipelineProxy;
-
-},{"../../../../utils/Benchmark":27,"comlink":31}],9:[function(require,module,exports){
+},{"../../../../constants":1,"../../../../utils/Benchmark":17,"../../../../utils/TwilioTFLite":18,"../../../../utils/support":19,"../../../pipelines":12,"./InputFrameDownscaleStage":5,"./PostProcessingStage":6}],3:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1028,7 +339,7 @@ var GaussianBlurBackgroundProcessorPipeline = /** @class */ (function (_super) {
 }(BackgroundProcessorPipeline_1.BackgroundProcessorPipeline));
 exports.GaussianBlurBackgroundProcessorPipeline = GaussianBlurBackgroundProcessorPipeline;
 
-},{"../../../../utils/support":29,"../gaussianblurfilterpipeline":17,"./BackgroundProcessorPipeline":7}],10:[function(require,module,exports){
+},{"../../../../utils/support":19,"../gaussianblurfilterpipeline":8,"./BackgroundProcessorPipeline":2}],4:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1082,42 +393,39 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GaussianBlurBackgroundProcessorPipelineProxy = void 0;
+exports.GaussianBlurBackgroundProcessorPipelineWorker = void 0;
 var comlink_1 = require("comlink");
-var constants_1 = require("../../../../constants");
-var BackgroundProcessorPipeline_proxy_1 = require("./BackgroundProcessorPipeline.proxy");
-var GaussianBlurBackgroundProcessorPipelineWorker;
+var GaussianBlurBackgroundProcessorPipeline_1 = require("./GaussianBlurBackgroundProcessorPipeline");
 /**
  * @private
  */
-var GaussianBlurBackgroundProcessorPipelineProxy = /** @class */ (function (_super) {
-    __extends(GaussianBlurBackgroundProcessorPipelineProxy, _super);
-    function GaussianBlurBackgroundProcessorPipelineProxy(options) {
-        var _this = this;
-        GaussianBlurBackgroundProcessorPipelineWorker || (GaussianBlurBackgroundProcessorPipelineWorker = (0, comlink_1.wrap)(new Worker("".concat(options.assetsPath).concat(constants_1.TWILIO_GAUSSIAN_BLUR_BACKGROUND_PROCESSOR_PIPELINE_WORKER))));
-        var pipelineWorkerPromise = new GaussianBlurBackgroundProcessorPipelineWorker(options);
-        _this = _super.call(this, pipelineWorkerPromise) || this;
-        _this._pipelineWorkerPromise = pipelineWorkerPromise;
-        return _this;
+var GaussianBlurBackgroundProcessorPipelineWorker = /** @class */ (function (_super) {
+    __extends(GaussianBlurBackgroundProcessorPipelineWorker, _super);
+    function GaussianBlurBackgroundProcessorPipelineWorker() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    GaussianBlurBackgroundProcessorPipelineProxy.prototype.setBlurFilterRadius = function (radius) {
+    GaussianBlurBackgroundProcessorPipelineWorker.prototype.render = function (inputFrame) {
         return __awaiter(this, void 0, void 0, function () {
-            var pipelineWorker;
+            var outputFrame, outputBitmap;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this._pipelineWorkerPromise];
+                    case 0: return [4 /*yield*/, _super.prototype.render.call(this, inputFrame)];
                     case 1:
-                        pipelineWorker = _a.sent();
-                        return [2 /*return*/, pipelineWorker.setBlurFilterRadius(radius)];
+                        outputFrame = _a.sent();
+                        outputBitmap = outputFrame instanceof OffscreenCanvas
+                            ? outputFrame.transferToImageBitmap()
+                            : outputFrame;
+                        return [2 /*return*/, outputBitmap && (0, comlink_1.transfer)(outputBitmap, [outputBitmap])];
                 }
             });
         });
     };
-    return GaussianBlurBackgroundProcessorPipelineProxy;
-}(BackgroundProcessorPipeline_proxy_1.BackgroundProcessorPipelineProxy));
-exports.GaussianBlurBackgroundProcessorPipelineProxy = GaussianBlurBackgroundProcessorPipelineProxy;
+    return GaussianBlurBackgroundProcessorPipelineWorker;
+}(GaussianBlurBackgroundProcessorPipeline_1.GaussianBlurBackgroundProcessorPipeline));
+exports.GaussianBlurBackgroundProcessorPipelineWorker = GaussianBlurBackgroundProcessorPipelineWorker;
+(0, comlink_1.expose)(GaussianBlurBackgroundProcessorPipelineWorker);
 
-},{"../../../../constants":1,"./BackgroundProcessorPipeline.proxy":8,"comlink":31}],11:[function(require,module,exports){
+},{"./GaussianBlurBackgroundProcessorPipeline":3,"comlink":20}],5:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -1198,7 +506,7 @@ var InputFrameDowscaleStage = /** @class */ (function () {
 }());
 exports.InputFrameDowscaleStage = InputFrameDowscaleStage;
 
-},{}],12:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostProcessingStage = void 0;
@@ -1250,261 +558,7 @@ var PostProcessingStage = /** @class */ (function () {
 }());
 exports.PostProcessingStage = PostProcessingStage;
 
-},{"../personmaskupscalepipeline":19}],13:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.VirtualBackgroundProcessorPipeline = void 0;
-var types_1 = require("../../../../types");
-var BackgroundProcessorPipeline_1 = require("./BackgroundProcessorPipeline");
-/**
- * @private
- */
-var VirtualBackgroundProcessorPipeline = /** @class */ (function (_super) {
-    __extends(VirtualBackgroundProcessorPipeline, _super);
-    function VirtualBackgroundProcessorPipeline(options) {
-        var _this = _super.call(this, options) || this;
-        var fitType = options.fitType;
-        _this._backgroundImage = null;
-        _this._fitType = fitType;
-        return _this;
-    }
-    VirtualBackgroundProcessorPipeline.prototype.setBackgroundImage = function (backgroundImage) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_b) {
-                (_a = this._backgroundImage) === null || _a === void 0 ? void 0 : _a.close();
-                this._backgroundImage = backgroundImage;
-                return [2 /*return*/];
-            });
-        });
-    };
-    VirtualBackgroundProcessorPipeline.prototype.setFitType = function (fitType) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                this._fitType = fitType;
-                return [2 /*return*/];
-            });
-        });
-    };
-    VirtualBackgroundProcessorPipeline.prototype._setBackground = function () {
-        var _a = this, _backgroundImage = _a._backgroundImage, _fitType = _a._fitType, _outputCanvas = _a._outputCanvas;
-        if (!_backgroundImage) {
-            return;
-        }
-        var ctx = _outputCanvas.getContext('2d');
-        var imageWidth = _backgroundImage.width;
-        var imageHeight = _backgroundImage.height;
-        var canvasWidth = _outputCanvas.width;
-        var canvasHeight = _outputCanvas.height;
-        if (_fitType === types_1.ImageFit.Fill) {
-            ctx.drawImage(_backgroundImage, 0, 0, imageWidth, imageHeight, 0, 0, canvasWidth, canvasHeight);
-        }
-        else if (_fitType === types_1.ImageFit.None) {
-            ctx.drawImage(_backgroundImage, 0, 0, imageWidth, imageHeight);
-        }
-        else {
-            var _b = this._getFitPosition(imageWidth, imageHeight, canvasWidth, canvasHeight, _fitType), x = _b.x, y = _b.y, w = _b.w, h = _b.h;
-            ctx.drawImage(_backgroundImage, 0, 0, imageWidth, imageHeight, x, y, w, h);
-        }
-    };
-    VirtualBackgroundProcessorPipeline.prototype._getFitPosition = function (contentWidth, contentHeight, viewportWidth, viewportHeight, type) {
-        // Calculate new content width to fit viewport width
-        var factor = viewportWidth / contentWidth;
-        var newContentWidth = viewportWidth;
-        var newContentHeight = factor * contentHeight;
-        // Scale down the resulting height and width more
-        // to fit viewport height if the content still exceeds it
-        if ((type === types_1.ImageFit.Contain && newContentHeight > viewportHeight)
-            || (type === types_1.ImageFit.Cover && viewportHeight > newContentHeight)) {
-            factor = viewportHeight / newContentHeight;
-            newContentWidth = factor * newContentWidth;
-            newContentHeight = viewportHeight;
-        }
-        // Calculate the destination top left corner to center the content
-        var x = (viewportWidth - newContentWidth) / 2;
-        var y = (viewportHeight - newContentHeight) / 2;
-        return {
-            x: x,
-            y: y,
-            w: newContentWidth,
-            h: newContentHeight,
-        };
-    };
-    return VirtualBackgroundProcessorPipeline;
-}(BackgroundProcessorPipeline_1.BackgroundProcessorPipeline));
-exports.VirtualBackgroundProcessorPipeline = VirtualBackgroundProcessorPipeline;
-
-},{"../../../../types":26,"./BackgroundProcessorPipeline":7}],14:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.VirtualBackgroundProcessorPipelineProxy = void 0;
-var comlink_1 = require("comlink");
-var constants_1 = require("../../../../constants");
-var BackgroundProcessorPipeline_proxy_1 = require("./BackgroundProcessorPipeline.proxy");
-var VirtualBackgroundProcessorPipelineWorker;
-/**
- * @private
- */
-var VirtualBackgroundProcessorPipelineProxy = /** @class */ (function (_super) {
-    __extends(VirtualBackgroundProcessorPipelineProxy, _super);
-    function VirtualBackgroundProcessorPipelineProxy(options) {
-        var _this = this;
-        VirtualBackgroundProcessorPipelineWorker || (VirtualBackgroundProcessorPipelineWorker = (0, comlink_1.wrap)(new Worker("".concat(options.assetsPath).concat(constants_1.TWILIO_VIRTUAL_BACKGROUND_PROCESSOR_PIPELINE_WORKER))));
-        var pipelineWorkerPromise = new VirtualBackgroundProcessorPipelineWorker(options);
-        _this = _super.call(this, pipelineWorkerPromise) || this;
-        _this._pipelineWorkerPromise = pipelineWorkerPromise;
-        return _this;
-    }
-    VirtualBackgroundProcessorPipelineProxy.prototype.setBackgroundImage = function (backgroundImage) {
-        return __awaiter(this, void 0, void 0, function () {
-            var pipelineWorker;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this._pipelineWorkerPromise];
-                    case 1:
-                        pipelineWorker = _a.sent();
-                        return [2 /*return*/, pipelineWorker.setBackgroundImage((0, comlink_1.transfer)(backgroundImage, [backgroundImage]))];
-                }
-            });
-        });
-    };
-    VirtualBackgroundProcessorPipelineProxy.prototype.setFitType = function (fitType) {
-        return __awaiter(this, void 0, void 0, function () {
-            var pipelineWorker;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this._pipelineWorkerPromise];
-                    case 1:
-                        pipelineWorker = _a.sent();
-                        return [2 /*return*/, pipelineWorker.setFitType(fitType)];
-                }
-            });
-        });
-    };
-    return VirtualBackgroundProcessorPipelineProxy;
-}(BackgroundProcessorPipeline_proxy_1.BackgroundProcessorPipelineProxy));
-exports.VirtualBackgroundProcessorPipelineProxy = VirtualBackgroundProcessorPipelineProxy;
-
-},{"../../../../constants":1,"./BackgroundProcessorPipeline.proxy":8,"comlink":31}],15:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.VirtualBackgroundProcessorPipelineProxy = exports.VirtualBackgroundProcessorPipeline = exports.GaussianBlurBackgroundProcessorPipelineProxy = exports.GaussianBlurBackgroundProcessorPipeline = exports.BackgroundProcessorPipelineProxy = exports.BackgroundProcessorPipeline = void 0;
-var BackgroundProcessorPipeline_1 = require("./BackgroundProcessorPipeline");
-Object.defineProperty(exports, "BackgroundProcessorPipeline", { enumerable: true, get: function () { return BackgroundProcessorPipeline_1.BackgroundProcessorPipeline; } });
-var BackgroundProcessorPipeline_proxy_1 = require("./BackgroundProcessorPipeline.proxy");
-Object.defineProperty(exports, "BackgroundProcessorPipelineProxy", { enumerable: true, get: function () { return BackgroundProcessorPipeline_proxy_1.BackgroundProcessorPipelineProxy; } });
-var GaussianBlurBackgroundProcessorPipeline_1 = require("./GaussianBlurBackgroundProcessorPipeline");
-Object.defineProperty(exports, "GaussianBlurBackgroundProcessorPipeline", { enumerable: true, get: function () { return GaussianBlurBackgroundProcessorPipeline_1.GaussianBlurBackgroundProcessorPipeline; } });
-var GaussianBlurBackgroundProcessorPipeline_proxy_1 = require("./GaussianBlurBackgroundProcessorPipeline.proxy");
-Object.defineProperty(exports, "GaussianBlurBackgroundProcessorPipelineProxy", { enumerable: true, get: function () { return GaussianBlurBackgroundProcessorPipeline_proxy_1.GaussianBlurBackgroundProcessorPipelineProxy; } });
-var VirtualBackgroundProcessorPipeline_1 = require("./VirtualBackgroundProcessorPipeline");
-Object.defineProperty(exports, "VirtualBackgroundProcessorPipeline", { enumerable: true, get: function () { return VirtualBackgroundProcessorPipeline_1.VirtualBackgroundProcessorPipeline; } });
-var VirtualBackgroundProcessorPipeline_proxy_1 = require("./VirtualBackgroundProcessorPipeline.proxy");
-Object.defineProperty(exports, "VirtualBackgroundProcessorPipelineProxy", { enumerable: true, get: function () { return VirtualBackgroundProcessorPipeline_proxy_1.VirtualBackgroundProcessorPipelineProxy; } });
-
-},{"./BackgroundProcessorPipeline":7,"./BackgroundProcessorPipeline.proxy":8,"./GaussianBlurBackgroundProcessorPipeline":9,"./GaussianBlurBackgroundProcessorPipeline.proxy":10,"./VirtualBackgroundProcessorPipeline":13,"./VirtualBackgroundProcessorPipeline.proxy":14}],16:[function(require,module,exports){
+},{"../personmaskupscalepipeline":10}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1586,7 +640,7 @@ var SinglePassGaussianBlurFilterStage = /** @class */ (function (_super) {
 }(pipelines_1.WebGL2Pipeline.ProcessingStage));
 exports.SinglePassGaussianBlurFilterStage = SinglePassGaussianBlurFilterStage;
 
-},{"../../../pipelines":21}],17:[function(require,module,exports){
+},{"../../../pipelines":12}],8:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1627,7 +681,7 @@ var GaussianBlurFilterPipeline = /** @class */ (function (_super) {
 }(pipelines_1.WebGL2Pipeline));
 exports.GaussianBlurFilterPipeline = GaussianBlurFilterPipeline;
 
-},{"../../../pipelines":21,"./SinglePassGaussianBlurFilterStage":16}],18:[function(require,module,exports){
+},{"../../../pipelines":12,"./SinglePassGaussianBlurFilterStage":7}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1748,7 +802,7 @@ var SinglePassBilateralFilterStage = /** @class */ (function (_super) {
 }(pipelines_1.WebGL2Pipeline.ProcessingStage));
 exports.SinglePassBilateralFilterStage = SinglePassBilateralFilterStage;
 
-},{"../../../pipelines":21}],19:[function(require,module,exports){
+},{"../../../pipelines":12}],10:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1800,7 +854,7 @@ var PersonMaskUpscalePipeline = /** @class */ (function (_super) {
 }(pipelines_1.WebGL2Pipeline));
 exports.PersonMaskUpscalePipeline = PersonMaskUpscalePipeline;
 
-},{"../../../pipelines":21,"./SinglePassBilateralFilterStage":18}],20:[function(require,module,exports){
+},{"../../../pipelines":12,"./SinglePassBilateralFilterStage":9}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Pipeline = void 0;
@@ -1827,7 +881,7 @@ var Pipeline = /** @class */ (function () {
 }());
 exports.Pipeline = Pipeline;
 
-},{}],21:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebGL2Pipeline = exports.Pipeline = void 0;
@@ -1836,7 +890,7 @@ Object.defineProperty(exports, "Pipeline", { enumerable: true, get: function () 
 var webgl2pipeline_1 = require("./webgl2pipeline");
 Object.defineProperty(exports, "WebGL2Pipeline", { enumerable: true, get: function () { return webgl2pipeline_1.WebGL2Pipeline; } });
 
-},{"./Pipeline":20,"./webgl2pipeline":24}],22:[function(require,module,exports){
+},{"./Pipeline":11,"./webgl2pipeline":15}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebGL2PipelineInputStage = void 0;
@@ -1883,7 +937,7 @@ var WebGL2PipelineInputStage = /** @class */ (function () {
 }());
 exports.WebGL2PipelineInputStage = WebGL2PipelineInputStage;
 
-},{"./webgl2PipelineHelpers":25}],23:[function(require,module,exports){
+},{"./webgl2PipelineHelpers":16}],14:[function(require,module,exports){
 "use strict";
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
@@ -1987,7 +1041,7 @@ var WebGL2PipelineProcessingStage = /** @class */ (function () {
 }());
 exports.WebGL2PipelineProcessingStage = WebGL2PipelineProcessingStage;
 
-},{"./webgl2PipelineHelpers":25}],24:[function(require,module,exports){
+},{"./webgl2PipelineHelpers":16}],15:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -2034,7 +1088,7 @@ var WebGL2Pipeline = /** @class */ (function (_super) {
 }(Pipeline_1.Pipeline));
 exports.WebGL2Pipeline = WebGL2Pipeline;
 
-},{"../Pipeline":20,"./WebGL2PipelineInputStage":22,"./WebGL2PipelineProcessingStage":23}],25:[function(require,module,exports){
+},{"../Pipeline":11,"./WebGL2PipelineInputStage":13,"./WebGL2PipelineProcessingStage":14}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initBuffer = exports.createTexture = exports.compileShader = exports.createProgram = exports.createPipelineStageProgram = void 0;
@@ -2108,37 +1162,7 @@ function initBuffer(gl, data) {
 }
 exports.initBuffer = initBuffer;
 
-},{}],26:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ImageFit = void 0;
-/**
- * ImageFit specifies the positioning of an image inside a viewport.
- */
-var ImageFit;
-(function (ImageFit) {
-    /**
-     * Scale the image up or down to fill the viewport while preserving the aspect ratio.
-     * The image will be fully visible but will add empty space in the viewport if
-     * aspect ratios do not match.
-     */
-    ImageFit["Contain"] = "Contain";
-    /**
-     * Scale the image to fill both height and width of the viewport while preserving
-     * the aspect ratio, but will crop the image if aspect ratios do not match.
-     */
-    ImageFit["Cover"] = "Cover";
-    /**
-     * Stretches the image to fill the viewport regardless of aspect ratio.
-     */
-    ImageFit["Fill"] = "Fill";
-    /**
-     * Ignore height and width and use the original size.
-     */
-    ImageFit["None"] = "None";
-})(ImageFit || (exports.ImageFit = ImageFit = {}));
-
-},{}],27:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -2224,7 +1248,7 @@ var Benchmark = /** @class */ (function () {
 }());
 exports.Benchmark = Benchmark;
 
-},{}],28:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -2412,7 +1436,7 @@ var TwilioTFLite = /** @class */ (function () {
 }());
 exports.TwilioTFLite = TwilioTFLite;
 
-},{}],29:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
@@ -2485,17 +1509,7 @@ exports.isCanvasBlurSupported = (function () {
  */
 exports.isSupported = isBrowserSupported();
 
-},{}],30:[function(require,module,exports){
-"use strict";
-// This file is generated on build. To make changes, see scripts/version.js
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.version = void 0;
-/**
- * The current version of the library.
- */
-exports.version = '3.0.0-preview.1';
-
-},{}],31:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -2860,4 +1874,4 @@ exports.version = '3.0.0-preview.1';
 }));
 
 
-},{}]},{},[2]);
+},{}]},{},[4]);
