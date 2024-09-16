@@ -3,7 +3,7 @@ declare function importScripts(path: string): any;
 const fixWorkerBasePathForFetch = (basePath: string) => {
   const fetchOrig = fetch;
   // @ts-ignore
-  fetch = (url: string, init?: RequestInit) =>
+  fetch = (url: string, init?: RequestInit) => // eslint-disable-line no-global-assign
     fetchOrig(`${basePath}${url}`, init);
 };
 
