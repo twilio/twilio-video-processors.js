@@ -1,3 +1,17 @@
+3.0.0-preview.2 (September 16, 2024)
+====================================
+
+* The web workers can now be hosted on a different domain than that of the application, provided the `Access-Control-Allow-Origin` response header points to the domain of the application.
+  ```ts
+  import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+
+  /* Application is running at https://appserver.com/app */
+
+  const processor = new GaussianBlurBackgroundProcessor({
+    assetsPath: "https://assetsserver.com/path/to/assets"
+  });
+  ```
+
 3.0.0-preview.1 (August 13, 2024)
 =================================
 

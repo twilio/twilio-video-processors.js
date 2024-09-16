@@ -1,5 +1,6 @@
 import { Remote, wrap } from 'comlink';
 import { TWILIO_GAUSSIAN_BLUR_BACKGROUND_PROCESSOR_PIPELINE_WORKER } from '../../../../constants';
+import { CorsWorker } from '../../../../utils/CorsWorker';
 import { BackgroundProcessorPipelineProxy } from './BackgroundProcessorPipeline.proxy';
 import { GaussianBlurBackgroundProcessorPipeline, GaussianBlurBackgroundProcessorPipelineOptions } from './GaussianBlurBackgroundProcessorPipeline';
 
@@ -14,10 +15,13 @@ export class GaussianBlurBackgroundProcessorPipelineProxy extends BackgroundProc
   constructor(
     options: GaussianBlurBackgroundProcessorPipelineOptions
   ) {
-    GaussianBlurBackgroundProcessorPipelineWorker ||= wrap<typeof GaussianBlurBackgroundProcessorPipeline>(
-      new Worker(`${options.assetsPath}${TWILIO_GAUSSIAN_BLUR_BACKGROUND_PROCESSOR_PIPELINE_WORKER}`)
+    const corsWorker = new CorsWorker(
+      `${options.assetsPath}${TWILIO_GAUSSIAN_BLUR_BACKGROUND_PROCESSOR_PIPELINE_WORKER}`
     );
-    const pipelineWorkerPromise = new GaussianBlurBackgroundProcessorPipelineWorker(options);
+    const pipelineWorkerPromise = corsWorker.workerPromise.then((worker) => {
+      GaussianBlurBackgroundProcessorPipelineWorker ||= wrap<typeof GaussianBlurBackgroundProcessorPipeline>(worker);
+      return new GaussianBlurBackgroundProcessorPipelineWorker(options);
+    });
     super(pipelineWorkerPromise);
     this._pipelineWorkerPromise = pipelineWorkerPromise;
   }
