@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 3.0.0-preview.1
+/*! twilio-video-processors.js 3.0.0-preview.2
 
 The following license applies to all parts of this software except as
 documented below.

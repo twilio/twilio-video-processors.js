@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 3.0.0-preview.1
+/*! twilio-video-processors.js 3.0.0-preview.2
 
 The following license applies to all parts of this software except as
 documented below.
@@ -81,7 +81,7 @@ if (typeof window !== 'undefined') {
     window.Twilio.VideoProcessors = __assign(__assign({}, window.Twilio.VideoProcessors), { GaussianBlurBackgroundProcessor: GaussianBlurBackgroundProcessor_1.GaussianBlurBackgroundProcessor, ImageFit: types_1.ImageFit, isSupported: support_1.isSupported, version: version_1.version, VirtualBackgroundProcessor: VirtualBackgroundProcessor_1.VirtualBackgroundProcessor });
 }
 
-},{"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./types":26,"./utils/support":29,"./utils/version":30}],3:[function(require,module,exports){
+},{"./processors/background/GaussianBlurBackgroundProcessor":5,"./processors/background/VirtualBackgroundProcessor":6,"./types":26,"./utils/support":30,"./utils/version":31}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Processor = void 0;
@@ -471,7 +471,7 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
 }(BackgroundProcessor_1.BackgroundProcessor));
 exports.GaussianBlurBackgroundProcessor = GaussianBlurBackgroundProcessor;
 
-},{"../../constants":1,"../../utils/support":29,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],6:[function(require,module,exports){
+},{"../../constants":1,"../../utils/support":30,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -625,7 +625,7 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
 }(BackgroundProcessor_1.BackgroundProcessor));
 exports.VirtualBackgroundProcessor = VirtualBackgroundProcessor;
 
-},{"../../constants":1,"../../types":26,"../../utils/support":29,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],7:[function(require,module,exports){
+},{"../../constants":1,"../../types":26,"../../utils/support":30,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -808,7 +808,7 @@ var BackgroundProcessorPipeline = /** @class */ (function (_super) {
 }(pipelines_1.Pipeline));
 exports.BackgroundProcessorPipeline = BackgroundProcessorPipeline;
 
-},{"../../../../constants":1,"../../../../utils/Benchmark":27,"../../../../utils/TwilioTFLite":28,"../../../../utils/support":29,"../../../pipelines":21,"./InputFrameDownscaleStage":11,"./PostProcessingStage":12}],8:[function(require,module,exports){
+},{"../../../../constants":1,"../../../../utils/Benchmark":27,"../../../../utils/TwilioTFLite":29,"../../../../utils/support":30,"../../../pipelines":21,"./InputFrameDownscaleStage":11,"./PostProcessingStage":12}],8:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -923,7 +923,7 @@ var BackgroundProcessorPipelineProxy = /** @class */ (function () {
 }());
 exports.BackgroundProcessorPipelineProxy = BackgroundProcessorPipelineProxy;
 
-},{"../../../../utils/Benchmark":27,"comlink":31}],9:[function(require,module,exports){
+},{"../../../../utils/Benchmark":27,"comlink":32}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1028,7 +1028,7 @@ var GaussianBlurBackgroundProcessorPipeline = /** @class */ (function (_super) {
 }(BackgroundProcessorPipeline_1.BackgroundProcessorPipeline));
 exports.GaussianBlurBackgroundProcessorPipeline = GaussianBlurBackgroundProcessorPipeline;
 
-},{"../../../../utils/support":29,"../gaussianblurfilterpipeline":17,"./BackgroundProcessorPipeline":7}],10:[function(require,module,exports){
+},{"../../../../utils/support":30,"../gaussianblurfilterpipeline":17,"./BackgroundProcessorPipeline":7}],10:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1085,6 +1085,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GaussianBlurBackgroundProcessorPipelineProxy = void 0;
 var comlink_1 = require("comlink");
 var constants_1 = require("../../../../constants");
+var CorsWorker_1 = require("../../../../utils/CorsWorker");
 var BackgroundProcessorPipeline_proxy_1 = require("./BackgroundProcessorPipeline.proxy");
 var GaussianBlurBackgroundProcessorPipelineWorker;
 /**
@@ -1094,8 +1095,11 @@ var GaussianBlurBackgroundProcessorPipelineProxy = /** @class */ (function (_sup
     __extends(GaussianBlurBackgroundProcessorPipelineProxy, _super);
     function GaussianBlurBackgroundProcessorPipelineProxy(options) {
         var _this = this;
-        GaussianBlurBackgroundProcessorPipelineWorker || (GaussianBlurBackgroundProcessorPipelineWorker = (0, comlink_1.wrap)(new Worker("".concat(options.assetsPath).concat(constants_1.TWILIO_GAUSSIAN_BLUR_BACKGROUND_PROCESSOR_PIPELINE_WORKER))));
-        var pipelineWorkerPromise = new GaussianBlurBackgroundProcessorPipelineWorker(options);
+        var corsWorker = new CorsWorker_1.CorsWorker("".concat(options.assetsPath).concat(constants_1.TWILIO_GAUSSIAN_BLUR_BACKGROUND_PROCESSOR_PIPELINE_WORKER));
+        var pipelineWorkerPromise = corsWorker.workerPromise.then(function (worker) {
+            GaussianBlurBackgroundProcessorPipelineWorker || (GaussianBlurBackgroundProcessorPipelineWorker = (0, comlink_1.wrap)(worker));
+            return new GaussianBlurBackgroundProcessorPipelineWorker(options);
+        });
         _this = _super.call(this, pipelineWorkerPromise) || this;
         _this._pipelineWorkerPromise = pipelineWorkerPromise;
         return _this;
@@ -1117,7 +1121,7 @@ var GaussianBlurBackgroundProcessorPipelineProxy = /** @class */ (function (_sup
 }(BackgroundProcessorPipeline_proxy_1.BackgroundProcessorPipelineProxy));
 exports.GaussianBlurBackgroundProcessorPipelineProxy = GaussianBlurBackgroundProcessorPipelineProxy;
 
-},{"../../../../constants":1,"./BackgroundProcessorPipeline.proxy":8,"comlink":31}],11:[function(require,module,exports){
+},{"../../../../constants":1,"../../../../utils/CorsWorker":28,"./BackgroundProcessorPipeline.proxy":8,"comlink":32}],11:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -1442,6 +1446,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VirtualBackgroundProcessorPipelineProxy = void 0;
 var comlink_1 = require("comlink");
 var constants_1 = require("../../../../constants");
+var CorsWorker_1 = require("../../../../utils/CorsWorker");
 var BackgroundProcessorPipeline_proxy_1 = require("./BackgroundProcessorPipeline.proxy");
 var VirtualBackgroundProcessorPipelineWorker;
 /**
@@ -1451,8 +1456,11 @@ var VirtualBackgroundProcessorPipelineProxy = /** @class */ (function (_super) {
     __extends(VirtualBackgroundProcessorPipelineProxy, _super);
     function VirtualBackgroundProcessorPipelineProxy(options) {
         var _this = this;
-        VirtualBackgroundProcessorPipelineWorker || (VirtualBackgroundProcessorPipelineWorker = (0, comlink_1.wrap)(new Worker("".concat(options.assetsPath).concat(constants_1.TWILIO_VIRTUAL_BACKGROUND_PROCESSOR_PIPELINE_WORKER))));
-        var pipelineWorkerPromise = new VirtualBackgroundProcessorPipelineWorker(options);
+        var corsWorker = new CorsWorker_1.CorsWorker("".concat(options.assetsPath).concat(constants_1.TWILIO_VIRTUAL_BACKGROUND_PROCESSOR_PIPELINE_WORKER));
+        var pipelineWorkerPromise = corsWorker.workerPromise.then(function (worker) {
+            VirtualBackgroundProcessorPipelineWorker || (VirtualBackgroundProcessorPipelineWorker = (0, comlink_1.wrap)(worker));
+            return new VirtualBackgroundProcessorPipelineWorker(options);
+        });
         _this = _super.call(this, pipelineWorkerPromise) || this;
         _this._pipelineWorkerPromise = pipelineWorkerPromise;
         return _this;
@@ -1487,7 +1495,7 @@ var VirtualBackgroundProcessorPipelineProxy = /** @class */ (function (_super) {
 }(BackgroundProcessorPipeline_proxy_1.BackgroundProcessorPipelineProxy));
 exports.VirtualBackgroundProcessorPipelineProxy = VirtualBackgroundProcessorPipelineProxy;
 
-},{"../../../../constants":1,"./BackgroundProcessorPipeline.proxy":8,"comlink":31}],15:[function(require,module,exports){
+},{"../../../../constants":1,"../../../../utils/CorsWorker":28,"./BackgroundProcessorPipeline.proxy":8,"comlink":32}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VirtualBackgroundProcessorPipelineProxy = exports.VirtualBackgroundProcessorPipeline = exports.GaussianBlurBackgroundProcessorPipelineProxy = exports.GaussianBlurBackgroundProcessorPipeline = exports.BackgroundProcessorPipelineProxy = exports.BackgroundProcessorPipeline = void 0;
@@ -2263,6 +2271,106 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CorsWorker = void 0;
+var fixWorkerBasePathForFetch = function (basePath) {
+    var fetchOrig = fetch;
+    // @ts-ignore
+    fetch = function (url, init) {
+        return fetchOrig("".concat(basePath).concat(url), init);
+    };
+};
+var fixWorkerBasePathForImportScripts = function (basePath) {
+    var importScriptsOrig = importScripts;
+    // @ts-ignore
+    importScripts = function (url) {
+        return importScriptsOrig("".concat(basePath).concat(url));
+    };
+};
+var CorsWorker = /** @class */ (function () {
+    function CorsWorker(url) {
+        if (!/:\/\//.test(url) || new RegExp("^".concat(window.location.origin)).test(url)) {
+            this.workerPromise = this._loadSameOrigin(url);
+        }
+        else {
+            this.workerPromise = this._loadCrossOrigin(url);
+        }
+    }
+    CorsWorker.prototype._loadCrossOrigin = function (url) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response, code, type, basePath, dataUrl, dataBlob, workerUrl;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, fetch(url)];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, response.text()];
+                    case 2:
+                        code = _a.sent();
+                        type = 'application/javascript';
+                        basePath = "".concat(url.split('/').slice(0, -1).join('/'), "/");
+                        dataUrl = [
+                            "data:".concat(type, ","),
+                            encodeURIComponent("(".concat(fixWorkerBasePathForFetch, ")(\"").concat(basePath, "\");")),
+                            encodeURIComponent("(".concat(fixWorkerBasePathForImportScripts, ")(\"").concat(basePath, "\");")),
+                            encodeURIComponent(code),
+                        ].join('');
+                        dataBlob = new Blob(["importScripts(\"".concat(dataUrl, "\")")], { type: type });
+                        workerUrl = URL.createObjectURL(dataBlob);
+                        return [2 /*return*/, new Worker(workerUrl)];
+                }
+            });
+        });
+    };
+    CorsWorker.prototype._loadSameOrigin = function (url) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, new Worker(url)];
+            });
+        });
+    };
+    return CorsWorker;
+}());
+exports.CorsWorker = CorsWorker;
+
+},{}],29:[function(require,module,exports){
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.TwilioTFLite = void 0;
 var isWebWorker = typeof WorkerGlobalScope !== 'undefined'
     && self instanceof WorkerGlobalScope;
@@ -2412,7 +2520,7 @@ var TwilioTFLite = /** @class */ (function () {
 }());
 exports.TwilioTFLite = TwilioTFLite;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
@@ -2485,7 +2593,7 @@ exports.isCanvasBlurSupported = (function () {
  */
 exports.isSupported = isBrowserSupported();
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 "use strict";
 // This file is generated on build. To make changes, see scripts/version.js
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2493,9 +2601,9 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '3.0.0-preview.1';
+exports.version = '3.0.0-preview.2';
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
