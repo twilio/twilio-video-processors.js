@@ -1,8 +1,5 @@
 # Twilio Video Processors
 
-> [!WARNING]  
-> We are no longer allowing new customers to onboard to Twilio Video. Effective **December 5th, 2026**, Twilio Video will End of Life (EOL) and will cease to function for all customers. Customers may transition to any video provider they choose, however, we are recommending customers migrate to the Zoom Video SDK and we have prepared a [Migration Guide](https://developers.zoom.us/docs/video-sdk/twilio/). Additional information on this EOL is available in our Help Center [here](https://help.twilio.com/articles/24158233644443-Programmable-Video-End-of-Life-Extension).
-
 Twilio Video Processors is a collection of video processing tools which can be used with [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) to apply transformations and filters to a VideoTrack.
 
 &nbsp;&nbsp; [See it live here!](https://twilio.github.io/twilio-video-processors.js/examples/virtualbackground/)
