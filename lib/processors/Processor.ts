@@ -11,6 +11,6 @@ export abstract class Processor {
    * @param outputFrameBuffer - The output frame buffer to use to draw the processed frame.
    */
   abstract processFrame(
-    inputFrameBuffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement,
+    inputFrameBuffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame,
     outputFrameBuffer: HTMLCanvasElement): Promise<void> | void;
 }

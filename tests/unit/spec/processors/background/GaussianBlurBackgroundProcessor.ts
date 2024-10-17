@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { GaussianBlurBackgroundProcessor } from '../../../../../lib/processors/background/GaussianBlurBackgroundProcessor';
+import { GaussianBlurBackgroundProcessor } from '../../../../../lib';
 import { BLUR_FILTER_RADIUS } from '../../../../../lib/constants';
 
 describe('GaussianBlurBackgroundProcessor', () => {

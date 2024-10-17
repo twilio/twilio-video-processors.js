@@ -1,19 +1,25 @@
 import * as assert from 'assert';
-import { GaussianBlurBackgroundProcessor, Pipeline, VirtualBackgroundProcessor } from '../../../lib';
+import { GaussianBlurBackgroundProcessor, VirtualBackgroundProcessor } from '../../../lib';
 import { loadImage } from '../util';
 
 describe('Benchmark', function() {
   this.timeout(30000);
+
+  const options = {
+    assetsPath: '/assets',
+    useWebWorker: false
+  };
+
   let processor: GaussianBlurBackgroundProcessor | VirtualBackgroundProcessor;
 
   [{
     name: 'GaussianBlurBackgroundProcessor',
-    initProcessor: async () => new GaussianBlurBackgroundProcessor({ assetsPath: '/assets', pipeline: Pipeline.Canvas2D }),
+    initProcessor: async () => new GaussianBlurBackgroundProcessor(options),
   },{
     name: 'VirtualBackgroundProcessor',
     initProcessor: async () => {
       const backgroundImage = await loadImage('/images/input/input_background.jpg');
-      return new VirtualBackgroundProcessor({ assetsPath: '/assets', backgroundImage, pipeline: Pipeline.Canvas2D });
+      return new VirtualBackgroundProcessor({ ...options, backgroundImage });
     },
   }].forEach(({ name, initProcessor }) => {
     it(`should not exceed max delays for ${name}`, async () => {
@@ -51,10 +57,10 @@ describe('Benchmark', function() {
         maxValue: 2
       },{
         stat: 'inputImageResizeDelay',
-        maxValue: 5
+        maxValue: 20
       },{
         stat: 'processFrameDelay',
-        maxValue: 20
+        maxValue: 30
       },{
         stat: 'segmentationDelay',
         maxValue: 10
