@@ -65,7 +65,7 @@ describe('VirtualBackgroundProcessor', () => {
   });
 
   describe('_getFitPosition', () => {
-    const options = { assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }} as any;
+    const options = { assetsPath: 'foo', backgroundImage: { complete: true, naturalHeight: 1 }, useWebWorker: false } as any;
     let processor: VirtualBackgroundProcessor;
 
     beforeEach(() => {

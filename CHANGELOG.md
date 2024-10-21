@@ -1,3 +1,8 @@
+3.0.0-beta.1 (in progress)
+==========================
+
+* Web workers are now supported for Firefox and Safari.
+
 3.0.0-preview.2 (September 16, 2024)
 ====================================
 
@@ -15,7 +20,7 @@
 3.0.0-preview.1 (August 13, 2024)
 =================================
 
-*This version works with `twilio-video` SDK versions `2.29.0` and above.*
+*The 3.x version of the Video Processors SDK works with `twilio-video` SDK versions `2.29.0` and above.*
 
 API Changes
 -----------

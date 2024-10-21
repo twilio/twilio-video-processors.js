@@ -20,7 +20,7 @@ export class BackgroundProcessorPipelineProxy {
     return pipelineWorker.loadTwilioTFLite();
   }
 
-  async render(inputFrame: VideoFrame): Promise<ImageBitmap | null> {
+  async render(inputFrame: VideoFrame | ImageBitmap): Promise<ImageBitmap | null> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     const outputFrame = await pipelineWorker.render(
       transfer(inputFrame, [inputFrame])

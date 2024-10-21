@@ -109,7 +109,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
 
     const { height, width } = isInputVideoFrame
       ? { height: inputFrame.displayHeight, width: inputFrame.displayWidth }
-      : inputFrame as (OffscreenCanvas | HTMLCanvasElement);
+      : inputFrame as (OffscreenCanvas | HTMLCanvasElement | ImageBitmap);
 
     let didResizeWebGL2Canvas = false;
     if (_outputCanvas.width !== width) {
@@ -153,8 +153,8 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     );
     _benchmark.end('imageCompositionDelay');
 
-    if (typeof VideoFrame === 'function'
-      && inputFrame instanceof VideoFrame) {
+    if ((typeof VideoFrame === 'function' && inputFrame instanceof VideoFrame)
+      || (typeof ImageBitmap === 'function' && inputFrame instanceof ImageBitmap)) {
       inputFrame.close();
     }
 
