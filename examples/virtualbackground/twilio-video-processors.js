@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 3.0.0-preview.2
+/*! twilio-video-processors.js 3.0.0-rc.1
 
 The following license applies to all parts of this software except as
 documented below.
@@ -324,7 +324,9 @@ var BackgroundProcessor = /** @class */ (function (_super) {
                         _c = _d.sent();
                         return [3 /*break*/, 4];
                     case 2: return [4 /*yield*/, _backgroundProcessorPipeline
-                            .render(inputFrame)];
+                            .render(inputFrame instanceof OffscreenCanvas
+                            ? inputFrame.transferToImageBitmap()
+                            : inputFrame)];
                     case 3:
                         _c = _d.sent();
                         _d.label = 4;
@@ -370,7 +372,6 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GaussianBlurBackgroundProcessor = void 0;
 var constants_1 = require("../../constants");
-var support_1 = require("../../utils/support");
 var BackgroundProcessor_1 = require("./BackgroundProcessor");
 var backgroundprocessorpipeline_1 = require("./pipelines/backgroundprocessorpipeline");
 /**
@@ -426,7 +427,7 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
         var assetsPath = options
             .assetsPath
             .replace(/([^/])$/, '$1/');
-        var BackgroundProcessorPipelineOrProxy = useWebWorker && (0, support_1.isChromiumImageBitmap)()
+        var BackgroundProcessorPipelineOrProxy = useWebWorker
             ? backgroundprocessorpipeline_1.GaussianBlurBackgroundProcessorPipelineProxy
             : backgroundprocessorpipeline_1.GaussianBlurBackgroundProcessorPipeline;
         var backgroundProcessorPipeline = new BackgroundProcessorPipelineOrProxy({
@@ -471,7 +472,7 @@ var GaussianBlurBackgroundProcessor = /** @class */ (function (_super) {
 }(BackgroundProcessor_1.BackgroundProcessor));
 exports.GaussianBlurBackgroundProcessor = GaussianBlurBackgroundProcessor;
 
-},{"../../constants":1,"../../utils/support":30,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],6:[function(require,module,exports){
+},{"../../constants":1,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -492,7 +493,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VirtualBackgroundProcessor = void 0;
 var types_1 = require("../../types");
 var constants_1 = require("../../constants");
-var support_1 = require("../../utils/support");
 var BackgroundProcessor_1 = require("./BackgroundProcessor");
 var backgroundprocessorpipeline_1 = require("./pipelines/backgroundprocessorpipeline");
 /**
@@ -552,7 +552,7 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
         var assetsPath = options
             .assetsPath
             .replace(/([^/])$/, '$1/');
-        var VirtualBackgroundProcessorPipelineOrProxy = useWebWorker && (0, support_1.isChromiumImageBitmap)()
+        var VirtualBackgroundProcessorPipelineOrProxy = useWebWorker
             ? backgroundprocessorpipeline_1.VirtualBackgroundProcessorPipelineProxy
             : backgroundprocessorpipeline_1.VirtualBackgroundProcessorPipeline;
         var backgroundProcessorPipeline = new VirtualBackgroundProcessorPipelineOrProxy({
@@ -625,7 +625,7 @@ var VirtualBackgroundProcessor = /** @class */ (function (_super) {
 }(BackgroundProcessor_1.BackgroundProcessor));
 exports.VirtualBackgroundProcessor = VirtualBackgroundProcessor;
 
-},{"../../constants":1,"../../types":26,"../../utils/support":30,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],7:[function(require,module,exports){
+},{"../../constants":1,"../../types":26,"./BackgroundProcessor":4,"./pipelines/backgroundprocessorpipeline":15}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -777,8 +777,8 @@ var BackgroundProcessorPipeline = /** @class */ (function (_super) {
                         _benchmark.start('imageCompositionDelay');
                         postProcessingStage.render(inputFrame, personMask);
                         _benchmark.end('imageCompositionDelay');
-                        if (typeof VideoFrame === 'function'
-                            && inputFrame instanceof VideoFrame) {
+                        if ((typeof VideoFrame === 'function' && inputFrame instanceof VideoFrame)
+                            || (typeof ImageBitmap === 'function' && inputFrame instanceof ImageBitmap)) {
                             inputFrame.close();
                         }
                         return [2 /*return*/, this._outputCanvas];
@@ -2601,7 +2601,7 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '3.0.0-preview.2';
+exports.version = '3.0.0-rc.1';
 
 },{}],32:[function(require,module,exports){
 (function (global, factory) {

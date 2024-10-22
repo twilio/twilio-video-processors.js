@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 3.0.0-preview.2
+/*! twilio-video-processors.js 3.0.0-rc.1
 
 The following license applies to all parts of this software except as
 documented below.
@@ -203,8 +203,8 @@ var BackgroundProcessorPipeline = /** @class */ (function (_super) {
                         _benchmark.start('imageCompositionDelay');
                         postProcessingStage.render(inputFrame, personMask);
                         _benchmark.end('imageCompositionDelay');
-                        if (typeof VideoFrame === 'function'
-                            && inputFrame instanceof VideoFrame) {
+                        if ((typeof VideoFrame === 'function' && inputFrame instanceof VideoFrame)
+                            || (typeof ImageBitmap === 'function' && inputFrame instanceof ImageBitmap)) {
                             inputFrame.close();
                         }
                         return [2 /*return*/, this._outputCanvas];
