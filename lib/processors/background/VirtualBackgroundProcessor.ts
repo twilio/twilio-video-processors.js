@@ -1,5 +1,7 @@
+import { ImageFit } from '../../types';
+import { MASK_BLUR_RADIUS } from '../../constants';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
-import { ImageFit, WebGL2PipelineType } from '../../types';
+import { VirtualBackgroundProcessorPipeline, VirtualBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
 /**
  * Options passed to [[VirtualBackgroundProcessor]] constructor.
@@ -35,24 +37,15 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { Pipeline, VirtualBackgroundProcessor } from '@twilio/video-processors';
- * import { simd } from 'wasm-feature-detect';
+ * import { VirtualBackgroundProcessor } from '@twilio/video-processors';
  *
  * let virtualBackground: VirtualBackgroundProcessor;
  * const img = new Image();
  *
  * img.onload = async () => {
- *   const isWasmSimdSupported = await simd();
- *
  *   virtualBackground = new VirtualBackgroundProcessor({
  *     assetsPath: 'https://my-server-path/assets',
- *     backgroundImage: img,
- *
- *     // Enable debounce only if the browser does not support
- *     // WASM SIMD in order to retain an acceptable frame rate.
- *     debounce: !isWasmSimdSupported,
- *
- *     pipeline: Pipeline.WebGL2,
+ *     backgroundImage: img
  *   });
  *   await virtualBackground.loadModel();
  *
@@ -69,8 +62,8 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  *     frameRate: 24
  *   });
  *   track.addProcessor(virtualBackground, {
- *     inputFrameBufferType: 'video',
- *     outputFrameBufferContextType: 'webgl2',
+ *     inputFrameBufferType: 'videoframe',
+ *     outputFrameBufferContextType: 'bitmaprenderer'
  *   });
  * };
  *
@@ -78,7 +71,7 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  * ```
  */
 export class VirtualBackgroundProcessor extends BackgroundProcessor {
-
+  private _backgroundImage!: HTMLImageElement;
   private _fitType!: ImageFit;
   // tslint:disable-next-line no-unused-variable
   private readonly _name: string = 'VirtualBackgroundProcessor';
@@ -89,16 +82,43 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
    * and invalid properties will be ignored.
    */
   constructor(options: VirtualBackgroundProcessorOptions) {
-    super(options);
-    this.backgroundImage = options.backgroundImage;
-    this.fitType = options.fitType!;
+    const {
+      backgroundImage,
+      deferInputFrameDownscale = false,
+      fitType = ImageFit.Fill,
+      maskBlurRadius = MASK_BLUR_RADIUS,
+      useWebWorker = true
+    } = options;
+
+    const assetsPath = options
+      .assetsPath
+      .replace(/([^/])$/, '$1/');
+
+    const VirtualBackgroundProcessorPipelineOrProxy = useWebWorker
+      ? VirtualBackgroundProcessorPipelineProxy
+      : VirtualBackgroundProcessorPipeline;
+
+    const backgroundProcessorPipeline = new VirtualBackgroundProcessorPipelineOrProxy({
+      assetsPath,
+      deferInputFrameDownscale,
+      fitType,
+      maskBlurRadius
+    });
+
+    super(
+      backgroundProcessorPipeline,
+      options
+    );
+
+    this.backgroundImage = backgroundImage;
+    this.fitType = fitType;
   }
 
   /**
    * The HTMLImageElement representing the current background image.
    */
   get backgroundImage(): HTMLImageElement {
-    return this._backgroundImage!;
+    return this._backgroundImage;
   }
 
   /**
@@ -112,10 +132,12 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       throw new Error('Invalid image. Make sure that the image is an HTMLImageElement and has been successfully loaded');
     }
     this._backgroundImage = image;
-
-    // Triggers recreation of the pipeline in the next processFrame call
-    this._webgl2Pipeline?.cleanUp();
-    this._webgl2Pipeline = null;
+    createImageBitmap(this._backgroundImage).then(
+      (imageBitmap) => (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline | VirtualBackgroundProcessorPipelineProxy)
+        .setBackgroundImage(imageBitmap)
+    ).catch(() => {
+      /* noop */
+    });
   }
 
   /**
@@ -130,67 +152,15 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
    */
   set fitType(fitType: ImageFit) {
     const validTypes = Object.keys(ImageFit);
-    if (!validTypes.includes(fitType as any)) {
+    if (!validTypes.includes(fitType as string)) {
       console.warn(`Valid fitType not found. Using '${ImageFit.Fill}' as default.`);
       fitType = ImageFit.Fill;
     }
     this._fitType = fitType;
-  }
-
-  protected _getWebGL2PipelineType(): WebGL2PipelineType {
-    return WebGL2PipelineType.Image;
-  }
-
-  protected _setBackground(): void {
-    if (!this._outputContext || !this._outputCanvas) {
-      return;
-    }
-    const img = this._backgroundImage!;
-    const imageWidth = img.naturalWidth;
-    const imageHeight = img.naturalHeight;
-    const canvasWidth = this._outputCanvas.width;
-    const canvasHeight = this._outputCanvas.height;
-    const ctx = this._outputContext as CanvasRenderingContext2D;
-
-    if (this._fitType === ImageFit.Fill) {
-      ctx.drawImage(img, 0, 0, imageWidth, imageHeight, 0, 0, canvasWidth, canvasHeight);
-    } else if (this._fitType === ImageFit.None) {
-      ctx.drawImage(img, 0, 0, imageWidth, imageHeight);
-    } else if (this._fitType === ImageFit.Contain) {
-      const { x, y, w, h } = this._getFitPosition(imageWidth, imageHeight, canvasWidth, canvasHeight, ImageFit.Contain);
-      ctx.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
-    } else if (this._fitType === ImageFit.Cover) {
-      const { x, y, w, h } = this._getFitPosition(imageWidth, imageHeight, canvasWidth, canvasHeight, ImageFit.Cover);
-      ctx.drawImage(img, 0, 0, imageWidth, imageHeight, x, y, w, h);
-    }
-  }
-
-  private _getFitPosition(contentWidth: number, contentHeight: number,
-    viewportWidth: number, viewportHeight: number, type: ImageFit)
-      : { h: number, w: number, x: number, y: number } {
-
-    // Calculate new content width to fit viewport width
-    let factor = viewportWidth / contentWidth;
-    let newContentWidth = viewportWidth;
-    let newContentHeight = factor * contentHeight;
-
-    // Scale down the resulting height and width more
-    // to fit viewport height if the content still exceeds it
-    if ((type === ImageFit.Contain && newContentHeight > viewportHeight)
-      || (type === ImageFit.Cover && viewportHeight > newContentHeight)) {
-      factor = viewportHeight / newContentHeight;
-      newContentWidth = factor * newContentWidth;
-      newContentHeight = viewportHeight;
-    }
-
-    // Calculate the destination top left corner to center the content
-    const x = (viewportWidth - newContentWidth) / 2;
-    const y = (viewportHeight - newContentHeight) / 2;
-
-    return {
-      x, y,
-      w: newContentWidth,
-      h: newContentHeight,
-    };
+    (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline | VirtualBackgroundProcessorPipelineProxy)
+      .setFitType(this._fitType)
+      .catch(() => {
+        /* noop */
+      });
   }
 }

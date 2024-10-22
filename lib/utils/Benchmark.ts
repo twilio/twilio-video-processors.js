@@ -50,6 +50,16 @@ export class Benchmark {
     return (timingCache.length / totalDelay) * 1000;
   }
 
+  merge(benchmark: Benchmark) {
+    const { _timingCache, _timings } = benchmark;
+    _timingCache.forEach(
+      (cache, name) => this._timingCache.set(name, cache)
+    );
+    _timings.forEach(
+      (timing, name) => this._timings.set(name, timing)
+    );
+  }
+
   start(name: string) {
     let timing = this._timings.get(name);
     if (!timing) {
