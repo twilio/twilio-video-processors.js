@@ -5,7 +5,7 @@ import { GaussianBlurBackgroundProcessorPipeline } from './GaussianBlurBackgroun
  * @private
  */
 export class GaussianBlurBackgroundProcessorPipelineWorker extends GaussianBlurBackgroundProcessorPipeline {
-  async render(inputFrame: VideoFrame): Promise<ImageBitmap | null> {
+  async render(inputFrame: VideoFrame | ImageBitmap): Promise<ImageBitmap | null> {
     const outputFrame = await super.render(inputFrame);
 
     const outputBitmap = outputFrame instanceof OffscreenCanvas

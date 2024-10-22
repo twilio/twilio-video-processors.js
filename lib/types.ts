@@ -38,7 +38,7 @@ export type BilateralFilterConfig = {
 /**
  * @private
  */
-export type InputFrame = OffscreenCanvas | HTMLCanvasElement | VideoFrame;
+export type InputFrame = OffscreenCanvas | HTMLCanvasElement | VideoFrame | ImageBitmap;
 
 /**
  * ImageFit specifies the positioning of an image inside a viewport.

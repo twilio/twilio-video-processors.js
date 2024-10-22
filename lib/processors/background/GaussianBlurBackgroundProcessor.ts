@@ -1,5 +1,4 @@
 import { BLUR_FILTER_RADIUS, MASK_BLUR_RADIUS } from '../../constants';
-import { isChromiumImageBitmap } from '../../utils/support';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { GaussianBlurBackgroundProcessorPipeline, GaussianBlurBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
@@ -79,7 +78,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       .assetsPath
       .replace(/([^/])$/, '$1/');
 
-    const BackgroundProcessorPipelineOrProxy = useWebWorker && isChromiumImageBitmap()
+    const BackgroundProcessorPipelineOrProxy = useWebWorker
       ? GaussianBlurBackgroundProcessorPipelineProxy
       : GaussianBlurBackgroundProcessorPipeline;
 

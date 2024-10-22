@@ -257,7 +257,9 @@ export class BackgroundProcessor extends Processor {
           )
       : await (_backgroundProcessorPipeline as BackgroundProcessorPipelineProxy)
           .render(
-            inputFrame as VideoFrame
+            inputFrame instanceof OffscreenCanvas
+              ? inputFrame.transferToImageBitmap()
+              : (inputFrame as VideoFrame)
           );
 
     if (_outputFrameBufferContext instanceof ImageBitmapRenderingContext) {

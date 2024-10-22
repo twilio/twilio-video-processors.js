@@ -1,6 +1,5 @@
 import { ImageFit } from '../../types';
 import { MASK_BLUR_RADIUS } from '../../constants';
-import { isChromiumImageBitmap } from '../../utils/support';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { VirtualBackgroundProcessorPipeline, VirtualBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
@@ -95,7 +94,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       .assetsPath
       .replace(/([^/])$/, '$1/');
 
-    const VirtualBackgroundProcessorPipelineOrProxy = useWebWorker && isChromiumImageBitmap()
+    const VirtualBackgroundProcessorPipelineOrProxy = useWebWorker
       ? VirtualBackgroundProcessorPipelineProxy
       : VirtualBackgroundProcessorPipeline;
 
