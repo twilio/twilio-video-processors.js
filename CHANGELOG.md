@@ -1,5 +1,5 @@
-3.0.0-beta.1 (in progress)
-==========================
+3.0.0-beta.1 (December 4, 2024)
+===============================
 
 * Web workers are now supported for Firefox and Safari.
 
