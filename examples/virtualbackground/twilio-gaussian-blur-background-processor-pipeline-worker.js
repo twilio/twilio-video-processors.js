@@ -1,9 +1,9 @@
-/*! twilio-video-processors.js 3.0.0-rc.1
+/*! twilio-video-processors.js 3.0.0-beta.1
 
 The following license applies to all parts of this software except as
 documented below.
 
-    Copyright (C) 2022 Twilio Inc.
+    Copyright (C) 2025 Twilio Inc.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -1683,7 +1683,24 @@ exports.isSupported = isBrowserSupported();
             endpoint.close();
     }
     function wrap(ep, target) {
-        return createProxy(ep, [], target);
+        const pendingListeners = new Map();
+        ep.addEventListener("message", function handleMessage(ev) {
+            const { data } = ev;
+            if (!data || !data.id) {
+                return;
+            }
+            const resolver = pendingListeners.get(data.id);
+            if (!resolver) {
+                return;
+            }
+            try {
+                resolver(data);
+            }
+            finally {
+                pendingListeners.delete(data.id);
+            }
+        });
+        return createProxy(ep, pendingListeners, [], target);
     }
     function throwIfProxyReleased(isReleased) {
         if (isReleased) {
@@ -1691,7 +1708,7 @@ exports.isSupported = isBrowserSupported();
         }
     }
     function releaseEndpoint(ep) {
-        return requestResponseMessage(ep, {
+        return requestResponseMessage(ep, new Map(), {
             type: "RELEASE" /* MessageType.RELEASE */,
         }).then(() => {
             closeEndPoint(ep);
@@ -1718,7 +1735,7 @@ exports.isSupported = isBrowserSupported();
             proxyFinalizers.unregister(proxy);
         }
     }
-    function createProxy(ep, path = [], target = function () { }) {
+    function createProxy(ep, pendingListeners, path = [], target = function () { }) {
         let isProxyReleased = false;
         const proxy = new Proxy(target, {
             get(_target, prop) {
@@ -1727,6 +1744,7 @@ exports.isSupported = isBrowserSupported();
                     return () => {
                         unregisterProxy(proxy);
                         releaseEndpoint(ep);
+                        pendingListeners.clear();
                         isProxyReleased = true;
                     };
                 }
@@ -1734,20 +1752,20 @@ exports.isSupported = isBrowserSupported();
                     if (path.length === 0) {
                         return { then: () => proxy };
                     }
-                    const r = requestResponseMessage(ep, {
+                    const r = requestResponseMessage(ep, pendingListeners, {
                         type: "GET" /* MessageType.GET */,
                         path: path.map((p) => p.toString()),
                     }).then(fromWireValue);
                     return r.then.bind(r);
                 }
-                return createProxy(ep, [...path, prop]);
+                return createProxy(ep, pendingListeners, [...path, prop]);
             },
             set(_target, prop, rawValue) {
                 throwIfProxyReleased(isProxyReleased);
                 // FIXME: ES6 Proxy Handler `set` methods are supposed to return a
                 // boolean. To show good will, we return true asynchronously ¯\_(ツ)_/¯
                 const [value, transferables] = toWireValue(rawValue);
-                return requestResponseMessage(ep, {
+                return requestResponseMessage(ep, pendingListeners, {
                     type: "SET" /* MessageType.SET */,
                     path: [...path, prop].map((p) => p.toString()),
                     value,
@@ -1757,16 +1775,16 @@ exports.isSupported = isBrowserSupported();
                 throwIfProxyReleased(isProxyReleased);
                 const last = path[path.length - 1];
                 if (last === createEndpoint) {
-                    return requestResponseMessage(ep, {
+                    return requestResponseMessage(ep, pendingListeners, {
                         type: "ENDPOINT" /* MessageType.ENDPOINT */,
                     }).then(fromWireValue);
                 }
                 // We just pretend that `bind()` didn’t happen.
                 if (last === "bind") {
-                    return createProxy(ep, path.slice(0, -1));
+                    return createProxy(ep, pendingListeners, path.slice(0, -1));
                 }
                 const [argumentList, transferables] = processArguments(rawArgumentList);
-                return requestResponseMessage(ep, {
+                return requestResponseMessage(ep, pendingListeners, {
                     type: "APPLY" /* MessageType.APPLY */,
                     path: path.map((p) => p.toString()),
                     argumentList,
@@ -1775,7 +1793,7 @@ exports.isSupported = isBrowserSupported();
             construct(_target, rawArgumentList) {
                 throwIfProxyReleased(isProxyReleased);
                 const [argumentList, transferables] = processArguments(rawArgumentList);
-                return requestResponseMessage(ep, {
+                return requestResponseMessage(ep, pendingListeners, {
                     type: "CONSTRUCT" /* MessageType.CONSTRUCT */,
                     path: path.map((p) => p.toString()),
                     argumentList,
@@ -1837,16 +1855,10 @@ exports.isSupported = isBrowserSupported();
                 return value.value;
         }
     }
-    function requestResponseMessage(ep, msg, transfers) {
+    function requestResponseMessage(ep, pendingListeners, msg, transfers) {
         return new Promise((resolve) => {
             const id = generateUUID();
-            ep.addEventListener("message", function l(ev) {
-                if (!ev.data || !ev.data.id || ev.data.id !== id) {
-                    return;
-                }
-                ep.removeEventListener("message", l);
-                resolve(ev.data);
-            });
+            pendingListeners.set(id, resolve);
             if (ep.start) {
                 ep.start();
             }
