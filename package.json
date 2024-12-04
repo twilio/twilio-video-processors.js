@@ -2,7 +2,7 @@
   "name": "@twilio/video-processors",
   "title": "Twilio Video Processors",
   "description": "Twilio Video Processors JavaScript Library",
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0-dev",
   "homepage": "https://github.com/twilio/twilio-video-processors.js#readme",
   "author": "Charlie Santos <csantos@twilio.com>",
   "contributors": [
