@@ -33,7 +33,7 @@
         "cp -r examples dist/docs/examples",
         "cp -r dist/build/* dist/docs/examples/virtualbackground/",
         "mkdir -p dist/docs/versions/${RELEASE_VERSION}",
-        "cd dist/docs && cp -r $(ls | grep -v versions) versions/${RELEASE_VERSION}/",
+        "(cd dist/docs && cp -r $(ls | grep -v versions) versions/${RELEASE_VERSION}/)",
         "git stage dist/docs -f",
         "git commit -nm \"${RELEASE_VERSION}\"",
         "git subtree push --prefix dist/docs origin gh-pages",
