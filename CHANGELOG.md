@@ -20,7 +20,7 @@
 3.0.0-preview.1 (August 13, 2024)
 =================================
 
-*The 3.x version of the Video Processors SDK works with `twilio-video` SDK versions `2.29.0` and above.*
+Version 3 of the Video Processor introduces significant enhancements, delivering improved performance on low-powered devices. This version is compatible with twilio-video SDK versions *2.29.0 and later*.
 
 API Changes
 -----------
@@ -32,14 +32,14 @@ API Changes
     outputFrameBufferContextType: 'bitmaprenderer'
   });
   ```
+* [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html#processFrame) and [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html#processFrame)'s `processFrame` method now accepts an `inputFrameBuffer` of type `VideoFrame`.
+* Added the following APIs:
+  * [deferInputFrameDownscale](https://twilio.github.io/twilio-video-processors.js/interfaces/VirtualBackgroundProcessorOptions.html#deferInputFrameDownscale)
+  * [useWebWorker](https://twilio.github.io/twilio-video-processors.js/interfaces/VirtualBackgroundProcessorOptions.html#useWebWorker)
 * The `Canvas2D` and `WebGL2` pipelines are replaced by a single hybrid pipeline. Therefore, the following APIs are no longer available:
+  * `BackgroundProcessorOptions.debounce`
   * `BackgroundProcessorOptions.pipeline`
   * `Pipeline` enum exported by `@twilio/video-processors`
-
-Performance Improvements
-------------------------
-
-*TODO(mmalavalli)*
 
 2.2.0 (July 16, 2024)
 =====================

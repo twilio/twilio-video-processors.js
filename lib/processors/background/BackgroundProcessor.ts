@@ -1,5 +1,6 @@
 import { MASK_BLUR_RADIUS } from '../../constants';
 import { Benchmark } from '../../utils/Benchmark';
+import { version } from '../../utils/version';
 import { InputFrame } from '../../types';
 import { Processor } from '../Processor';
 import { BackgroundProcessorPipeline, BackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
@@ -86,6 +87,10 @@ export class BackgroundProcessor extends Processor {
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _outputFrameBuffer: HTMLCanvasElement | null = null;
   private _outputFrameBufferContext: CanvasRenderingContext2D | ImageBitmapRenderingContext | null = null;
+
+  // This version is read by the Video SDK
+  // tslint:disable-next-line no-unused-variable
+  private readonly _version: string = version;
 
   protected constructor(
     backgroundProcessorPipeline: BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy,
