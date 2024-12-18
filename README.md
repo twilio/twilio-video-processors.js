@@ -13,9 +13,9 @@ The following Video Processors are provided to apply transformations and filters
 
 ## Prerequisites
 
-* [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.15+)
-* [Node.js](https://nodejs.org) (v14+)
-* NPM (v6+, comes installed with newer Node versions)
+* [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.29+)
+* [Node.js](https://nodejs.org) (v16+)
+* NPM (v8+, comes installed with newer Node versions)
 
 ### Note
 
@@ -65,7 +65,7 @@ These processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landsc
 
 ## Best Practice
 
-Please check out the following pages for best practice.
+Please check out the following pages for best practice:
 
 * [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html)
 * [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html)
