@@ -111,8 +111,7 @@ export default function(config: any) {
     karmaTypescriptConfig: {
       coverageOptions: {
         exclude: [
-          /tests\/.*/,
-          /lib\/processors\/webgl2\/.*/
+          /tests\/.*/
         ]
       },
       include: [

@@ -13,9 +13,9 @@ The following Video Processors are provided to apply transformations and filters
 
 ## Prerequisites
 
-* [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.15+)
-* [Node.js](https://nodejs.org) (v14+)
-* NPM (v6+, comes installed with newer Node versions)
+* [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.29+)
+* [Node.js](https://nodejs.org) (v16+)
+* NPM (v8+, comes installed with newer Node versions)
 
 ### Note
 
@@ -53,7 +53,11 @@ You can also copy `twilio-video-processors.js` from the `dist/build` folder and 
 
 ### Assets
 
-In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model and binaries so they can be loaded properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/VirtualBackgroundProcessorOptions.html#assetsPath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
+In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model, binaries and web workers so they can be loaded properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/VirtualBackgroundProcessorOptions.html#assetsPath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
+
+#### CORS
+
+If you are serving the assets from a domain that is different from that of your application, then ensure that the `Access-Control-Allow-Origin` response header points to your application's domain.
 
 ## Usage
 
@@ -61,7 +65,7 @@ These processors run TensorFlow Lite using [MediaPipe Selfie Segmentation Landsc
 
 ## Best Practice
 
-Please check out the following pages for best practice.
+Please check out the following pages for best practice:
 
 * [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html)
 * [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html)

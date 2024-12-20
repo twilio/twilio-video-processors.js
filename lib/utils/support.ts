@@ -1,5 +1,3 @@
-declare const chrome: any;
-
 /**
  * @private
  */
@@ -22,10 +20,35 @@ export function isBrowserSupported() {
  * @private
  */
 export function isChromiumImageBitmap() {
-  return typeof chrome === 'object'
-    && /Chrome/.test(navigator.userAgent)
+  return /Chrome/.test(navigator.userAgent)
     && typeof createImageBitmap === 'function';
 }
+
+/**
+ * @private
+ */
+export const isCanvasBlurSupported = (() => {
+  const blackPixel = [0, 0, 0, 255];
+  const whitePixel = [255, 255, 255, 255];
+
+  const inputImageData =  new ImageData(new Uint8ClampedArray([
+    ...blackPixel, ...blackPixel, ...blackPixel,
+    ...blackPixel, ...whitePixel, ...blackPixel,
+    ...blackPixel, ...blackPixel, ...blackPixel
+  ]), 3, 3);
+
+  const canvas = getCanvas();
+  const context = canvas.getContext('2d') as CanvasRenderingContext2D;
+
+  canvas.width = 3;
+  canvas.height = 3;
+  context.putImageData(inputImageData, 0, 0);
+  context.filter = 'blur(1px)';
+  context.drawImage(canvas, 0, 0);
+
+  const { data } = context.getImageData(0, 0, 3, 3);
+  return data[0] > 0;
+})();
 
 /**
  * Check if the current browser is officially supported by twilio-video-procesors.js.

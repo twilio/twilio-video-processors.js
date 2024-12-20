@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { version } from '../../../lib/index';
+import { version } from '../../../lib';
 
 const packageVersion = require('../../../package.json').version;
 

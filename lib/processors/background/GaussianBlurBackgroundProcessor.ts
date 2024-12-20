@@ -1,6 +1,6 @@
+import { BLUR_FILTER_RADIUS, MASK_BLUR_RADIUS } from '../../constants';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
-import { BLUR_FILTER_RADIUS } from '../../constants';
-import { WebGL2PipelineType } from '../../types';
+import { GaussianBlurBackgroundProcessorPipeline, GaussianBlurBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
 /**
  * Options passed to [[GaussianBlurBackgroundProcessor]] constructor.
@@ -27,22 +27,13 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *
  * ```ts
  * import { createLocalVideoTrack } from 'twilio-video';
- * import { Pipeline, GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
- * import { simd } from 'wasm-feature-detect';
+ * import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
  *
  * let blurBackground: GaussianBlurBackgroundProcessor;
  *
  * (async() => {
- *   const isWasmSimdSupported = await simd();
- *
  *   blurBackground = new GaussianBlurBackgroundProcessor({
- *     assetsPath: 'https://my-server-path/assets',
- *
- *     // Enable debounce only if the browser does not support
- *     // WASM SIMD in order to retain an acceptable frame rate.
- *     debounce: !isWasmSimdSupported,
- *
- *     pipeline: Pipeline.WebGL2,
+ *     assetsPath: 'https://my-server-path/assets'
  *   });
  *   await blurBackground.loadModel();
  *
@@ -59,14 +50,13 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  *     frameRate: 24
  *   });
  *   track.addProcessor(virtualBackground, {
- *     inputFrameBufferType: 'video',
- *     outputFrameBufferContextType: 'webgl2',
+ *     inputFrameBufferType: 'videoframe',
+ *     outputFrameBufferContextType: 'bitmaprenderer'
  *   });
  * })();
  * ```
  */
 export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
-
   private _blurFilterRadius: number = BLUR_FILTER_RADIUS;
   // tslint:disable-next-line no-unused-variable
   private readonly _name: string = 'GaussianBlurBackgroundProcessor';
@@ -77,7 +67,33 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
    * invalid properties will be ignored.
    */
   constructor(options: GaussianBlurBackgroundProcessorOptions) {
-    super(options);
+    const {
+      blurFilterRadius = BLUR_FILTER_RADIUS,
+      deferInputFrameDownscale = false,
+      maskBlurRadius = MASK_BLUR_RADIUS,
+      useWebWorker = true
+    } = options;
+
+    const assetsPath = options
+      .assetsPath
+      .replace(/([^/])$/, '$1/');
+
+    const BackgroundProcessorPipelineOrProxy = useWebWorker
+      ? GaussianBlurBackgroundProcessorPipelineProxy
+      : GaussianBlurBackgroundProcessorPipeline;
+
+    const backgroundProcessorPipeline = new BackgroundProcessorPipelineOrProxy({
+      assetsPath,
+      blurFilterRadius,
+      deferInputFrameDownscale,
+      maskBlurRadius
+    });
+
+    super(
+      backgroundProcessorPipeline,
+      options
+    );
+
     this.blurFilterRadius = options.blurFilterRadius!;
   }
 
@@ -97,18 +113,10 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       radius = BLUR_FILTER_RADIUS;
     }
     this._blurFilterRadius = radius;
-  }
-
-  protected _getWebGL2PipelineType(): WebGL2PipelineType {
-    return WebGL2PipelineType.Blur;
-  }
-
-  protected _setBackground(inputFrame: OffscreenCanvas | HTMLCanvasElement): void {
-    if (!this._outputContext) {
-      return;
-    }
-    const ctx = this._outputContext as CanvasRenderingContext2D;
-    ctx.filter = `blur(${this._blurFilterRadius}px)`;
-    ctx.drawImage(inputFrame, 0, 0);
+    (this._backgroundProcessorPipeline as GaussianBlurBackgroundProcessorPipeline | GaussianBlurBackgroundProcessorPipelineProxy)
+      .setBlurFilterRadius(this._blurFilterRadius)
+      .catch(() => {
+        /* noop */
+      });
   }
 }
