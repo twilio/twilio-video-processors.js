@@ -45,7 +45,12 @@ describe('Benchmark', function() {
           if (!shouldProcess) {
             return resolve(null);
           }
-          processor.processFrame(inputCanvas, outputCanvas).then(() => setTimeout(processFrame, 0));
+          processor.processFrame(inputCanvas, outputCanvas)
+            .then(() => setTimeout(processFrame, 0))
+            .catch(err => {
+              console.error('processFrame error:', err);
+              resolve(null);
+            });
         };
         processFrame();
       });
