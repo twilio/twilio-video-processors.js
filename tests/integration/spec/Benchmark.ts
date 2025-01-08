@@ -72,9 +72,9 @@ describe('Benchmark', function() {
         const currentValue = processor['_benchmark'].getAverageDelay(stat)!;
         console.log({ stat, maxValue, currentValue });
         // NOTE(lrivas): Instead of throwing an error and failing the test, we log a warning since the machine
-        // running the tests in CI might not be as powerful as the one used to determine the recommended max values.
+        // running the tests in CI might not be as powerful as the one used to determine the max values.
         if (currentValue > maxValue) {
-          console.warn(`⚠️ Warning: ${stat} (${currentValue}ms) exceeds recommended threshold (${maxValue}ms)`);
+          console.warn(`Warning: ${stat} (${currentValue}ms) exceeds max value (${maxValue}ms)`);
         }
       });
     });
