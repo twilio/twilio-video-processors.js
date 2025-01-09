@@ -5,7 +5,6 @@ export default function(config: any) {
   const chromeFlags = [
     '--headless',
     '--no-sandbox',
-    '--disable-gpu',
     '--remote-debugging-port=9222',
     '--use-fake-ui-for-media-stream',
     '--use-fake-device-for-media-stream',
