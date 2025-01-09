@@ -13,7 +13,9 @@ root.OffscreenCanvas = root.OffscreenCanvas || Canvas;
 root.createImageBitmap = root.createImageBitmap || createImageBitmap;
 
 // Starting Node.js 21 the global object contains a readonly property called 'navigator'
-if (root.navigator) { delete root.navigator; }
+if (root.navigator) {
+  delete root.navigator;
+}
 root.navigator = root.navigator || navigator;
 root.window = root.window || {
   createImageBitmap,
