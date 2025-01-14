@@ -3,5 +3,6 @@
   "exclude": [
     "tests/**/*"
   ],
-  "out": "dist/docs"
+  "out": "dist/docs",
+  "includeVersion": true
 }

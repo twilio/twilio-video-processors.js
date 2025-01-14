@@ -14,8 +14,8 @@ The following Video Processors are provided to apply transformations and filters
 ## Prerequisites
 
 * [Twilio Video JavaScript SDK](https://github.com/twilio/twilio-video.js) (v2.29+)
-* [Node.js](https://nodejs.org) (v16+)
-* NPM (v8+, comes installed with newer Node versions)
+* [Node.js](https://nodejs.org) (v18+)
+* NPM (v10+, comes installed with newer Node versions)
 
 ### Note
 

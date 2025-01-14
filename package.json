@@ -23,7 +23,7 @@
     "url": "git+https://github.com/twilio/twilio-video-processors.js.git"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
   "license": "BSD-3-Clause",
   "main": "./es5/index.js",
@@ -71,8 +71,7 @@
     "ts-node": "^9.1.1",
     "tsify": "^5.0.2",
     "twilio-release-tool": "^1.0.2",
-    "typedoc": "0.25.0",
-    "typedoc-plugin-as-member-of": "^1.0.2",
+    "typedoc": "0.27.6",
     "typescript": "5.2.2",
     "typescript-eslint": "^8.0.1",
     "uglify-js": "^3.17.4",
