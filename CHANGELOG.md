@@ -1,3 +1,42 @@
+3.0.0 (unreleased)
+===============================
+
+### Breaking Changes
+* Now requires twilio-video SDK v2.29.0 or later
+* Unified the `Canvas2D` and `WebGL2` pipelines into a single hybrid pipeline
+  * Pipelines are now automatically managed
+  * Removed `BackgroundProcessorOptions.debounce` and `BackgroundProcessorOptions.pipeline`
+  * The `Pipeline` enum is no longer exported
+* Changed frame buffer handling in video processors
+  * While adding a VideoProcessor to a VideoTrack, use the following `AddProcessorOptions`:
+    ```js
+    videoTrack.addProcessor(processor, {
+      inputFrameBufferType: 'videoframe',
+      outputFrameBufferContextType: 'bitmaprenderer'
+    });
+    ```
+
+### Features
+* Added web worker support
+  * Now supported across all major browsers (Chrome, Firefox, Safari)
+  * Cross-domain worker hosting is now supported.
+    Example cross-domain configuration:
+    ```js
+    import { GaussianBlurBackgroundProcessor } from '@twilio/video-processors';
+
+    /* Application is running at https://example.com/app */
+
+    const processor = new GaussianBlurBackgroundProcessor({
+      assetsPath: "https://example.net/path/to/assets"
+    });
+    ```
+    (Requires proper `Access-Control-Allow-Origin` headers pointing to your application domain)
+
+### Performance 
+This update improves video processing performance, especially on low-powered devices. Key advantages include:
+  * Processing is handled by web workers in all major browsers, reducing main thread blocking.
+  * Resource usage is optimized through a unified hybrid pipeline.
+
 3.0.0-beta.1 (December 4, 2024)
 ===============================
 
