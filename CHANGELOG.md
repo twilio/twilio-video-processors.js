@@ -32,7 +32,7 @@
     ```
     (Requires proper `Access-Control-Allow-Origin` headers pointing to your application domain)
 
-### Performance 
+### Performance
 This update improves video processing performance, especially on low-powered devices. Key advantages include:
   * Processing is handled by web workers in all major browsers, reducing main thread blocking.
   * Resource usage is optimized through a unified hybrid pipeline.
