@@ -15,6 +15,7 @@
       outputFrameBufferContextType: 'bitmaprenderer'
     });
     ```
+* Bump minimum Node version to 18.
 
 ### Features
 * Added web worker support
