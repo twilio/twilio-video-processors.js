@@ -1,4 +1,4 @@
-3.0.0 (in progress)
+3.0.0 (January 16, 2025)
 ===============================
 
 ### Breaking Changes
