@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Virtual Background Static Image</title>
+<style>
+</style>
+<script src="twilio-video-processors.js"></script>
+<script>
+async function start() {
+  const { GaussianBlurBackgroundProcessor } = Twilio.VideoProcessors;
+  const inputCanvas = document.querySelector('#input');
+  const outputCanvas = document.querySelector('#output');
+  const inputImage = await getImage('input.jpg');
+  const backgroundImage = await getImage('backgrounds/living_room.jpg');
+
+  inputCanvas.height = inputImage.height;
+  inputCanvas.width = inputImage.width;
+  outputCanvas.height = inputImage.height;
+  outputCanvas.width = inputImage.width;
+  inputCanvas.getContext('2d').drawImage(inputImage, 0, 0);
+
+  const processor = new GaussianBlurBackgroundProcessor({ assetsPath: '', maskBlurRadius: 2, blurFilterRadius: 15 });
+  await processor.loadModel();
+  startRenderLoop(processor, inputCanvas, outputCanvas);
+}
+
+function startRenderLoop(processor, inputCanvas, outputCanvas) {
+  const render = () => {
+    processor.processFrame(inputCanvas, outputCanvas).then(() => setTimeout(render, 0));
+  };
+  render();
+
+  setInterval(() => {
+    const benchmark = processor._benchmark;
+    document.querySelector('#fps').innerText =`FPS: ${parseInt(benchmark.getRate('totalProcessingDelay'))}
+processFrameDelay: ${parseInt(benchmark.getAverageDelay('processFrameDelay'))}
+`;
+  }, 1000);
+}
+
+async function getImage(path) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = path;
+  });
+}
+</script>
+</head>
+<body onload="start()">
+<div class="drawing">
+  <canvas id="input"></canvas>
+  <canvas id="output"></canvas>
+  <pre id="fps"></pre>
+</div>
+</body>
+</html>
