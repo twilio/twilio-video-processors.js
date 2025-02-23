@@ -8,6 +8,7 @@ import { PersonMaskUpscalePipeline } from '../personmaskupscalepipeline';
 export class PostProcessingStage implements Pipeline.Stage {
   private readonly _inputDimensions: Dimensions;
   private _maskBlurRadius: number;
+  private readonly _outputCanvas: OffscreenCanvas;
   private readonly _outputContext: OffscreenCanvasRenderingContext2D;
   private _personMaskUpscalePipeline: PersonMaskUpscalePipeline | null = null;
   private readonly _setBackground: (inputFrame?: InputFrame) => void;
@@ -22,6 +23,7 @@ export class PostProcessingStage implements Pipeline.Stage {
   ) {
     this._inputDimensions = inputDimensions;
     this._maskBlurRadius = maskBlurRadius;
+    this._outputCanvas = outputCanvas;
     this._outputContext = outputCanvas.getContext('2d')!;
     this._webgl2Canvas = webgl2Canvas;
     this._setBackground = setBackground;
@@ -44,14 +46,23 @@ export class PostProcessingStage implements Pipeline.Stage {
       personMask
     );
     _outputContext.save();
-    _outputContext.globalCompositeOperation = 'copy';
+    // Draw the raw frame
+    _outputContext.drawImage(inputFrame, 0, 0);
+    // Remove the foreground so blurring does not cause a halo
+    _outputContext.globalCompositeOperation = 'destination-out';
+    _outputContext.drawImage(_webgl2Canvas, 0, 0);
+    // Redraw the remaining background with blur applied
+    _outputContext.globalCompositeOperation = 'source-over';
+    _setBackground(this._outputCanvas);
+    // Draw the raw frame under the blurred background
+    // The foreground is visible through the gap created by removing
+    // the foreground prior to blurring
+    _outputContext.globalCompositeOperation = 'destination-over';
     _outputContext.drawImage(
-      _webgl2Canvas,
+      inputFrame,
       0,
       0
     );
-    _outputContext.globalCompositeOperation = 'destination-over';
-    _setBackground(inputFrame);
     _outputContext.restore();
   }
 
