@@ -6,14 +6,37 @@ function getCanvas() {
 }
 
 /**
+ * Represents the identifier for the rendering context type.
+ */
+export type RenderingContextType = '2d' | 'webgl2' | null;
+
+
+/**
+ * @private
+ * @returns {RenderingContextType} Determines the best available rendering context type.
+ * Returns 'webgl2' if available, '2d' if available but webgl2 is not,
+ * or null if neither context is available or if running in a non-browser environment.
+ */
+export function getRenderingContextType(): RenderingContextType {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return null;
+  }
+  const canvas = getCanvas();
+  if (canvas.getContext('webgl2')) {
+    return 'webgl2';
+  }
+  if (canvas.getContext('2d')) {
+    return '2d';
+  }
+  return null;
+}
+
+/**
  * @private
  */
 export function isBrowserSupported() {
-  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    return !!(getCanvas().getContext('2d') || getCanvas().getContext('webgl2'));
-  } else {
-    return false;
-  }
+  // Check if any supported rendering context is available
+  return getRenderingContextType() !== null;
 }
 
 /**
