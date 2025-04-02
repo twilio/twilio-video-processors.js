@@ -75,9 +75,9 @@ export interface BackgroundProcessorOptions {
 /**
  * @private
  */
-export class BackgroundProcessor extends Processor {
+export class BackgroundProcessor<T extends BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy = BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy> extends Processor {
   protected readonly _assetsPath: string;
-  protected readonly _backgroundProcessorPipeline: BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy;
+  protected readonly _backgroundProcessorPipeline: T;
 
   private readonly _benchmark: Benchmark;
   private _deferInputFrameDownscale: boolean = false;
@@ -93,7 +93,7 @@ export class BackgroundProcessor extends Processor {
   private readonly _version: string = version;
 
   protected constructor(
-    backgroundProcessorPipeline: BackgroundProcessorPipeline | BackgroundProcessorPipelineProxy,
+    backgroundProcessorPipeline: T,
     options: BackgroundProcessorOptions
   ) {
     super();

@@ -56,7 +56,7 @@ export interface GaussianBlurBackgroundProcessorOptions extends BackgroundProces
  * })();
  * ```
  */
-export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
+export class GaussianBlurBackgroundProcessor extends BackgroundProcessor<GaussianBlurBackgroundProcessorPipeline | GaussianBlurBackgroundProcessorPipelineProxy> {
   private _blurFilterRadius: number = BLUR_FILTER_RADIUS;
   // tslint:disable-next-line no-unused-variable
   private readonly _name: string = 'GaussianBlurBackgroundProcessor';
@@ -74,6 +74,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       useWebWorker = true
     } = options;
 
+    // Ensures assetsPath ends with a trailing slash ('/').
     const assetsPath = options
       .assetsPath
       .replace(/([^/])$/, '$1/');
@@ -113,7 +114,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor {
       radius = BLUR_FILTER_RADIUS;
     }
     this._blurFilterRadius = radius;
-    (this._backgroundProcessorPipeline as GaussianBlurBackgroundProcessorPipeline | GaussianBlurBackgroundProcessorPipelineProxy)
+    this._backgroundProcessorPipeline
       .setBlurFilterRadius(this._blurFilterRadius)
       .catch(() => {
         /* noop */
