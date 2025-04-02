@@ -108,6 +108,7 @@ export class BackgroundProcessor extends Processor {
       throw new Error('assetsPath parameter must be a string');
     }
 
+    // Ensures assetsPath ends with a trailing slash ('/').
     this._assetsPath = assetsPath.replace(/([^/])$/, '$1/');
     this._backgroundProcessorPipeline = backgroundProcessorPipeline;
     // @ts-ignore
@@ -222,14 +223,11 @@ export class BackgroundProcessor extends Processor {
     _benchmark.start('totalProcessingDelay');
     _benchmark.start('processFrameDelay');
 
+    // Extract dimensions based on input frame buffer type
     const {
       width: captureWidth,
       height: captureHeight
-    } = inputFrameBuffer instanceof HTMLVideoElement
-      ? { width: inputFrameBuffer.videoWidth, height: inputFrameBuffer.videoHeight }
-      : typeof VideoFrame === 'function' && inputFrameBuffer instanceof VideoFrame
-        ? { width: inputFrameBuffer.displayWidth, height: inputFrameBuffer.displayHeight }
-        : inputFrameBuffer as (OffscreenCanvas | HTMLCanvasElement);
+    } = this.getFrameDimensions(inputFrameBuffer);
 
     if (this._outputFrameBuffer !== outputFrameBuffer) {
       this._outputFrameBuffer = outputFrameBuffer;
@@ -243,30 +241,26 @@ export class BackgroundProcessor extends Processor {
       this._inputFrameCanvas.height = captureHeight;
     }
 
+    // For HTMLVideoElement, we need to draw it to a canvas first
+    // For other input types (OffscreenCanvas, HTMLCanvasElement, VideoFrame), we can use them directly
     let inputFrame: InputFrame;
     if (inputFrameBuffer instanceof HTMLVideoElement) {
-      this._inputFrameContext.drawImage(
-        inputFrameBuffer,
-        0,
-        0
-      );
+      this._inputFrameContext.drawImage(inputFrameBuffer, 0, 0);
       inputFrame = this._inputFrameCanvas;
     } else {
       inputFrame = inputFrameBuffer;
     }
 
+    // Process the input frame through the appropriate pipeline and return the processed frame
     const outputFrame = _backgroundProcessorPipeline instanceof BackgroundProcessorPipeline
-      ? await (_backgroundProcessorPipeline as BackgroundProcessorPipeline)
-          .render(
-            inputFrame
-          )
-      : await (_backgroundProcessorPipeline as BackgroundProcessorPipelineProxy)
-          .render(
-            inputFrame instanceof OffscreenCanvas
-              ? inputFrame.transferToImageBitmap()
-              : (inputFrame as VideoFrame)
+      ? await _backgroundProcessorPipeline.render(inputFrame)
+      : await _backgroundProcessorPipeline.render(
+          inputFrame instanceof OffscreenCanvas
+            ? inputFrame.transferToImageBitmap()
+            : (inputFrame as VideoFrame) // TODO(lrivas): Review why we need to cast to VideoFrame
           );
 
+    // Render the processed frame to the output buffer
     if (_outputFrameBufferContext instanceof ImageBitmapRenderingContext) {
       const outputBitmap = outputFrame instanceof OffscreenCanvas
         ? outputFrame.transferToImageBitmap()
@@ -282,5 +276,20 @@ export class BackgroundProcessor extends Processor {
 
     _benchmark.end('processFrameDelay');
     _benchmark.start('captureFrameDelay');
+  }
+
+  /**
+   * Gets the dimensions of a frame buffer based on its type
+  */
+  private getFrameDimensions(buffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame): { width: number, height: number } {
+    if (buffer instanceof HTMLVideoElement) {
+      return { width: buffer.videoWidth, height: buffer.videoHeight };
+    }
+    
+    if (buffer instanceof VideoFrame) {
+      return { width: buffer.displayWidth, height: buffer.displayHeight };
+    }
+    
+    return { width: buffer.width, height: buffer.height };
   }
 }
