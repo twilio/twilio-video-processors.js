@@ -111,7 +111,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     // Ensures assetsPath ends with a trailing slash ('/').
     this._assetsPath = assetsPath.replace(/([^/])$/, '$1/');
     this._backgroundProcessorPipeline = backgroundProcessorPipeline;
-    // @ts-ignore
+    // @ts-expect-error - _benchmark is a private property in the pipeline classes definition
     this._benchmark = this._backgroundProcessorPipeline._benchmark;
     this.deferInputFrameDownscale = deferInputFrameDownscale;
     this.maskBlurRadius = maskBlurRadius;
