@@ -8,7 +8,7 @@ function getCanvas() {
 /**
  * Represents the identifier for the rendering context type.
  */
-export type RenderingContextType = '2d' | 'webgl2' | null;
+type RenderingContextType = '2d' | 'webgl2' | null;
 
 
 /**
@@ -17,7 +17,7 @@ export type RenderingContextType = '2d' | 'webgl2' | null;
  * Returns 'webgl2' if available, '2d' if available but webgl2 is not,
  * or null if neither context is available or if running in a non-browser environment.
  */
-export function getRenderingContextType(): RenderingContextType {
+function getRenderingContextType(): RenderingContextType {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return null;
   }

@@ -77,11 +77,13 @@ export class TwilioTFLite {
 
     tflite._runInference();
 
-    const inputBuffer = this._inputBuffer || new Uint8ClampedArray(pixels * 4);
+    const outputBuffer = this._inputBuffer || new Uint8ClampedArray(pixels * 4);
     for (let i = 0; i < pixels; i++) {
-      inputBuffer![i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
+      // Use the output of the inference to control the alpha channel of the buffer which would result in a person mask
+      // with certains pixels being transparent, semi-transparent or opaque based on the confidence of the model.
+      outputBuffer[i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
     }
-    return inputBuffer!;
+    return outputBuffer;
   }
 
   private async _loadScript(path: string): Promise<void> {

@@ -257,10 +257,10 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
       : await _backgroundProcessorPipeline.render(
           inputFrame instanceof OffscreenCanvas
             ? inputFrame.transferToImageBitmap()
-            : (inputFrame as VideoFrame) // TODO(lrivas): Review why we need to cast to VideoFrame
+            : inputFrame as VideoFrame // TODO(lrivas): Review why we need to cast to VideoFrame, this breaks when using 'canvas' as inputFrameBufferType
           );
 
-    // Render the processed frame to the output buffer
+    // Render the processed frame through the output frame buffer context
     if (_outputFrameBufferContext instanceof ImageBitmapRenderingContext) {
       const outputBitmap = outputFrame instanceof OffscreenCanvas
         ? outputFrame.transferToImageBitmap()
