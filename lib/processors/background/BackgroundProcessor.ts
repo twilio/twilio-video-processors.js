@@ -227,7 +227,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     const {
       width: captureWidth,
       height: captureHeight
-    } = this.getFrameDimensions(inputFrameBuffer);
+    } = this._getFrameDimensions(inputFrameBuffer);
 
     if (this._outputFrameBuffer !== outputFrameBuffer) {
       this._outputFrameBuffer = outputFrameBuffer;
@@ -281,7 +281,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
   /**
    * Gets the dimensions of a frame buffer based on its type
   */
-  private getFrameDimensions(buffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame): { width: number, height: number } {
+  private _getFrameDimensions(buffer: OffscreenCanvas | HTMLCanvasElement | HTMLVideoElement | VideoFrame): { width: number, height: number } {
     if (buffer instanceof HTMLVideoElement) {
       return { width: buffer.videoWidth, height: buffer.videoHeight };
     }

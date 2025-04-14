@@ -9,15 +9,18 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
   private readonly _outputCanvas: OffscreenCanvas | HTMLCanvasElement;
   private readonly _inputDimensions: Dimensions;
   private _isWebGL2Supported: boolean = true;
+  private _maskBlurRadius: number;
   
   constructor(
     inputDimensions: Dimensions,
-    outputCanvas: OffscreenCanvas | HTMLCanvasElement
+    outputCanvas: OffscreenCanvas | HTMLCanvasElement,
+    maskBlurRadius: number
   ) {
     super();
     
     this._outputCanvas = outputCanvas;
     this._inputDimensions = inputDimensions;
+    this._maskBlurRadius = maskBlurRadius;
 
       const glOut = outputCanvas.getContext('webgl2');
       if (glOut) {
@@ -86,7 +89,7 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
     // Get 2D context for drawing
     const ctx = this._outputCanvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
     ctx.save();
-    ctx.filter = 'blur(4px)'; // Default blur value from v2.x
+    ctx.filter = `blur(${this._maskBlurRadius}px)`;
     ctx.globalCompositeOperation = 'copy';
     ctx.drawImage(maskCanvas, 0, 0, this._outputCanvas.width, this._outputCanvas.height);
     ctx.filter = 'none';
@@ -96,24 +99,26 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
   }
 
   updateBilateralFilterConfig(config: BilateralFilterConfig) {
+    const { sigmaSpace } = config;
+    if (typeof sigmaSpace !== 'number') {
+      return;
+    }
     if (!this._isWebGL2Supported) {
-      // SigmaSpace is not supported in Canvas2D fallback
+      this._maskBlurRadius = sigmaSpace;
+      // SinglePassBilateralFilterStage is not supported in Canvas2D fallback
       return;
     }
     const [
       /* inputStage */,
       ...bilateralFilterStages
     ] = this._stages;
-    const { sigmaSpace } = config;
 
-    if (typeof sigmaSpace === 'number') {
-      (bilateralFilterStages as SinglePassBilateralFilterStage[]).forEach(
-        (stage) => {
-          stage.updateSigmaColor(0.1);
-          stage.updateSigmaSpace(sigmaSpace);
-        }
-      );
-    }
+    (bilateralFilterStages as SinglePassBilateralFilterStage[]).forEach(
+      (stage) => {
+        stage.updateSigmaColor(0.1);
+        stage.updateSigmaSpace(sigmaSpace);
+      }
+    );
   }
 
   cleanUp(): void {

@@ -7,11 +7,13 @@ import { SinglePassGaussianBlurFilterStage } from './SinglePassGaussianBlurFilte
 export class GaussianBlurFilterPipeline extends WebGL2Pipeline {
   private _isWebGL2Supported: boolean = true;
   private _outputCanvas: OffscreenCanvas | HTMLCanvasElement;
+  private _blurFilterRadius: number;
 
-  constructor(outputCanvas: OffscreenCanvas | HTMLCanvasElement) {
+  constructor(outputCanvas: OffscreenCanvas | HTMLCanvasElement, blurFilterRadius: number) {
     super();
 
     this._outputCanvas = outputCanvas;
+    this._blurFilterRadius = blurFilterRadius;
     const glOut = outputCanvas.getContext('webgl2');
     if (glOut) {
       this.initializeWebGL2Pipeline(glOut as WebGL2RenderingContext);
@@ -31,7 +33,7 @@ export class GaussianBlurFilterPipeline extends WebGL2Pipeline {
 
   private _renderFallback(): void {
     const ctx = this._outputCanvas.getContext('2d') as CanvasRenderingContext2D;
-    ctx.filter = 'blur(15px)'; // Default blur value from v2.x
+    ctx.filter = `blur(${this._blurFilterRadius}px)`;
   }
 
   private initializeWebGL2Pipeline(glOut: WebGL2RenderingContext): void {
@@ -52,8 +54,9 @@ export class GaussianBlurFilterPipeline extends WebGL2Pipeline {
   }
 
   updateRadius(radius: number): void {
+    this._blurFilterRadius = radius;
     if (!this._isWebGL2Supported) {
-      // Radius is not supported in Canvas2D fallback
+      // SinglePassGaussianBlurFilterStage is not supported in Canvas2D fallback
       return;
     }
     this._stages.forEach(

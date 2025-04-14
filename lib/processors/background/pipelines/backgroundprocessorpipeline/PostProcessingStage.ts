@@ -64,7 +64,8 @@ export class PostProcessingStage implements Pipeline.Stage {
     this._personMaskUpscalePipeline?.cleanUp();
     this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
       _inputDimensions,
-      _webgl2Canvas
+      _webgl2Canvas,
+      _maskBlurRadius
     );
     this._personMaskUpscalePipeline.updateBilateralFilterConfig({
       sigmaSpace: _maskBlurRadius
