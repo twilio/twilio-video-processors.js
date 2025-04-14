@@ -73,7 +73,8 @@ export class GaussianBlurBackgroundProcessorPipeline extends BackgroundProcessor
     } = this;
     this._gaussianBlurFilterPipeline?.cleanUp();
     this._gaussianBlurFilterPipeline = new GaussianBlurFilterPipeline(
-      _webgl2Canvas
+      _webgl2Canvas,
+      _blurFilterRadius
     );
     this._gaussianBlurFilterPipeline!.updateRadius(
       _blurFilterRadius
