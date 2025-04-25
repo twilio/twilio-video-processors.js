@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 3.0.0
+/*! twilio-video-processors.js 3.1.0
 
 The following license applies to all parts of this software except as
 documented below.
@@ -155,7 +155,7 @@ var BackgroundProcessorPipeline = /** @class */ (function (_super) {
     };
     BackgroundProcessorPipeline.prototype.render = function (inputFrame) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, inputFrameDownscaleStage, postProcessingStage, _b, _benchmark, _deferInputFrameDownscale, _c, inferenceInputHeight, inferenceInputWidth, _outputCanvas, _webgl2Canvas, _twilioTFLite, isInputVideoFrame, _d, height, width, didResizeWebGL2Canvas, downscalePromise, personMask;
+            var _a, inputFrameDownscaleStage, postProcessingStage, _b, _benchmark, _deferInputFrameDownscale, _c, inferenceInputHeight, inferenceInputWidth, _outputCanvas, _webgl2Canvas, _twilioTFLite, isInputVideoFrame, _d, height, width, needsWidthResize, needsHeightResize, didResizeWebGL2Canvas, downscalePromise, personMask;
             return __generator(this, function (_e) {
                 switch (_e.label) {
                     case 0:
@@ -170,16 +170,16 @@ var BackgroundProcessorPipeline = /** @class */ (function (_super) {
                         _d = isInputVideoFrame
                             ? { height: inputFrame.displayHeight, width: inputFrame.displayWidth }
                             : inputFrame, height = _d.height, width = _d.width;
-                        didResizeWebGL2Canvas = false;
-                        if (_outputCanvas.width !== width) {
+                        needsWidthResize = _outputCanvas.width !== width;
+                        needsHeightResize = _outputCanvas.height !== height;
+                        didResizeWebGL2Canvas = needsWidthResize || needsHeightResize;
+                        if (needsWidthResize) {
                             _outputCanvas.width = width;
                             _webgl2Canvas.width = width;
-                            didResizeWebGL2Canvas = true;
                         }
-                        if (_outputCanvas.height !== height) {
+                        if (needsHeightResize) {
                             _outputCanvas.height = height;
                             _webgl2Canvas.height = height;
-                            didResizeWebGL2Canvas = true;
                         }
                         if (didResizeWebGL2Canvas) {
                             postProcessingStage.resetPersonMaskUpscalePipeline();
@@ -332,7 +332,7 @@ var GaussianBlurBackgroundProcessorPipeline = /** @class */ (function (_super) {
         var _a;
         var _b = this, _blurFilterRadius = _b._blurFilterRadius, _webgl2Canvas = _b._webgl2Canvas;
         (_a = this._gaussianBlurFilterPipeline) === null || _a === void 0 ? void 0 : _a.cleanUp();
-        this._gaussianBlurFilterPipeline = new gaussianblurfilterpipeline_1.GaussianBlurFilterPipeline(_webgl2Canvas);
+        this._gaussianBlurFilterPipeline = new gaussianblurfilterpipeline_1.GaussianBlurFilterPipeline(_webgl2Canvas, _blurFilterRadius);
         this._gaussianBlurFilterPipeline.updateRadius(_blurFilterRadius);
     };
     return GaussianBlurBackgroundProcessorPipeline;
@@ -466,6 +466,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InputFrameDowscaleStage = void 0;
 /**
+ * Downscales the input frame to the dimensions of the output canvas using the specified mode and returns the pixel data
+ * @params outputCanvas - The canvas to draw the downscaled image to
+ * @params inputFrameDownscaleMode - The mode to downscale the input frame to
  * @private
  */
 var InputFrameDowscaleStage = /** @class */ (function () {
@@ -540,7 +543,7 @@ var PostProcessingStage = /** @class */ (function () {
         var _a;
         var _b = this, _inputDimensions = _b._inputDimensions, _maskBlurRadius = _b._maskBlurRadius, _webgl2Canvas = _b._webgl2Canvas;
         (_a = this._personMaskUpscalePipeline) === null || _a === void 0 ? void 0 : _a.cleanUp();
-        this._personMaskUpscalePipeline = new personmaskupscalepipeline_1.PersonMaskUpscalePipeline(_inputDimensions, _webgl2Canvas);
+        this._personMaskUpscalePipeline = new personmaskupscalepipeline_1.PersonMaskUpscalePipeline(_inputDimensions, _webgl2Canvas, _maskBlurRadius);
         this._personMaskUpscalePipeline.updateBilateralFilterConfig({
             sigmaSpace: _maskBlurRadius
         });
@@ -666,16 +669,50 @@ var SinglePassGaussianBlurFilterStage_1 = require("./SinglePassGaussianBlurFilte
  */
 var GaussianBlurFilterPipeline = /** @class */ (function (_super) {
     __extends(GaussianBlurFilterPipeline, _super);
-    function GaussianBlurFilterPipeline(outputCanvas) {
+    function GaussianBlurFilterPipeline(outputCanvas, blurFilterRadius) {
         var _this = _super.call(this) || this;
+        _this._isWebGL2Supported = true;
+        _this._outputCanvas = outputCanvas;
+        _this._blurFilterRadius = blurFilterRadius;
         var glOut = outputCanvas.getContext('webgl2');
-        _this.addStage(new SinglePassGaussianBlurFilterStage_1.SinglePassGaussianBlurFilterStage(glOut, 'horizontal', 'texture', 0, 2));
-        _this.addStage(new SinglePassGaussianBlurFilterStage_1.SinglePassGaussianBlurFilterStage(glOut, 'vertical', 'canvas', 2));
+        if (glOut) {
+            _this.initializeWebGL2Pipeline(glOut);
+        }
+        else {
+            _this._isWebGL2Supported = false;
+            console.warn('Downgraded to Canvas2D for Gaussian blur due to missing WebGL2 support.');
+        }
         return _this;
     }
+    GaussianBlurFilterPipeline.prototype.render = function () {
+        if (!this._isWebGL2Supported) {
+            this._renderFallback();
+        }
+        else {
+            _super.prototype.render.call(this);
+        }
+    };
+    GaussianBlurFilterPipeline.prototype._renderFallback = function () {
+        var ctx = this._outputCanvas.getContext('2d');
+        ctx.filter = "blur(".concat(this._blurFilterRadius, "px)");
+    };
+    GaussianBlurFilterPipeline.prototype.initializeWebGL2Pipeline = function (glOut) {
+        this.addStage(new SinglePassGaussianBlurFilterStage_1.SinglePassGaussianBlurFilterStage(glOut, 'horizontal', 'texture', 0, 2));
+        this.addStage(new SinglePassGaussianBlurFilterStage_1.SinglePassGaussianBlurFilterStage(glOut, 'vertical', 'canvas', 2));
+    };
     GaussianBlurFilterPipeline.prototype.updateRadius = function (radius) {
+        this._blurFilterRadius = radius;
+        if (!this._isWebGL2Supported) {
+            // SinglePassGaussianBlurFilterStage is not supported in Canvas2D fallback
+            return;
+        }
         this._stages.forEach(function (stage) { return stage
             .updateRadius(radius); });
+    };
+    GaussianBlurFilterPipeline.prototype.cleanUp = function () {
+        if (this._isWebGL2Supported) {
+            _super.prototype.cleanUp.call(this);
+        }
     };
     return GaussianBlurFilterPipeline;
 }(pipelines_1.WebGL2Pipeline));
@@ -828,26 +865,81 @@ var SinglePassBilateralFilterStage_1 = require("./SinglePassBilateralFilterStage
  */
 var PersonMaskUpscalePipeline = /** @class */ (function (_super) {
     __extends(PersonMaskUpscalePipeline, _super);
-    function PersonMaskUpscalePipeline(inputDimensions, outputCanvas) {
+    function PersonMaskUpscalePipeline(inputDimensions, outputCanvas, maskBlurRadius) {
         var _this = _super.call(this) || this;
+        _this._isWebGL2Supported = true;
+        _this._outputCanvas = outputCanvas;
+        _this._inputDimensions = inputDimensions;
+        _this._maskBlurRadius = maskBlurRadius;
         var glOut = outputCanvas.getContext('webgl2');
-        var outputDimensions = {
-            height: outputCanvas.height,
-            width: outputCanvas.width
-        };
-        _this.addStage(new pipelines_1.WebGL2Pipeline.InputStage(glOut));
-        _this.addStage(new SinglePassBilateralFilterStage_1.SinglePassBilateralFilterStage(glOut, 'horizontal', 'texture', inputDimensions, outputDimensions, 1, 2));
-        _this.addStage(new SinglePassBilateralFilterStage_1.SinglePassBilateralFilterStage(glOut, 'vertical', 'canvas', inputDimensions, outputDimensions, 2));
+        if (glOut) {
+            _this.initializeWebGL2Pipeline(glOut);
+        }
+        else {
+            _this._isWebGL2Supported = false;
+            console.warn('Downgraded to Canvas2D for person mask upscaling due to missing WebGL2 support.');
+        }
         return _this;
     }
+    PersonMaskUpscalePipeline.prototype.initializeWebGL2Pipeline = function (glOut) {
+        var outputDimensions = {
+            height: this._outputCanvas.height,
+            width: this._outputCanvas.width
+        };
+        this.addStage(new pipelines_1.WebGL2Pipeline.InputStage(glOut));
+        this.addStage(new SinglePassBilateralFilterStage_1.SinglePassBilateralFilterStage(glOut, 'horizontal', 'texture', this._inputDimensions, outputDimensions, 1, 2));
+        this.addStage(new SinglePassBilateralFilterStage_1.SinglePassBilateralFilterStage(glOut, 'vertical', 'canvas', this._inputDimensions, outputDimensions, 2));
+    };
+    PersonMaskUpscalePipeline.prototype.render = function (inputFrame, personMask) {
+        if (this._isWebGL2Supported) {
+            // Use WebGL2 pipeline when supported
+            _super.prototype.render.call(this, inputFrame, personMask);
+        }
+        else {
+            // Fallback for browsers without WebGL2 support
+            this._renderFallback(inputFrame, personMask);
+        }
+    };
+    /**
+     * Render the person mask using a Canvas 2D context as a fallback for browsers without WebGL2 support
+     * @param inputFrame - The input frame to render
+     * @param personMask - The person mask to render
+     */
+    PersonMaskUpscalePipeline.prototype._renderFallback = function (inputFrame, personMask) {
+        // Create a temporary canvas for the mask
+        var maskCanvas = new OffscreenCanvas(personMask.width, personMask.height);
+        var maskCtx = maskCanvas.getContext('2d');
+        maskCtx.putImageData(personMask, 0, 0);
+        // Get 2D context for drawing
+        var ctx = this._outputCanvas.getContext('2d');
+        ctx.save();
+        ctx.filter = "blur(".concat(this._maskBlurRadius, "px)");
+        ctx.globalCompositeOperation = 'copy';
+        ctx.drawImage(maskCanvas, 0, 0, this._outputCanvas.width, this._outputCanvas.height);
+        ctx.filter = 'none';
+        ctx.globalCompositeOperation = 'source-in';
+        ctx.drawImage(inputFrame, 0, 0, this._outputCanvas.width, this._outputCanvas.height);
+        ctx.restore();
+    };
     PersonMaskUpscalePipeline.prototype.updateBilateralFilterConfig = function (config) {
-        var _a = this._stages, bilateralFilterStages = _a.slice(1);
         var sigmaSpace = config.sigmaSpace;
-        if (typeof sigmaSpace === 'number') {
-            bilateralFilterStages.forEach(function (stage) {
-                stage.updateSigmaColor(0.1);
-                stage.updateSigmaSpace(sigmaSpace);
-            });
+        if (typeof sigmaSpace !== 'number') {
+            return;
+        }
+        if (!this._isWebGL2Supported) {
+            this._maskBlurRadius = sigmaSpace;
+            // SinglePassBilateralFilterStage is not supported in Canvas2D fallback
+            return;
+        }
+        var _a = this._stages, bilateralFilterStages = _a.slice(1);
+        bilateralFilterStages.forEach(function (stage) {
+            stage.updateSigmaColor(0.1);
+            stage.updateSigmaSpace(sigmaSpace);
+        });
+    };
+    PersonMaskUpscalePipeline.prototype.cleanUp = function () {
+        if (this._isWebGL2Supported) {
+            _super.prototype.cleanUp.call(this);
         }
     };
     return PersonMaskUpscalePipeline;
@@ -1368,11 +1460,13 @@ var TwilioTFLite = /** @class */ (function () {
         var pixels = width * height;
         var tfliteOutputMemoryOffset = tflite._getOutputMemoryOffset() / 4;
         tflite._runInference();
-        var inputBuffer = this._inputBuffer || new Uint8ClampedArray(pixels * 4);
+        var outputBuffer = this._inputBuffer || new Uint8ClampedArray(pixels * 4);
         for (var i = 0; i < pixels; i++) {
-            inputBuffer[i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
+            // Use the output of the inference to control the alpha channel of the buffer which would result in a person mask
+            // with certains pixels being transparent, semi-transparent or opaque based on the confidence of the model.
+            outputBuffer[i * 4 + 3] = Math.round(tflite.HEAPF32[tfliteOutputMemoryOffset + i] * 255);
         }
-        return inputBuffer;
+        return outputBuffer;
     };
     TwilioTFLite.prototype._loadScript = function (path) {
         return __awaiter(this, void 0, void 0, function () {
@@ -1457,14 +1551,29 @@ function getCanvas() {
 }
 /**
  * @private
+ * @returns {RenderingContextType} Determines the best available rendering context type.
+ * Returns 'webgl2' if available, '2d' if available but webgl2 is not,
+ * or null if neither context is available or if running in a non-browser environment.
+ */
+function getRenderingContextType() {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return null;
+    }
+    var canvas = getCanvas();
+    if (canvas.getContext('webgl2')) {
+        return 'webgl2';
+    }
+    if (canvas.getContext('2d')) {
+        return '2d';
+    }
+    return null;
+}
+/**
+ * @private
  */
 function isBrowserSupported() {
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-        return !!(getCanvas().getContext('2d') || getCanvas().getContext('webgl2'));
-    }
-    else {
-        return false;
-    }
+    // Check if any supported rendering context is available
+    return getRenderingContextType() !== null;
 }
 exports.isBrowserSupported = isBrowserSupported;
 /**
