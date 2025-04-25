@@ -1,7 +1,7 @@
 3.1.0 (April 25, 2025)
 ===============================
 
-### Features
+### New Features
 * Added backward compatibility for environments that do not have access to the `WebGL2` API. In such cases, the Pipeline will automatically revert to `Canvas2D`, ensuring functionality. However, `WebGL2` is still preferred and recommended due to its superior performance capabilities.
 
 3.0.0 (January 16, 2025)
