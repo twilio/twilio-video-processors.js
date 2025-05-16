@@ -27,7 +27,7 @@ The **Node.js** and **NPM** requirements do not apply if the goal is to use this
 
 You can install directly from npm.
 
-```
+```sh
 npm install @twilio/video-processors --save
 ```
 
@@ -46,7 +46,7 @@ You can also copy `twilio-video-processors.js` from the `dist/build` folder and 
  ```
 
  Using this method, `twilio-video-processors.js` will set a browser global:
- 
+
  ```ts
  const VideoProcessors = Twilio.VideoProcessors;
  ```
@@ -55,9 +55,57 @@ You can also copy `twilio-video-processors.js` from the `dist/build` folder and 
 
 In order to achieve the best performance, the VideoProcessors use WebAssembly to run TensorFlow Lite for person segmentation. You need to serve the tflite model, binaries and web workers so they can be loaded properly. These files can be downloaded from the `dist/build` folder. Check the [API docs](https://twilio.github.io/twilio-video-processors.js/interfaces/VirtualBackgroundProcessorOptions.html#assetsPath) for details and the [examples](https://github.com/twilio/twilio-video-processors.js/tree/master/examples) folder for reference.
 
+You can use the `assetsPath` option to specify the path to the assets. Depending on your use case, you can either serve the assets as follows:
+
+#### Recommended: Same-Origin Hosting
+
+For optimal security, performance, and the simplest configuration, **we strongly recommend serving these assets from the same origin (domain, protocol, and port) as your main application.** This avoids complexities with Cross-Origin Resource Sharing (CORS) and Content Security Policy (CSP).
+
+You would typically copy the contents of the `dist/build` folder to a publicly accessible directory within your application's web server (e.g., `/static/twilio-video-processors-assets/`) and configure the `assetsPath` option in the `VideoProcessors` constructor to point to this location. For example:
+
+```javascript
+// Assuming assets are served from https://example.com/static/twilio-video-processors-assets/
+const virtualBackground = new VideoProcessors.VirtualBackgroundProcessor({
+  assetsPath: '/static/twilio-video-processors-assets/'
+});
+```
+
+#### Alternative: Cross-Origin Hosting
+
+If serving assets from the same origin is not feasible, you can host them on a different origin (e.g., a trusted CDN). However, this requires careful setup of CORS and CSP. If you choose this path, refer to the [Cross-Origin Configuration](#cross-origin-configuration) section below for detailed instructions.
+
+### Cross-Origin Configuration
+
+As highlighted in the [Assets](#assets) section, if you must host your Video Processors assets on a different origin than your main application, your browser's security policies (CORS and CSP) will require specific configurations.
+
+The following sections provide details on how to set these headers for cross-origin requests. For the sake of simplicity, we'll use `https://example.com` as your app's origin and `https://assets.example.com` as the origin of the assets such as the tflite model, and web workers.
+
+```javascript
+// Assuming you need to serve assets from https://assets.example.com
+const virtualBackground = new VideoProcessors.VirtualBackgroundProcessor({
+  assetsPath: 'https://assets.example.com/static/twilio-video-processors-assets/'
+});
+```
+
 #### CORS
 
-If you are serving the assets from a domain that is different from that of your application, then ensure that the `Access-Control-Allow-Origin` response header points to your application's domain.
+Your asset server must send the `Access-Control-Allow-Origin` HTTP response header, set to your app’s exact origin. This header informs the browser that your application's origin is permitted to fetch resources from the asset server.
+
+``` plaintext
+Access-Control-Allow-Origin: https://example.com
+```
+
+#### Content Security Policy (CSP)
+
+If your application enforces a Content Security Policy (CSP), you'll need to update it to allow the loading and execution of Web Workers and related assets.
+
+```plaintext
+Content-Security-Policy: default-src 'self'; worker-src blob: data:; connect-src 'self' https://assets.example.com;
+```
+
+(`default-src 'self'` is a common base, but you can adjust it to your needs.)
+
+Always thoroughly test your CSP after making changes.
 
 ## Usage
 
