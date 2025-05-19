@@ -105,7 +105,7 @@ Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' dat
 
 > Note: This is a general baseline you can customize to fit your needs. You do not need to send this CSP exactly as is—your application’s CSP should be configured according to your specific security requirements, and you should always thoroughly test your CSP after making changes.
 
-In the example above, we are allowing the loading of the required Web Workers properly, but if you consider changing the CSP is not an option for you and still you need to host the assets on a different origin, you can use the `useWebWorkers` option to say the library to don't use Web Workers. That will force the library to use the main thread to process the video frames, but it will turn off the recilence and performance benefits of using Web Workers, and it could impact the UX of your application.
+In the example above, we are allowing the required Web Workers to load properly. However, if changing the Content Security Policy (CSP) is not an option and you still need to host the assets on a different origin, you can use the `useWebWorkers` option to instruct the library _**not**_ to use Web Workers. This will force the library to process video frames on the main thread, disabling the resilience and performance benefits of Web Workers, which could negatively impact the user experience (UX) of your application.
 
 ```javascript
 const virtualBackground = new VideoProcessors.VirtualBackgroundProcessor({
