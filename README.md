@@ -100,12 +100,18 @@ Access-Control-Allow-Origin: https://example.com
 If your application enforces a Content Security Policy (CSP), you'll need to update it to allow the loading and execution of Web Workers and related assets.
 
 ```plaintext
-Content-Security-Policy: default-src 'self'; worker-src blob: data:; connect-src 'self' https://assets.example.com;
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' data: https://assets.example.com; worker-src blob:; connect-src 'self' https://assets.example.com;
 ```
 
-(`default-src 'self'` is a common base, but you can adjust it to your needs.)
+> Note: This is a general baseline you can customize to fit your needs. You do not need to send this CSP exactly as is—your application’s CSP should be configured according to your specific security requirements, and you should always thoroughly test your CSP after making changes.
 
-Always thoroughly test your CSP after making changes.
+In the example above, we are allowing the loading of the required Web Workers properly, but if you consider changing the CSP is not an option for you and still you need to host the assets on a different origin, you can use the `useWebWorkers` option to say the library to don't use Web Workers. That will force the library to use the main thread to process the video frames, but it will turn off the recilence and performance benefits of using Web Workers, and it could impact the UX of your application.
+
+```javascript
+const virtualBackground = new VideoProcessors.VirtualBackgroundProcessor({
+  useWebWorkers: false
+});
+```
 
 ## Usage
 
