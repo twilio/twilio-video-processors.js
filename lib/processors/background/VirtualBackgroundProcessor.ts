@@ -70,7 +70,7 @@ export interface VirtualBackgroundProcessorOptions extends BackgroundProcessorOp
  * img.src = '/background.jpg';
  * ```
  */
-export class VirtualBackgroundProcessor extends BackgroundProcessor {
+export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackgroundProcessorPipeline | VirtualBackgroundProcessorPipelineProxy> {
   private _backgroundImage!: HTMLImageElement;
   private _fitType!: ImageFit;
   // tslint:disable-next-line no-unused-variable
@@ -90,6 +90,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       useWebWorker = true
     } = options;
 
+    // Ensures assetsPath ends with a trailing slash ('/').
     const assetsPath = options
       .assetsPath
       .replace(/([^/])$/, '$1/');
@@ -133,7 +134,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
     }
     this._backgroundImage = image;
     createImageBitmap(this._backgroundImage).then(
-      (imageBitmap) => (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline | VirtualBackgroundProcessorPipelineProxy)
+      (imageBitmap) => this._backgroundProcessorPipeline
         .setBackgroundImage(imageBitmap)
     ).catch(() => {
       /* noop */
@@ -157,7 +158,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor {
       fitType = ImageFit.Fill;
     }
     this._fitType = fitType;
-    (this._backgroundProcessorPipeline as VirtualBackgroundProcessorPipeline | VirtualBackgroundProcessorPipelineProxy)
+    this._backgroundProcessorPipeline
       .setFitType(this._fitType)
       .catch(() => {
         /* noop */

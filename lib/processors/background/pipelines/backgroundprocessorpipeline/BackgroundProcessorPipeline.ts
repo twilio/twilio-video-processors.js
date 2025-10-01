@@ -111,16 +111,19 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       ? { height: inputFrame.displayHeight, width: inputFrame.displayWidth }
       : inputFrame as (OffscreenCanvas | HTMLCanvasElement | ImageBitmap);
 
-    let didResizeWebGL2Canvas = false;
-    if (_outputCanvas.width !== width) {
+    // Check if canvas dimensions need to be updated
+    const needsWidthResize = _outputCanvas.width !== width;
+    const needsHeightResize = _outputCanvas.height !== height;
+    const didResizeWebGL2Canvas = needsWidthResize || needsHeightResize;
+    
+    if (needsWidthResize) {
       _outputCanvas.width = width;
       _webgl2Canvas.width = width;
-      didResizeWebGL2Canvas = true;
     }
-    if (_outputCanvas.height !== height) {
+    
+    if (needsHeightResize) {
       _outputCanvas.height = height;
       _webgl2Canvas.height = height;
-      didResizeWebGL2Canvas = true;
     }
     if (didResizeWebGL2Canvas) {
       postProcessingStage.resetPersonMaskUpscalePipeline();
@@ -128,9 +131,11 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     }
 
     _benchmark.start('inputImageResizeDelay');
+
+    // Downscale the input frame and load the downscaled frame data into the TFLite model
     const downscalePromise = inputFrameDownscaleStage.render(inputFrame)
       .then((downscaledFrameData) => {
-        _twilioTFLite!.loadInputBuffer(downscaledFrameData);
+        _twilioTFLite.loadInputBuffer(downscaledFrameData);
       });
 
     if (!_deferInputFrameDownscale) {
@@ -140,7 +145,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
 
     _benchmark.start('segmentationDelay');
     const personMask = new ImageData(
-      _twilioTFLite!.runInference(),
+      _twilioTFLite.runInference(),
       inferenceInputWidth,
       inferenceInputHeight
     );

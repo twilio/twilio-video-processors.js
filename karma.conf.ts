@@ -20,6 +20,12 @@ export default function(config: any) {
       base: 'Chrome',
       flags: chromeFlags,
     };
+    // Disable GPU to test fallback to Canvas 2D rendering
+    browsers.push('ChromeNoGPU');
+    customLaunchers.ChromeNoGPU = {
+      base: 'Chrome',
+      flags: [...chromeFlags, '--disable-gpu'],
+    };
   } else if (selectedBrowser === 'firefox') {
     browsers.push('FirefoxWebRTC');
     customLaunchers.FirefoxWebRTC = {

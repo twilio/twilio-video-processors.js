@@ -25,7 +25,7 @@ export class BackgroundProcessorPipelineProxy {
     const outputFrame = await pipelineWorker.render(
       transfer(inputFrame, [inputFrame])
     );
-    // @ts-ignore
+    // @ts-expect-error - _benchmark is a private property in the pipeline classes definition
     this._benchmark.merge(await pipelineWorker._benchmark);
     return outputFrame as ImageBitmap | null;
   }
