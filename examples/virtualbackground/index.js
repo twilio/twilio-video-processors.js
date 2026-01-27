@@ -5,6 +5,22 @@ const $errorMessage = document.querySelector('div.modal-body');
 const $errorModal = new bootstrap.Modal(document.querySelector('div#errorModal'));
 const $stats = document.querySelector('#stats');
 const $videoInput = document.querySelector('video#video-input');
+const $settingsPanel = document.querySelector('#settings-panel');
+const $settingsToggle = document.querySelector('#settings-toggle');
+const $settingsContent = document.querySelector('#settings-content');
+const $maskBlurRadius = document.querySelector('#maskBlurRadius');
+const $maskBlurRadiusValue = document.querySelector('#maskBlurRadiusValue');
+const $sigmaColor = document.querySelector('#sigmaColor');
+const $sigmaColorValue = document.querySelector('#sigmaColorValue');
+const $skipPostProcessing = document.querySelector('#skipPostProcessing');
+const $hysteresisEnabled = document.querySelector('#hysteresisEnabled');
+const $hysteresisLow = document.querySelector('#hysteresisLow');
+const $hysteresisLowValue = document.querySelector('#hysteresisLowValue');
+const $hysteresisHigh = document.querySelector('#hysteresisHigh');
+const $hysteresisHighValue = document.querySelector('#hysteresisHighValue');
+const $fitType = document.querySelector('#fitType');
+const $hysteresisSettings = document.querySelectorAll('.hysteresis-settings');
+const $fitTypeSettings = document.querySelector('.fit-type-settings');
 
 const assetsPath = '';
 const bkgImages = new Map();
@@ -118,7 +134,7 @@ const loadImage = async (name) => {
     }
   };
 
-  const handleButtonClick = async (bg) => {
+  let handleButtonClick = async (bg) => {
     if (bg === 'none') {
       setProcessor(videoTrack, null);
     } else if (bg === 'blur') {
@@ -181,6 +197,79 @@ const loadImage = async (name) => {
       });
     }, 1000);
   }
+
+  $settingsToggle.onclick = () => {
+    $settingsPanel.classList.toggle('collapsed');
+  };
+
+  const getActiveProcessor = () => gaussianBlurProcessor || virtualBackgroundProcessor;
+
+  $maskBlurRadius.oninput = () => {
+    const value = Number($maskBlurRadius.value);
+    $maskBlurRadiusValue.textContent = value;
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.maskBlurRadius = value;
+    }
+  };
+
+  $sigmaColor.oninput = () => {
+    const value = Number($sigmaColor.value) / 100;
+    $sigmaColorValue.textContent = value.toFixed(2);
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.sigmaColor = value;
+    }
+  };
+
+  $skipPostProcessing.onchange = () => {
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.skipPostProcessing = $skipPostProcessing.checked;
+    }
+  };
+
+  $hysteresisEnabled.onchange = () => {
+    const enabled = $hysteresisEnabled.checked;
+    $hysteresisSettings.forEach(el => {
+      el.style.display = enabled ? 'block' : 'none';
+    });
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.hysteresisEnabled = enabled;
+    }
+  };
+
+  $hysteresisLow.oninput = () => {
+    const value = Number($hysteresisLow.value);
+    $hysteresisLowValue.textContent = value;
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.hysteresisLow = value;
+    }
+  };
+
+  $hysteresisHigh.oninput = () => {
+    const value = Number($hysteresisHigh.value);
+    $hysteresisHighValue.textContent = value;
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.hysteresisHigh = value;
+    }
+  };
+
+  $fitType.onchange = () => {
+    if (virtualBackgroundProcessor) {
+      virtualBackgroundProcessor.fitType = $fitType.value;
+    }
+  };
+
+  const originalHandleButtonClick = handleButtonClick;
+  handleButtonClick = async (bg) => {
+    await originalHandleButtonClick(bg);
+    const isVirtualBackground = bg !== 'none' && bg !== 'blur';
+    $fitTypeSettings.style.display = isVirtualBackground ? 'block' : 'none';
+  };
 
   window.videoTrack = videoTrack;
 })(Twilio);

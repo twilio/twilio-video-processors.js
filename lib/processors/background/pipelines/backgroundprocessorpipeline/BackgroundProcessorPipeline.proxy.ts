@@ -35,8 +35,33 @@ export class BackgroundProcessorPipelineProxy {
     return pipelineWorker.setDeferInputFrameDownscale(defer);
   }
 
+  async setHysteresisEnabled(enabled: boolean): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setHysteresisEnabled(enabled);
+  }
+
+  async setHysteresisHigh(high: number): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setHysteresisHigh(high);
+  }
+
+  async setHysteresisLow(low: number): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setHysteresisLow(low);
+  }
+
   async setMaskBlurRadius(radius: number): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setMaskBlurRadius(radius);
+  }
+
+  async setSigmaColor(sigmaColor: number): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setSigmaColor(sigmaColor);
+  }
+
+  async setSkipPostProcessing(skip: boolean): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setSkipPostProcessing(skip);
   }
 }

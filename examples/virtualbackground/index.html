@@ -27,6 +27,46 @@
                 <div id="flag" class="img-btn" style="background-image: url('backgrounds/flag.jpg');"></div>
                 <div id="mountain_lake" class="img-btn" style="background-image: url('backgrounds/mountain_lake.jpg');"></div>
               </div>
+              <div id="settings-panel" class="settings-panel">
+                <div class="settings-header" id="settings-toggle">Settings</div>
+                <div class="settings-content" id="settings-content">
+                  <div class="setting-group">
+                    <label for="maskBlurRadius">Mask Blur Radius: <span id="maskBlurRadiusValue">8</span></label>
+                    <input type="range" id="maskBlurRadius" min="0" max="30" value="8">
+                  </div>
+                  <div class="setting-group">
+                    <label for="sigmaColor">Sigma Color: <span id="sigmaColorValue">0.1</span></label>
+                    <input type="range" id="sigmaColor" min="1" max="100" value="10">
+                  </div>
+                  <div class="setting-group">
+                    <label for="skipPostProcessing">
+                      <input type="checkbox" id="skipPostProcessing"> Show Raw Mask
+                    </label>
+                  </div>
+                  <div class="setting-group">
+                    <label for="hysteresisEnabled">
+                      <input type="checkbox" id="hysteresisEnabled"> Enable Hysteresis
+                    </label>
+                  </div>
+                  <div class="setting-group hysteresis-settings" style="display: none;">
+                    <label for="hysteresisLow">Hysteresis Low: <span id="hysteresisLowValue">80</span></label>
+                    <input type="range" id="hysteresisLow" min="0" max="255" value="80">
+                  </div>
+                  <div class="setting-group hysteresis-settings" style="display: none;">
+                    <label for="hysteresisHigh">Hysteresis High: <span id="hysteresisHighValue">180</span></label>
+                    <input type="range" id="hysteresisHigh" min="0" max="255" value="180">
+                  </div>
+                  <div class="setting-group fit-type-settings" style="display: none;">
+                    <label for="fitType">Fit Type:</label>
+                    <select id="fitType">
+                      <option value="Fill">Fill</option>
+                      <option value="Contain">Contain</option>
+                      <option value="Cover">Cover</option>
+                      <option value="None">None</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

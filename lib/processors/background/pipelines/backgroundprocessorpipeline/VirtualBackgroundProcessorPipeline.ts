@@ -6,6 +6,11 @@ import { BackgroundProcessorPipeline, BackgroundProcessorPipelineOptions } from 
  */
 export interface VirtualBackgroundProcessorPipelineOptions extends BackgroundProcessorPipelineOptions {
   fitType: ImageFit;
+  hysteresisEnabled?: boolean;
+  hysteresisHigh?: number;
+  hysteresisLow?: number;
+  sigmaColor?: number;
+  skipPostProcessing?: boolean;
 }
 
 /**

@@ -8,6 +8,11 @@ import { BackgroundProcessorPipeline, BackgroundProcessorPipelineOptions } from 
  */
 export interface GaussianBlurBackgroundProcessorPipelineOptions extends BackgroundProcessorPipelineOptions {
   blurFilterRadius: number;
+  hysteresisEnabled?: boolean;
+  hysteresisHigh?: number;
+  hysteresisLow?: number;
+  sigmaColor?: number;
+  skipPostProcessing?: boolean;
 }
 
 /**

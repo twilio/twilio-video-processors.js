@@ -13,7 +13,12 @@ import { PostProcessingStage } from './PostProcessingStage';
 export interface BackgroundProcessorPipelineOptions {
   assetsPath: string;
   deferInputFrameDownscale: boolean;
+  hysteresisEnabled?: boolean;
+  hysteresisHigh?: number;
+  hysteresisLow?: number;
   maskBlurRadius: number;
+  sigmaColor?: number;
+  skipPostProcessing?: boolean;
 }
 
 /**
@@ -40,7 +45,12 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     const {
       assetsPath,
       deferInputFrameDownscale,
-      maskBlurRadius
+      hysteresisEnabled,
+      hysteresisHigh,
+      hysteresisLow,
+      maskBlurRadius,
+      sigmaColor,
+      skipPostProcessing
     } = options;
 
     this._assetsPath = assetsPath;
@@ -57,7 +67,14 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       this._webgl2Canvas,
       this._outputCanvas,
       maskBlurRadius,
-      (inputFrame?: InputFrame): void => this._setBackground(inputFrame)
+      (inputFrame?: InputFrame): void => this._setBackground(inputFrame),
+      {
+        hysteresisEnabled,
+        hysteresisHigh,
+        hysteresisLow,
+        sigmaColor,
+        skipPostProcessing
+      }
     ));
   }
 
@@ -170,9 +187,34 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     this._deferInputFrameDownscale = defer;
   }
 
+  async setHysteresisEnabled(enabled: boolean): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateHysteresisEnabled(enabled);
+  }
+
+  async setHysteresisHigh(high: number): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateHysteresisHigh(high);
+  }
+
+  async setHysteresisLow(low: number): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateHysteresisLow(low);
+  }
+
   async setMaskBlurRadius(radius: number): Promise<void> {
     (this._stages[1] as PostProcessingStage)
       .updateMaskBlurRadius(radius);
+  }
+
+  async setSigmaColor(sigmaColor: number): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateSigmaColor(sigmaColor);
+  }
+
+  async setSkipPostProcessing(skip: boolean): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateSkipPostProcessing(skip);
   }
 
   protected abstract _setBackground(inputFrame?: InputFrame): void;

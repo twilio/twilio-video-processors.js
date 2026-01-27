@@ -32,7 +32,8 @@ export interface Dimensions {
  * @private
  */
 export type BilateralFilterConfig = {
-  sigmaSpace?: number
+  sigmaColor?: number;
+  sigmaSpace?: number;
 };
 
 /**

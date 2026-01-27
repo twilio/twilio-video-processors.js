@@ -1,5 +1,5 @@
 import { ImageFit } from '../../types';
-import { MASK_BLUR_RADIUS } from '../../constants';
+import { HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, SIGMA_COLOR } from '../../constants';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { VirtualBackgroundProcessorPipeline, VirtualBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
@@ -86,7 +86,12 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       backgroundImage,
       deferInputFrameDownscale = false,
       fitType = ImageFit.Fill,
+      hysteresisEnabled = false,
+      hysteresisHigh = HYSTERESIS_HIGH,
+      hysteresisLow = HYSTERESIS_LOW,
       maskBlurRadius = MASK_BLUR_RADIUS,
+      sigmaColor = SIGMA_COLOR,
+      skipPostProcessing = false,
       useWebWorker = true
     } = options;
 
@@ -103,7 +108,12 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       assetsPath,
       deferInputFrameDownscale,
       fitType,
-      maskBlurRadius
+      hysteresisEnabled,
+      hysteresisHigh,
+      hysteresisLow,
+      maskBlurRadius,
+      sigmaColor,
+      skipPostProcessing
     });
 
     super(

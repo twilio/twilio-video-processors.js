@@ -1,7 +1,10 @@
 import { Dimensions } from './types';
 
 export const BLUR_FILTER_RADIUS = 15;
+export const HYSTERESIS_LOW = 80;
+export const HYSTERESIS_HIGH = 180;
 export const MASK_BLUR_RADIUS = 8;
+export const SIGMA_COLOR = 0.1;
 export const MODEL_NAME = 'selfie_segmentation_landscape.tflite';
 export const TFLITE_LOADER_NAME = 'tflite-1-0-0.js';
 export const TFLITE_SIMD_LOADER_NAME = 'tflite-simd-1-0-0.js';

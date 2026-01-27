@@ -1,4 +1,4 @@
-import { MASK_BLUR_RADIUS } from '../../constants';
+import { HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, SIGMA_COLOR } from '../../constants';
 import { Benchmark } from '../../utils/Benchmark';
 import { version } from '../../utils/version';
 import { InputFrame } from '../../types';
@@ -54,6 +54,34 @@ export interface BackgroundProcessorOptions {
   deferInputFrameDownscale?: boolean;
 
   /**
+   * Whether to enable hysteresis thresholding for temporal smoothing.
+   * When enabled, reduces flickering at mask edges by using previous frame data.
+   * @default
+   * ```html
+   * false
+   * ```
+   */
+  hysteresisEnabled?: boolean;
+
+  /**
+   * The high threshold for hysteresis (0-255). Pixels above this are always foreground.
+   * @default
+   * ```html
+   * 180
+   * ```
+   */
+  hysteresisHigh?: number;
+
+  /**
+   * The low threshold for hysteresis (0-255). Pixels below this are always background.
+   * @default
+   * ```html
+   * 80
+   * ```
+   */
+  hysteresisLow?: number;
+
+  /**
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
@@ -61,6 +89,26 @@ export interface BackgroundProcessorOptions {
    * ```
    */
   maskBlurRadius?: number;
+
+  /**
+   * The sigma color parameter for the bilateral filter (0.01-1.0).
+   * Lower values preserve edges better.
+   * @default
+   * ```html
+   * 0.1
+   * ```
+   */
+  sigmaColor?: number;
+
+  /**
+   * Whether to skip post-processing and output the raw segmentation mask.
+   * Useful for debugging.
+   * @default
+   * ```html
+   * false
+   * ```
+   */
+  skipPostProcessing?: boolean;
 
   /**
    * Whether to use a web worker (Chrome only).
@@ -81,12 +129,17 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
 
   private readonly _benchmark: Benchmark;
   private _deferInputFrameDownscale: boolean = false;
+  private _hysteresisEnabled: boolean = false;
+  private _hysteresisHigh: number = HYSTERESIS_HIGH;
+  private _hysteresisLow: number = HYSTERESIS_LOW;
   private readonly _inputFrameCanvas: OffscreenCanvas = new OffscreenCanvas(1, 1);
   private readonly _inputFrameContext: OffscreenCanvasRenderingContext2D = this._inputFrameCanvas.getContext('2d', { willReadFrequently: true })!;
   private _isSimdEnabled: boolean | null = null;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _outputFrameBuffer: HTMLCanvasElement | null = null;
   private _outputFrameBufferContext: CanvasRenderingContext2D | ImageBitmapRenderingContext | null = null;
+  private _sigmaColor: number = SIGMA_COLOR;
+  private _skipPostProcessing: boolean = false;
 
   // This version is read by the Video SDK
   // tslint:disable-next-line no-unused-variable
@@ -101,7 +154,12 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     const {
       assetsPath,
       deferInputFrameDownscale = this._deferInputFrameDownscale,
-      maskBlurRadius = this._maskBlurRadius
+      hysteresisEnabled = this._hysteresisEnabled,
+      hysteresisHigh = this._hysteresisHigh,
+      hysteresisLow = this._hysteresisLow,
+      maskBlurRadius = this._maskBlurRadius,
+      sigmaColor = this._sigmaColor,
+      skipPostProcessing = this._skipPostProcessing
     } = options;
 
     if (typeof assetsPath !== 'string') {
@@ -114,7 +172,12 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     // @ts-expect-error - _benchmark is a private property in the pipeline classes definition
     this._benchmark = this._backgroundProcessorPipeline._benchmark;
     this.deferInputFrameDownscale = deferInputFrameDownscale;
+    this.hysteresisEnabled = hysteresisEnabled;
+    this.hysteresisHigh = hysteresisHigh;
+    this.hysteresisLow = hysteresisLow;
     this.maskBlurRadius = maskBlurRadius;
+    this.sigmaColor = sigmaColor;
+    this.skipPostProcessing = skipPostProcessing;
   }
 
   /**
@@ -146,6 +209,81 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
   }
 
   /**
+   * Whether hysteresis thresholding is enabled.
+   */
+  get hysteresisEnabled(): boolean {
+    return this._hysteresisEnabled;
+  }
+
+  /**
+   * Enable or disable hysteresis thresholding for temporal smoothing.
+   */
+  set hysteresisEnabled(enabled: boolean) {
+    if (typeof enabled !== 'boolean') {
+      console.warn('Provided hysteresisEnabled is not a boolean.');
+      enabled = false;
+    }
+    if (this._hysteresisEnabled !== enabled) {
+      this._hysteresisEnabled = enabled;
+      this._backgroundProcessorPipeline
+        .setHysteresisEnabled(this._hysteresisEnabled)
+        .catch(() => {
+          /* noop */
+        });
+    }
+  }
+
+  /**
+   * The current high threshold for hysteresis (0-255).
+   */
+  get hysteresisHigh(): number {
+    return this._hysteresisHigh;
+  }
+
+  /**
+   * Set the high threshold for hysteresis (0-255).
+   */
+  set hysteresisHigh(high: number) {
+    if (typeof high !== 'number' || high < 0 || high > 255) {
+      console.warn(`Valid hysteresis high threshold not found. Using ${HYSTERESIS_HIGH} as default.`);
+      high = HYSTERESIS_HIGH;
+    }
+    if (this._hysteresisHigh !== high) {
+      this._hysteresisHigh = high;
+      this._backgroundProcessorPipeline
+        .setHysteresisHigh(this._hysteresisHigh)
+        .catch(() => {
+          /* noop */
+        });
+    }
+  }
+
+  /**
+   * The current low threshold for hysteresis (0-255).
+   */
+  get hysteresisLow(): number {
+    return this._hysteresisLow;
+  }
+
+  /**
+   * Set the low threshold for hysteresis (0-255).
+   */
+  set hysteresisLow(low: number) {
+    if (typeof low !== 'number' || low < 0 || low > 255) {
+      console.warn(`Valid hysteresis low threshold not found. Using ${HYSTERESIS_LOW} as default.`);
+      low = HYSTERESIS_LOW;
+    }
+    if (this._hysteresisLow !== low) {
+      this._hysteresisLow = low;
+      this._backgroundProcessorPipeline
+        .setHysteresisLow(this._hysteresisLow)
+        .catch(() => {
+          /* noop */
+        });
+    }
+  }
+
+  /**
    * The current blur radius when smoothing out the edges of the person's mask.
    */
   get maskBlurRadius(): number {
@@ -164,6 +302,56 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
       this._maskBlurRadius = radius;
       this._backgroundProcessorPipeline
         .setMaskBlurRadius(this._maskBlurRadius)
+        .catch(() => {
+          /* noop */
+        });
+    }
+  }
+
+  /**
+   * The current sigma color parameter for the bilateral filter.
+   */
+  get sigmaColor(): number {
+    return this._sigmaColor;
+  }
+
+  /**
+   * Set the sigma color parameter for the bilateral filter (0.01-1.0).
+   */
+  set sigmaColor(sigmaColor: number) {
+    if (typeof sigmaColor !== 'number' || sigmaColor < 0.01 || sigmaColor > 1.0) {
+      console.warn(`Valid sigma color not found. Using ${SIGMA_COLOR} as default.`);
+      sigmaColor = SIGMA_COLOR;
+    }
+    if (this._sigmaColor !== sigmaColor) {
+      this._sigmaColor = sigmaColor;
+      this._backgroundProcessorPipeline
+        .setSigmaColor(this._sigmaColor)
+        .catch(() => {
+          /* noop */
+        });
+    }
+  }
+
+  /**
+   * Whether post-processing is skipped (raw mask output).
+   */
+  get skipPostProcessing(): boolean {
+    return this._skipPostProcessing;
+  }
+
+  /**
+   * Enable or disable skipping post-processing to show raw mask.
+   */
+  set skipPostProcessing(skip: boolean) {
+    if (typeof skip !== 'boolean') {
+      console.warn('Provided skipPostProcessing is not a boolean.');
+      skip = false;
+    }
+    if (this._skipPostProcessing !== skip) {
+      this._skipPostProcessing = skip;
+      this._backgroundProcessorPipeline
+        .setSkipPostProcessing(this._skipPostProcessing)
         .catch(() => {
           /* noop */
         });

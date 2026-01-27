@@ -105,3 +105,72 @@ div.col-sm-4 {
   max-width: 100%;
   flex: 100%;
 }
+
+.settings-panel {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  min-width: 220px;
+  font-size: 0.85em;
+  z-index: 10;
+}
+
+.settings-header {
+  padding: 8px 12px;
+  font-weight: bold;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  user-select: none;
+}
+
+.settings-header::after {
+  content: ' \25BC';
+  font-size: 0.7em;
+}
+
+.settings-panel.collapsed .settings-header::after {
+  content: ' \25B6';
+}
+
+.settings-content {
+  padding: 10px 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.settings-panel.collapsed .settings-content {
+  display: none;
+}
+
+.setting-group {
+  margin-bottom: 12px;
+}
+
+.setting-group:last-child {
+  margin-bottom: 0;
+}
+
+.setting-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9em;
+}
+
+.setting-group input[type="range"] {
+  width: 100%;
+  margin: 0;
+}
+
+.setting-group input[type="checkbox"] {
+  margin-right: 6px;
+}
+
+.setting-group select {
+  width: 100%;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}

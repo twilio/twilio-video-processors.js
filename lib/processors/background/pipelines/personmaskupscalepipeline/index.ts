@@ -99,13 +99,11 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
   }
 
   updateBilateralFilterConfig(config: BilateralFilterConfig) {
-    const { sigmaSpace } = config;
-    if (typeof sigmaSpace !== 'number') {
-      return;
-    }
+    const { sigmaColor, sigmaSpace } = config;
     if (!this._isWebGL2Supported) {
-      this._maskBlurRadius = sigmaSpace;
-      // SinglePassBilateralFilterStage is not supported in Canvas2D fallback
+      if (typeof sigmaSpace === 'number') {
+        this._maskBlurRadius = sigmaSpace;
+      }
       return;
     }
     const [
@@ -115,8 +113,12 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
 
     (bilateralFilterStages as SinglePassBilateralFilterStage[]).forEach(
       (stage) => {
-        stage.updateSigmaColor(0.1);
-        stage.updateSigmaSpace(sigmaSpace);
+        if (typeof sigmaColor === 'number') {
+          stage.updateSigmaColor(sigmaColor);
+        }
+        if (typeof sigmaSpace === 'number') {
+          stage.updateSigmaSpace(sigmaSpace);
+        }
       }
     );
   }
