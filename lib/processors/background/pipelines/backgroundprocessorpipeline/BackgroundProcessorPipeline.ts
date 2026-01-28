@@ -1,4 +1,4 @@
-import { MODEL_NAME, TFLITE_LOADER_NAME, TFLITE_SIMD_LOADER_NAME, WASM_INFERENCE_DIMENSIONS } from '../../../../constants';
+import { DEFAULT_MODEL_TYPE, MODEL_CONFIGS, ModelType, TFLITE_LOADER_NAME, TFLITE_SIMD_LOADER_NAME } from '../../../../constants';
 import { Benchmark } from '../../../../utils/Benchmark';
 import { isChromiumImageBitmap } from '../../../../utils/support';
 import { TwilioTFLite } from '../../../../utils/TwilioTFLite';
@@ -17,6 +17,7 @@ export interface BackgroundProcessorPipelineOptions {
   hysteresisHigh?: number;
   hysteresisLow?: number;
   maskBlurRadius: number;
+  modelType?: ModelType;
   sigmaColor?: number;
   skipPostProcessing?: boolean;
 }
@@ -31,8 +32,9 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
   protected readonly _webgl2Canvas = new OffscreenCanvas(1, 1);
   private readonly _assetsPath: string;
   private readonly _benchmark = new Benchmark();
+  private _currentModelType: ModelType;
   private _deferInputFrameDownscale: boolean;
-  private readonly _inferenceInputCanvas = new OffscreenCanvas(WASM_INFERENCE_DIMENSIONS.width, WASM_INFERENCE_DIMENSIONS.height);
+  private _inferenceInputCanvas: OffscreenCanvas;
   private readonly _inputFrameDownscaleMode = isChromiumImageBitmap() ? 'image-bitmap' : 'canvas';
   private readonly _onResizeWebGL2Canvas: () => void;
 
@@ -49,13 +51,21 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       hysteresisHigh,
       hysteresisLow,
       maskBlurRadius,
+      modelType = DEFAULT_MODEL_TYPE,
       sigmaColor,
       skipPostProcessing
     } = options;
 
     this._assetsPath = assetsPath;
+    this._currentModelType = modelType;
     this._deferInputFrameDownscale = deferInputFrameDownscale;
     this._onResizeWebGL2Canvas = onResizeWebGL2Canvas;
+
+    const modelConfig = MODEL_CONFIGS[modelType];
+    this._inferenceInputCanvas = new OffscreenCanvas(
+      modelConfig.dimensions.width,
+      modelConfig.dimensions.height
+    );
 
     this.addStage(new InputFrameDowscaleStage(
       this._inferenceInputCanvas,
@@ -63,7 +73,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     ));
 
     this.addStage(new PostProcessingStage(
-      WASM_INFERENCE_DIMENSIONS,
+      modelConfig.dimensions,
       this._webgl2Canvas,
       this._outputCanvas,
       maskBlurRadius,
@@ -82,9 +92,10 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     let { _twilioTFLite } = BackgroundProcessorPipeline;
     if (!_twilioTFLite) {
       _twilioTFLite = new TwilioTFLite();
+      const modelConfig = MODEL_CONFIGS[this._currentModelType];
       await _twilioTFLite.initialize(
         this._assetsPath,
-        MODEL_NAME,
+        modelConfig.name,
         TFLITE_LOADER_NAME,
         TFLITE_SIMD_LOADER_NAME
       );
@@ -185,6 +196,28 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
 
   async setDeferInputFrameDownscale(defer: boolean): Promise<void> {
     this._deferInputFrameDownscale = defer;
+  }
+
+  async setModelType(modelType: ModelType): Promise<void> {
+    if (this._currentModelType === modelType) {
+      return;
+    }
+    const { _twilioTFLite } = BackgroundProcessorPipeline;
+    if (!_twilioTFLite) {
+      this._currentModelType = modelType;
+      return;
+    }
+
+    const modelConfig = MODEL_CONFIGS[modelType];
+    await _twilioTFLite.switchModel(this._assetsPath, modelConfig.name);
+
+    this._inferenceInputCanvas.width = modelConfig.dimensions.width;
+    this._inferenceInputCanvas.height = modelConfig.dimensions.height;
+
+    (this._stages[1] as PostProcessingStage)
+      .updateInputDimensions(modelConfig.dimensions);
+
+    this._currentModelType = modelType;
   }
 
   async setHysteresisEnabled(enabled: boolean): Promise<void> {

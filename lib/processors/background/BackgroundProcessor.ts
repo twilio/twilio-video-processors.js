@@ -1,4 +1,4 @@
-import { HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, SIGMA_COLOR } from '../../constants';
+import { DEFAULT_MODEL_TYPE, HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, ModelType, SIGMA_COLOR } from '../../constants';
 import { Benchmark } from '../../utils/Benchmark';
 import { version } from '../../utils/version';
 import { InputFrame } from '../../types';
@@ -91,6 +91,17 @@ export interface BackgroundProcessorOptions {
   maskBlurRadius?: number;
 
   /**
+   * The segmentation model to use.
+   * - 'landscape': 256x144, optimized for landscape video (default)
+   * - 'square': 256x256, better for square or portrait video
+   * @default
+   * ```html
+   * 'landscape'
+   * ```
+   */
+  modelType?: ModelType;
+
+  /**
    * The sigma color parameter for the bilateral filter (0.01-1.0).
    * Lower values preserve edges better.
    * @default
@@ -136,6 +147,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
   private readonly _inputFrameContext: OffscreenCanvasRenderingContext2D = this._inputFrameCanvas.getContext('2d', { willReadFrequently: true })!;
   private _isSimdEnabled: boolean | null = null;
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
+  private _modelType: ModelType = DEFAULT_MODEL_TYPE;
   private _outputFrameBuffer: HTMLCanvasElement | null = null;
   private _outputFrameBufferContext: CanvasRenderingContext2D | ImageBitmapRenderingContext | null = null;
   private _sigmaColor: number = SIGMA_COLOR;
@@ -158,6 +170,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
       hysteresisHigh = this._hysteresisHigh,
       hysteresisLow = this._hysteresisLow,
       maskBlurRadius = this._maskBlurRadius,
+      modelType = this._modelType,
       sigmaColor = this._sigmaColor,
       skipPostProcessing = this._skipPostProcessing
     } = options;
@@ -176,6 +189,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     this.hysteresisHigh = hysteresisHigh;
     this.hysteresisLow = hysteresisLow;
     this.maskBlurRadius = maskBlurRadius;
+    this._modelType = modelType;
     this.sigmaColor = sigmaColor;
     this.skipPostProcessing = skipPostProcessing;
   }
@@ -302,6 +316,31 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
       this._maskBlurRadius = radius;
       this._backgroundProcessorPipeline
         .setMaskBlurRadius(this._maskBlurRadius)
+        .catch(() => {
+          /* noop */
+        });
+    }
+  }
+
+  /**
+   * The current segmentation model type.
+   */
+  get modelType(): ModelType {
+    return this._modelType;
+  }
+
+  /**
+   * Set the segmentation model type ('landscape' or 'square').
+   */
+  set modelType(modelType: ModelType) {
+    if (modelType !== 'landscape' && modelType !== 'square') {
+      console.warn(`Valid model type not found. Using '${DEFAULT_MODEL_TYPE}' as default.`);
+      modelType = DEFAULT_MODEL_TYPE;
+    }
+    if (this._modelType !== modelType) {
+      this._modelType = modelType;
+      this._backgroundProcessorPipeline
+        .setModelType(this._modelType)
         .catch(() => {
           /* noop */
         });

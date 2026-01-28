@@ -1,4 +1,5 @@
 import { Remote, transfer } from 'comlink';
+import { ModelType } from '../../../../constants';
 import { Benchmark } from '../../../../utils/Benchmark';
 import { BackgroundProcessorPipeline } from './BackgroundProcessorPipeline';
 
@@ -33,6 +34,11 @@ export class BackgroundProcessorPipelineProxy {
   async setDeferInputFrameDownscale(defer: boolean): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setDeferInputFrameDownscale(defer);
+  }
+
+  async setModelType(modelType: ModelType): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setModelType(modelType);
   }
 
   async setHysteresisEnabled(enabled: boolean): Promise<void> {

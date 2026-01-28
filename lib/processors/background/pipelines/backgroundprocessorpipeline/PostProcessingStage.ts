@@ -21,7 +21,7 @@ export class PostProcessingStage implements Pipeline.Stage {
   private _hysteresisEnabled: boolean = false;
   private _hysteresisHigh: number = HYSTERESIS_HIGH;
   private _hysteresisLow: number = HYSTERESIS_LOW;
-  private readonly _inputDimensions: Dimensions;
+  private _inputDimensions: Dimensions;
   private _maskBlurRadius: number;
   private readonly _outputCanvas: OffscreenCanvas;
   private readonly _outputContext: OffscreenCanvasRenderingContext2D;
@@ -191,5 +191,11 @@ export class PostProcessingStage implements Pipeline.Stage {
 
   updateSkipPostProcessing(skip: boolean): void {
     this._skipPostProcessing = skip;
+  }
+
+  updateInputDimensions(dimensions: Dimensions): void {
+    this._inputDimensions = dimensions;
+    this.resetPersonMaskUpscalePipeline();
+    this._prevMaskData = null;
   }
 }

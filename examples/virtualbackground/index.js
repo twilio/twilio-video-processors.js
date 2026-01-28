@@ -19,6 +19,7 @@ const $hysteresisLowValue = document.querySelector('#hysteresisLowValue');
 const $hysteresisHigh = document.querySelector('#hysteresisHigh');
 const $hysteresisHighValue = document.querySelector('#hysteresisHighValue');
 const $fitType = document.querySelector('#fitType');
+const $modelType = document.querySelector('#modelType');
 const $hysteresisSettings = document.querySelectorAll('.hysteresis-settings');
 const $fitTypeSettings = document.querySelector('.fit-type-settings');
 
@@ -261,6 +262,13 @@ const loadImage = async (name) => {
   $fitType.onchange = () => {
     if (virtualBackgroundProcessor) {
       virtualBackgroundProcessor.fitType = $fitType.value;
+    }
+  };
+
+  $modelType.onchange = () => {
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.modelType = $modelType.value;
     }
   };
 

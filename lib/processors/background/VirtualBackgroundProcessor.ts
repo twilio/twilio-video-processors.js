@@ -1,5 +1,5 @@
 import { ImageFit } from '../../types';
-import { HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, SIGMA_COLOR } from '../../constants';
+import { DEFAULT_MODEL_TYPE, HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, SIGMA_COLOR } from '../../constants';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { VirtualBackgroundProcessorPipeline, VirtualBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
@@ -90,6 +90,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       hysteresisHigh = HYSTERESIS_HIGH,
       hysteresisLow = HYSTERESIS_LOW,
       maskBlurRadius = MASK_BLUR_RADIUS,
+      modelType = DEFAULT_MODEL_TYPE,
       sigmaColor = SIGMA_COLOR,
       skipPostProcessing = false,
       useWebWorker = true
@@ -112,6 +113,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       hysteresisHigh,
       hysteresisLow,
       maskBlurRadius,
+      modelType,
       sigmaColor,
       skipPostProcessing
     });

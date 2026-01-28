@@ -1,3 +1,5 @@
+import { Dimensions } from '../types';
+
 declare const WorkerGlobalScope: any;
 declare function createTwilioTFLiteModule(): Promise<any>;
 declare function createTwilioTFLiteSIMDModule(): Promise<any>;
@@ -7,18 +9,27 @@ const isWebWorker = typeof WorkerGlobalScope !== 'undefined'
   && self instanceof WorkerGlobalScope;
 
 const loadedScripts = new Set<string>();
-let model: ArrayBuffer;
+const modelCache = new Map<string, ArrayBuffer>();
 
 /**
  * @private
  */
 export class TwilioTFLite {
+  private _currentModelName: string | null = null;
   private _inputBuffer: Uint8ClampedArray | null = null;
   private _isSimdEnabled: boolean | null = null;
   private _tflite: any = null;
 
   get isSimdEnabled(): boolean | null {
     return this._isSimdEnabled;
+  }
+
+  getInputDimensions(): Dimensions {
+    const { _tflite: tflite } = this;
+    return {
+      width: tflite._getInputWidth(),
+      height: tflite._getInputHeight()
+    };
   }
 
   async initialize(
@@ -44,7 +55,33 @@ export class TwilioTFLite {
       ),
       fetch(`${assetsPath}${modelName}`),
     ]);
-    model = model || await modelResponse.arrayBuffer();
+    let model = modelCache.get(modelName);
+    if (!model) {
+      model = await modelResponse.arrayBuffer();
+      modelCache.set(modelName, model);
+    }
+    this._loadModelIntoTFLite(model);
+    this._currentModelName = modelName;
+  }
+
+  async switchModel(assetsPath: string, modelName: string): Promise<void> {
+    if (this._currentModelName === modelName) {
+      return;
+    }
+    if (isWebWorker) {
+      assetsPath = '';
+    }
+    let model = modelCache.get(modelName);
+    if (!model) {
+      const response = await fetch(`${assetsPath}${modelName}`);
+      model = await response.arrayBuffer();
+      modelCache.set(modelName, model);
+    }
+    this._loadModelIntoTFLite(model);
+    this._currentModelName = modelName;
+  }
+
+  private _loadModelIntoTFLite(model: ArrayBuffer): void {
     const { _tflite: tflite } = this;
     const modelBufferOffset = tflite._getModelBufferMemoryOffset();
     tflite.HEAPU8.set(new Uint8Array(model), modelBufferOffset);

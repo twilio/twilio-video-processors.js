@@ -1,4 +1,4 @@
-import { BLUR_FILTER_RADIUS, HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, SIGMA_COLOR } from '../../constants';
+import { BLUR_FILTER_RADIUS, DEFAULT_MODEL_TYPE, HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, SIGMA_COLOR } from '../../constants';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { GaussianBlurBackgroundProcessorPipeline, GaussianBlurBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
@@ -74,6 +74,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor<Gaussia
       hysteresisHigh = HYSTERESIS_HIGH,
       hysteresisLow = HYSTERESIS_LOW,
       maskBlurRadius = MASK_BLUR_RADIUS,
+      modelType = DEFAULT_MODEL_TYPE,
       sigmaColor = SIGMA_COLOR,
       skipPostProcessing = false,
       useWebWorker = true
@@ -96,6 +97,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor<Gaussia
       hysteresisHigh,
       hysteresisLow,
       maskBlurRadius,
+      modelType,
       sigmaColor,
       skipPostProcessing
     });

@@ -1,3 +1,4 @@
+import { ModelType } from './constants';
 import { GaussianBlurBackgroundProcessor, GaussianBlurBackgroundProcessorOptions } from './processors/background/GaussianBlurBackgroundProcessor';
 import { VirtualBackgroundProcessor, VirtualBackgroundProcessorOptions } from './processors/background/VirtualBackgroundProcessor';
 import { ImageFit } from './types';
@@ -21,6 +22,7 @@ export {
   GaussianBlurBackgroundProcessorOptions,
   ImageFit,
   isSupported,
+  ModelType,
   version,
   VirtualBackgroundProcessor,
   VirtualBackgroundProcessorOptions,
