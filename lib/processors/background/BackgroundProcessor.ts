@@ -1,7 +1,7 @@
 import { DEFAULT_MODEL_TYPE, HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS, ModelType, SIGMA_COLOR } from '../../constants';
 import { Benchmark } from '../../utils/Benchmark';
 import { version } from '../../utils/version';
-import { InputFrame } from '../../types';
+import { BilateralFilterType, InputFrame } from '../../types';
 import { Processor } from '../Processor';
 import { BackgroundProcessorPipeline, BackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
@@ -39,6 +39,17 @@ export interface BackgroundProcessorOptions {
    * ```
    */
   assetsPath: string;
+
+  /**
+   * The type of bilateral filter to use for mask upscaling.
+   * - 'separable': 2-pass filter (horizontal + vertical), faster
+   * - 'joint': 2D filter (single pass), better edge quality
+   * @default
+   * ```html
+   * 'separable'
+   * ```
+   */
+  bilateralFilterType?: BilateralFilterType;
 
   /**
    * Whether the pipeline should calculate the person mask without
@@ -139,6 +150,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
   protected readonly _backgroundProcessorPipeline: T;
 
   private readonly _benchmark: Benchmark;
+  private _bilateralFilterType: BilateralFilterType = 'separable';
   private _deferInputFrameDownscale: boolean = false;
   private _hysteresisEnabled: boolean = false;
   private _hysteresisHigh: number = HYSTERESIS_HIGH;
@@ -165,6 +177,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
 
     const {
       assetsPath,
+      bilateralFilterType = this._bilateralFilterType,
       deferInputFrameDownscale = this._deferInputFrameDownscale,
       hysteresisEnabled = this._hysteresisEnabled,
       hysteresisHigh = this._hysteresisHigh,
@@ -184,6 +197,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     this._backgroundProcessorPipeline = backgroundProcessorPipeline;
     // @ts-expect-error - _benchmark is a private property in the pipeline classes definition
     this._benchmark = this._backgroundProcessorPipeline._benchmark;
+    this._bilateralFilterType = bilateralFilterType;
     this.deferInputFrameDownscale = deferInputFrameDownscale;
     this.hysteresisEnabled = hysteresisEnabled;
     this.hysteresisHigh = hysteresisHigh;
@@ -192,6 +206,31 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     this._modelType = modelType;
     this.sigmaColor = sigmaColor;
     this.skipPostProcessing = skipPostProcessing;
+  }
+
+  /**
+   * The current bilateral filter type.
+   */
+  get bilateralFilterType(): BilateralFilterType {
+    return this._bilateralFilterType;
+  }
+
+  /**
+   * Set the bilateral filter type ('separable' or 'joint').
+   */
+  set bilateralFilterType(type: BilateralFilterType) {
+    if (type !== 'separable' && type !== 'joint') {
+      console.warn(`Valid bilateral filter type not found. Using 'separable' as default.`);
+      type = 'separable';
+    }
+    if (this._bilateralFilterType !== type) {
+      this._bilateralFilterType = type;
+      this._backgroundProcessorPipeline
+        .setBilateralFilterType(this._bilateralFilterType)
+        .catch(() => {
+          /* noop */
+        });
+    }
   }
 
   /**

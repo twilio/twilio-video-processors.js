@@ -39,6 +39,11 @@ export type BilateralFilterConfig = {
 /**
  * @private
  */
+export type BilateralFilterType = 'separable' | 'joint';
+
+/**
+ * @private
+ */
 export type InputFrame = OffscreenCanvas | HTMLCanvasElement | VideoFrame | ImageBitmap;
 
 /**

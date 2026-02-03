@@ -20,6 +20,7 @@ const $hysteresisHigh = document.querySelector('#hysteresisHigh');
 const $hysteresisHighValue = document.querySelector('#hysteresisHighValue');
 const $fitType = document.querySelector('#fitType');
 const $modelType = document.querySelector('#modelType');
+const $bilateralFilterType = document.querySelector('#bilateralFilterType');
 const $hysteresisSettings = document.querySelectorAll('.hysteresis-settings');
 const $fitTypeSettings = document.querySelector('.fit-type-settings');
 
@@ -269,6 +270,13 @@ const loadImage = async (name) => {
     const processor = getActiveProcessor();
     if (processor) {
       processor.modelType = $modelType.value;
+    }
+  };
+
+  $bilateralFilterType.onchange = () => {
+    const processor = getActiveProcessor();
+    if (processor) {
+      processor.bilateralFilterType = $bilateralFilterType.value;
     }
   };
 

@@ -1,5 +1,5 @@
 import { HYSTERESIS_HIGH, HYSTERESIS_LOW, SIGMA_COLOR } from '../../../../constants';
-import { Dimensions, InputFrame } from '../../../../types';
+import { BilateralFilterType, Dimensions, InputFrame } from '../../../../types';
 import { Pipeline } from '../../../pipelines';
 import { PersonMaskUpscalePipeline } from '../personmaskupscalepipeline';
 
@@ -7,6 +7,7 @@ import { PersonMaskUpscalePipeline } from '../personmaskupscalepipeline';
  * @private
  */
 export interface PostProcessingStageOptions {
+  bilateralFilterType?: BilateralFilterType;
   hysteresisEnabled?: boolean;
   hysteresisHigh?: number;
   hysteresisLow?: number;
@@ -18,6 +19,7 @@ export interface PostProcessingStageOptions {
  * @private
  */
 export class PostProcessingStage implements Pipeline.Stage {
+  private _bilateralFilterType: BilateralFilterType = 'separable';
   private _hysteresisEnabled: boolean = false;
   private _hysteresisHigh: number = HYSTERESIS_HIGH;
   private _hysteresisLow: number = HYSTERESIS_LOW;
@@ -47,6 +49,9 @@ export class PostProcessingStage implements Pipeline.Stage {
     this._webgl2Canvas = webgl2Canvas;
     this._setBackground = setBackground;
 
+    if (options.bilateralFilterType !== undefined) {
+      this._bilateralFilterType = options.bilateralFilterType;
+    }
     if (options.hysteresisEnabled !== undefined) {
       this._hysteresisEnabled = options.hysteresisEnabled;
     }
@@ -137,6 +142,7 @@ export class PostProcessingStage implements Pipeline.Stage {
 
   resetPersonMaskUpscalePipeline(): void {
     const {
+      _bilateralFilterType,
       _inputDimensions,
       _maskBlurRadius,
       _sigmaColor,
@@ -146,12 +152,20 @@ export class PostProcessingStage implements Pipeline.Stage {
     this._personMaskUpscalePipeline = new PersonMaskUpscalePipeline(
       _inputDimensions,
       _webgl2Canvas,
-      _maskBlurRadius
+      _maskBlurRadius,
+      _bilateralFilterType
     );
     this._personMaskUpscalePipeline.updateBilateralFilterConfig({
       sigmaColor: _sigmaColor,
       sigmaSpace: _maskBlurRadius
     });
+  }
+
+  updateBilateralFilterType(type: BilateralFilterType): void {
+    if (this._bilateralFilterType !== type) {
+      this._bilateralFilterType = type;
+      this.resetPersonMaskUpscalePipeline();
+    }
   }
 
   updateHysteresisEnabled(enabled: boolean): void {

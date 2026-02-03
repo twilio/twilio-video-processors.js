@@ -2,7 +2,7 @@ import { DEFAULT_MODEL_TYPE, MODEL_CONFIGS, ModelType, TFLITE_LOADER_NAME, TFLIT
 import { Benchmark } from '../../../../utils/Benchmark';
 import { isChromiumImageBitmap } from '../../../../utils/support';
 import { TwilioTFLite } from '../../../../utils/TwilioTFLite';
-import { InputFrame } from '../../../../types';
+import { BilateralFilterType, InputFrame } from '../../../../types';
 import { Pipeline } from '../../../pipelines';
 import { InputFrameDowscaleStage } from './InputFrameDownscaleStage';
 import { PostProcessingStage } from './PostProcessingStage';
@@ -12,6 +12,7 @@ import { PostProcessingStage } from './PostProcessingStage';
  */
 export interface BackgroundProcessorPipelineOptions {
   assetsPath: string;
+  bilateralFilterType?: BilateralFilterType;
   deferInputFrameDownscale: boolean;
   hysteresisEnabled?: boolean;
   hysteresisHigh?: number;
@@ -46,6 +47,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
 
     const {
       assetsPath,
+      bilateralFilterType,
       deferInputFrameDownscale,
       hysteresisEnabled,
       hysteresisHigh,
@@ -79,6 +81,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       maskBlurRadius,
       (inputFrame?: InputFrame): void => this._setBackground(inputFrame),
       {
+        bilateralFilterType,
         hysteresisEnabled,
         hysteresisHigh,
         hysteresisLow,
@@ -248,6 +251,11 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
   async setSkipPostProcessing(skip: boolean): Promise<void> {
     (this._stages[1] as PostProcessingStage)
       .updateSkipPostProcessing(skip);
+  }
+
+  async setBilateralFilterType(type: BilateralFilterType): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateBilateralFilterType(type);
   }
 
   protected abstract _setBackground(inputFrame?: InputFrame): void;

@@ -1,5 +1,6 @@
-import { BilateralFilterConfig, Dimensions, InputFrame } from '../../../../types';
+import { BilateralFilterConfig, BilateralFilterType, Dimensions, InputFrame } from '../../../../types';
 import { WebGL2Pipeline } from '../../../pipelines';
+import { JointBilateralFilterStage } from './JointBilateralFilterStage';
 import { SinglePassBilateralFilterStage } from './SinglePassBilateralFilterStage';
 
 /**
@@ -8,19 +9,22 @@ import { SinglePassBilateralFilterStage } from './SinglePassBilateralFilterStage
 export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
   private readonly _outputCanvas: OffscreenCanvas | HTMLCanvasElement;
   private readonly _inputDimensions: Dimensions;
+  private readonly _bilateralFilterType: BilateralFilterType;
   private _isWebGL2Supported: boolean = true;
   private _maskBlurRadius: number;
-  
+
   constructor(
     inputDimensions: Dimensions,
     outputCanvas: OffscreenCanvas | HTMLCanvasElement,
-    maskBlurRadius: number
+    maskBlurRadius: number,
+    bilateralFilterType: BilateralFilterType = 'separable'
   ) {
     super();
-    
+
     this._outputCanvas = outputCanvas;
     this._inputDimensions = inputDimensions;
     this._maskBlurRadius = maskBlurRadius;
+    this._bilateralFilterType = bilateralFilterType;
 
       const glOut = outputCanvas.getContext('webgl2');
       if (glOut) {
@@ -39,24 +43,33 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
 
     this.addStage(new WebGL2Pipeline.InputStage(glOut));
 
-    this.addStage(new SinglePassBilateralFilterStage(
-      glOut,
-      'horizontal',
-      'texture',
-      this._inputDimensions,
-      outputDimensions,
-      1,
-      2
-    ));
+    if (this._bilateralFilterType === 'joint') {
+      this.addStage(new JointBilateralFilterStage(
+        glOut,
+        this._inputDimensions,
+        outputDimensions,
+        1
+      ));
+    } else {
+      this.addStage(new SinglePassBilateralFilterStage(
+        glOut,
+        'horizontal',
+        'texture',
+        this._inputDimensions,
+        outputDimensions,
+        1,
+        2
+      ));
 
-    this.addStage(new SinglePassBilateralFilterStage(
-      glOut,
-      'vertical',
-      'canvas',
-      this._inputDimensions,
-      outputDimensions,
-      2
-    ));
+      this.addStage(new SinglePassBilateralFilterStage(
+        glOut,
+        'vertical',
+        'canvas',
+        this._inputDimensions,
+        outputDimensions,
+        2
+      ));
+    }
   }
 
   render(
@@ -111,7 +124,7 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
       ...bilateralFilterStages
     ] = this._stages;
 
-    (bilateralFilterStages as SinglePassBilateralFilterStage[]).forEach(
+    (bilateralFilterStages as (SinglePassBilateralFilterStage | JointBilateralFilterStage)[]).forEach(
       (stage) => {
         if (typeof sigmaColor === 'number') {
           stage.updateSigmaColor(sigmaColor);

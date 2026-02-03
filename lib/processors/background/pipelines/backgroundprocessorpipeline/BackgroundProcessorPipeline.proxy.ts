@@ -1,5 +1,6 @@
 import { Remote, transfer } from 'comlink';
 import { ModelType } from '../../../../constants';
+import { BilateralFilterType } from '../../../../types';
 import { Benchmark } from '../../../../utils/Benchmark';
 import { BackgroundProcessorPipeline } from './BackgroundProcessorPipeline';
 
@@ -69,5 +70,10 @@ export class BackgroundProcessorPipelineProxy {
   async setSkipPostProcessing(skip: boolean): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setSkipPostProcessing(skip);
+  }
+
+  async setBilateralFilterType(type: BilateralFilterType): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setBilateralFilterType(type);
   }
 }
