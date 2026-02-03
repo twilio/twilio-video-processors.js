@@ -23,6 +23,9 @@ const $modelType = document.querySelector('#modelType');
 const $bilateralFilterType = document.querySelector('#bilateralFilterType');
 const $hysteresisSettings = document.querySelectorAll('.hysteresis-settings');
 const $fitTypeSettings = document.querySelector('.fit-type-settings');
+const $blurFilterRadius = document.querySelector('#blurFilterRadius');
+const $blurFilterRadiusValue = document.querySelector('#blurFilterRadiusValue');
+const $blurFilterSettings = document.querySelector('.blur-filter-settings');
 
 const assetsPath = '';
 const bkgImages = new Map();
@@ -280,11 +283,21 @@ const loadImage = async (name) => {
     }
   };
 
+  $blurFilterRadius.oninput = () => {
+    const value = Number($blurFilterRadius.value);
+    $blurFilterRadiusValue.textContent = value;
+    if (gaussianBlurProcessor) {
+      gaussianBlurProcessor.blurFilterRadius = value;
+    }
+  };
+
   const originalHandleButtonClick = handleButtonClick;
   handleButtonClick = async (bg) => {
     await originalHandleButtonClick(bg);
     const isVirtualBackground = bg !== 'none' && bg !== 'blur';
+    const isBlur = bg === 'blur';
     $fitTypeSettings.style.display = isVirtualBackground ? 'block' : 'none';
+    $blurFilterSettings.style.display = isBlur ? 'block' : 'none';
   };
 
   window.videoTrack = videoTrack;

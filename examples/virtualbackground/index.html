@@ -31,7 +31,7 @@
                 <div class="settings-header" id="settings-toggle">Settings</div>
                 <div class="settings-content" id="settings-content">
                   <div class="setting-group">
-                    <label for="maskBlurRadius">Mask Blur Radius: <span id="maskBlurRadiusValue">8</span></label>
+                    <label for="maskBlurRadius">Sigma Space: <span id="maskBlurRadiusValue">8</span></label>
                     <input type="range" id="maskBlurRadius" min="0" max="30" value="8">
                   </div>
                   <div class="setting-group">
@@ -64,6 +64,10 @@
                       <option value="Cover">Cover</option>
                       <option value="None">None</option>
                     </select>
+                  </div>
+                  <div class="setting-group blur-filter-settings" style="display: none;">
+                    <label for="blurFilterRadius">Background Blur: <span id="blurFilterRadiusValue">15</span></label>
+                    <input type="range" id="blurFilterRadius" min="1" max="50" value="15">
                   </div>
                   <div class="setting-group">
                     <label for="modelType">Model Type:</label>
