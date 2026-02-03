@@ -179,6 +179,8 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         // tslint:disable-next-line no-unused-variable
         _this._isSimdEnabled = null;
         _this._maskBlurRadius = constants_1.MASK_BLUR_RADIUS;
+        _this._sigmaSpace = 10;
+        _this._sigmaColor = 0.12;
         _this._maskUsageCounter = 0;
         _this._outputMemoryOffset = 0;
         _this._personProbabilityThreshold = constants_1.PERSON_PROBABILITY_THRESHOLD;
@@ -193,6 +195,12 @@ var BackgroundProcessor = /** @class */ (function (_super) {
             assetsPath += '/';
         }
         _this.maskBlurRadius = options.maskBlurRadius;
+        if (typeof options.sigmaSpace === 'number') {
+            _this._sigmaSpace = options.sigmaSpace;
+        }
+        if (typeof options.sigmaColor === 'number') {
+            _this._sigmaColor = options.sigmaColor;
+        }
         _this._assetsPath = assetsPath;
         _this._debounce = typeof options.debounce === 'boolean' ? options.debounce : _this._debounce;
         _this._debounceCount = _this._debounce ? _this._debounceCount : 1;
@@ -224,6 +232,48 @@ var BackgroundProcessor = /** @class */ (function (_super) {
                 radius = constants_1.MASK_BLUR_RADIUS;
             }
             this._maskBlurRadius = radius;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(BackgroundProcessor.prototype, "sigmaSpace", {
+        get: function () {
+            return this._sigmaSpace;
+        },
+        set: function (value) {
+            var _a;
+            this._sigmaSpace = value;
+            (_a = this._webgl2Pipeline) === null || _a === void 0 ? void 0 : _a.updatePostProcessingConfig({
+                smoothSegmentationMask: true,
+                jointBilateralFilter: {
+                    sigmaSpace: this._sigmaSpace,
+                    sigmaColor: this._sigmaColor
+                },
+                coverage: [0, 0.99],
+                lightWrapping: 0,
+                blendMode: 'screen'
+            });
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(BackgroundProcessor.prototype, "sigmaColor", {
+        get: function () {
+            return this._sigmaColor;
+        },
+        set: function (value) {
+            var _a;
+            this._sigmaColor = value;
+            (_a = this._webgl2Pipeline) === null || _a === void 0 ? void 0 : _a.updatePostProcessingConfig({
+                smoothSegmentationMask: true,
+                jointBilateralFilter: {
+                    sigmaSpace: this._sigmaSpace,
+                    sigmaColor: this._sigmaColor
+                },
+                coverage: [0, 0.99],
+                lightWrapping: 0,
+                blendMode: 'screen'
+            });
         },
         enumerable: false,
         configurable: true
@@ -412,13 +462,10 @@ var BackgroundProcessor = /** @class */ (function (_super) {
         this._webgl2Pipeline.updatePostProcessingConfig({
             smoothSegmentationMask: true,
             jointBilateralFilter: {
-                sigmaSpace: 10,
-                sigmaColor: 0.12
+                sigmaSpace: this._sigmaSpace,
+                sigmaColor: this._sigmaColor
             },
-            coverage: [
-                0,
-                0.99
-            ],
+            coverage: [0, 0.99],
             lightWrapping: 0,
             blendMode: 'screen'
         });

@@ -79,6 +79,26 @@ export interface BackgroundProcessorOptions {
   personProbabilityThreshold?: number;
 
   /**
+   * The sigma space parameter for the bilateral filter (WebGL2 pipeline only).
+   * Controls the spatial extent of the filter.
+   * @default
+   * ```html
+   * 10
+   * ```
+   */
+  sigmaSpace?: number;
+
+  /**
+   * The sigma color parameter for the bilateral filter (WebGL2 pipeline only).
+   * Controls the color similarity threshold.
+   * @default
+   * ```html
+   * 0.12
+   * ```
+   */
+  sigmaColor?: number;
+
+  /**
    * Specifies which pipeline to use when processing video frames.
    * @default
    * ```html
@@ -115,6 +135,8 @@ export abstract class BackgroundProcessor extends Processor {
   private _maskBlurRadius: number = MASK_BLUR_RADIUS;
   private _maskCanvas: OffscreenCanvas | HTMLCanvasElement;
   private _maskContext: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  private _sigmaSpace: number = 10;
+  private _sigmaColor: number = 0.12;
   private _masks: (Uint8ClampedArray | Uint8Array)[];
   private _maskUsageCounter: number = 0;
   private _outputMemoryOffset: number = 0;
@@ -136,6 +158,12 @@ export abstract class BackgroundProcessor extends Processor {
     }
 
     this.maskBlurRadius = options.maskBlurRadius!;
+    if (typeof options.sigmaSpace === 'number') {
+      this._sigmaSpace = options.sigmaSpace;
+    }
+    if (typeof options.sigmaColor === 'number') {
+      this._sigmaColor = options.sigmaColor;
+    }
     this._assetsPath = assetsPath;
     this._debounce = typeof options.debounce === 'boolean' ? options.debounce : this._debounce;
     this._debounceCount = this._debounce ? this._debounceCount : 1;
@@ -168,6 +196,42 @@ export abstract class BackgroundProcessor extends Processor {
       radius = MASK_BLUR_RADIUS;
     }
     this._maskBlurRadius = radius;
+  }
+
+  get sigmaSpace(): number {
+    return this._sigmaSpace;
+  }
+
+  set sigmaSpace(value: number) {
+    this._sigmaSpace = value;
+    this._webgl2Pipeline?.updatePostProcessingConfig({
+      smoothSegmentationMask: true,
+      jointBilateralFilter: {
+        sigmaSpace: this._sigmaSpace,
+        sigmaColor: this._sigmaColor
+      },
+      coverage: [0, 0.99],
+      lightWrapping: 0,
+      blendMode: 'screen'
+    });
+  }
+
+  get sigmaColor(): number {
+    return this._sigmaColor;
+  }
+
+  set sigmaColor(value: number) {
+    this._sigmaColor = value;
+    this._webgl2Pipeline?.updatePostProcessingConfig({
+      smoothSegmentationMask: true,
+      jointBilateralFilter: {
+        sigmaSpace: this._sigmaSpace,
+        sigmaColor: this._sigmaColor
+      },
+      coverage: [0, 0.99],
+      lightWrapping: 0,
+      blendMode: 'screen'
+    });
   }
 
   /**
@@ -360,13 +424,10 @@ export abstract class BackgroundProcessor extends Processor {
     this._webgl2Pipeline.updatePostProcessingConfig({
       smoothSegmentationMask: true,
       jointBilateralFilter: {
-        sigmaSpace: 10,
-        sigmaColor: 0.12
+        sigmaSpace: this._sigmaSpace,
+        sigmaColor: this._sigmaColor
       },
-      coverage: [
-        0,
-        0.99
-      ],
+      coverage: [0, 0.99],
       lightWrapping: 0,
       blendMode: 'screen'
     });

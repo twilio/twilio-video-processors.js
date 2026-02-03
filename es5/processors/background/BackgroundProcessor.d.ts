@@ -60,6 +60,24 @@ export interface BackgroundProcessorOptions {
      */
     personProbabilityThreshold?: number;
     /**
+     * The sigma space parameter for the bilateral filter (WebGL2 pipeline only).
+     * Controls the spatial extent of the filter.
+     * @default
+     * ```html
+     * 10
+     * ```
+     */
+    sigmaSpace?: number;
+    /**
+     * The sigma color parameter for the bilateral filter (WebGL2 pipeline only).
+     * Controls the color similarity threshold.
+     * @default
+     * ```html
+     * 0.12
+     * ```
+     */
+    sigmaColor?: number;
+    /**
      * Specifies which pipeline to use when processing video frames.
      * @default
      * ```html
@@ -92,6 +110,8 @@ export declare abstract class BackgroundProcessor extends Processor {
     private _maskBlurRadius;
     private _maskCanvas;
     private _maskContext;
+    private _sigmaSpace;
+    private _sigmaColor;
     private _masks;
     private _maskUsageCounter;
     private _outputMemoryOffset;
@@ -108,6 +128,10 @@ export declare abstract class BackgroundProcessor extends Processor {
      * Set a new blur radius to be used when smoothing out the edges of the person's mask.
      */
     set maskBlurRadius(radius: number);
+    get sigmaSpace(): number;
+    set sigmaSpace(value: number);
+    get sigmaColor(): number;
+    set sigmaColor(value: number);
     /**
      * Load the segmentation model.
      * Call this method before attaching the processor to ensure
