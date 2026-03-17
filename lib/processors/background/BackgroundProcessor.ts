@@ -1,4 +1,4 @@
-import { MASK_BLUR_RADIUS } from '../../constants';
+import { HYSTERESIS_ENABLED, HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS } from '../../constants';
 import { Benchmark } from '../../utils/Benchmark';
 import { version } from '../../utils/version';
 import { InputFrame } from '../../types';
@@ -54,6 +54,37 @@ export interface BackgroundProcessorOptions {
   deferInputFrameDownscale?: boolean;
 
   /**
+   * Whether to apply hysteresis thresholding to reduce mask flickering
+   * between frames. When enabled, ambiguous pixels use the previous
+   * frame's mask values for temporal smoothing.
+   * @default
+   * ```html
+   * true
+   * ```
+   */
+  hysteresisEnabled?: boolean;
+
+  /**
+   * The upper alpha threshold for hysteresis. Pixels with alpha at or
+   * above this value are snapped to 255 (fully foreground).
+   * @default
+   * ```html
+   * 180
+   * ```
+   */
+  hysteresisHighThreshold?: number;
+
+  /**
+   * The lower alpha threshold for hysteresis. Pixels with alpha at or
+   * below this value are snapped to 0 (fully background).
+   * @default
+   * ```html
+   * 80
+   * ```
+   */
+  hysteresisLowThreshold?: number;
+
+  /**
    * The blur radius to use when smoothing out the edges of the person's mask.
    * @default
    * ```html
@@ -81,6 +112,9 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
 
   private readonly _benchmark: Benchmark;
   private _deferInputFrameDownscale: boolean = false;
+  private _hysteresisEnabled: boolean = HYSTERESIS_ENABLED;
+  private _hysteresisHighThreshold: number = HYSTERESIS_HIGH;
+  private _hysteresisLowThreshold: number = HYSTERESIS_LOW;
   private readonly _inputFrameCanvas: OffscreenCanvas = new OffscreenCanvas(1, 1);
   private readonly _inputFrameContext: OffscreenCanvasRenderingContext2D = this._inputFrameCanvas.getContext('2d', { willReadFrequently: true })!;
   private _isSimdEnabled: boolean | null = null;
@@ -101,6 +135,9 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     const {
       assetsPath,
       deferInputFrameDownscale = this._deferInputFrameDownscale,
+      hysteresisEnabled = this._hysteresisEnabled,
+      hysteresisHighThreshold = this._hysteresisHighThreshold,
+      hysteresisLowThreshold = this._hysteresisLowThreshold,
       maskBlurRadius = this._maskBlurRadius
     } = options;
 
@@ -114,6 +151,9 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
     // @ts-expect-error - _benchmark is a private property in the pipeline classes definition
     this._benchmark = this._backgroundProcessorPipeline._benchmark;
     this.deferInputFrameDownscale = deferInputFrameDownscale;
+    this.hysteresisEnabled = hysteresisEnabled;
+    this.hysteresisHighThreshold = hysteresisHighThreshold;
+    this.hysteresisLowThreshold = hysteresisLowThreshold;
     this.maskBlurRadius = maskBlurRadius;
   }
 
@@ -139,6 +179,83 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
       this._deferInputFrameDownscale = defer;
       this._backgroundProcessorPipeline.setDeferInputFrameDownscale(
         this._deferInputFrameDownscale
+      ).catch(() => {
+        /* noop */
+      });
+    }
+  }
+
+  /**
+   * Whether hysteresis thresholding is enabled to reduce mask flickering.
+   */
+  get hysteresisEnabled(): boolean {
+    return this._hysteresisEnabled;
+  }
+
+  /**
+   * Toggle hysteresis thresholding for temporal mask smoothing.
+   */
+  set hysteresisEnabled(enabled: boolean) {
+    if (typeof enabled !== 'boolean') {
+      console.warn('Provided hysteresisEnabled is not a boolean.');
+      enabled = this._hysteresisEnabled;
+    }
+    if (this._hysteresisEnabled !== enabled) {
+      this._hysteresisEnabled = enabled;
+      this._backgroundProcessorPipeline.setHysteresisEnabled(
+        this._hysteresisEnabled
+      ).catch(() => {
+        /* noop */
+      });
+    }
+  }
+
+  /**
+   * The upper alpha threshold for hysteresis.
+   */
+  get hysteresisHighThreshold(): number {
+    return this._hysteresisHighThreshold;
+  }
+
+  /**
+   * Set the upper alpha threshold for hysteresis. Pixels at or above
+   * this value are snapped to 255 (fully foreground).
+   */
+  set hysteresisHighThreshold(threshold: number) {
+    if (typeof threshold !== 'number' || threshold < 0 || threshold > 255) {
+      console.warn(`Valid hysteresisHighThreshold not found. Using ${HYSTERESIS_HIGH} as default.`);
+      threshold = HYSTERESIS_HIGH;
+    }
+    if (this._hysteresisHighThreshold !== threshold) {
+      this._hysteresisHighThreshold = threshold;
+      this._backgroundProcessorPipeline.setHysteresisHighThreshold(
+        this._hysteresisHighThreshold
+      ).catch(() => {
+        /* noop */
+      });
+    }
+  }
+
+  /**
+   * The lower alpha threshold for hysteresis.
+   */
+  get hysteresisLowThreshold(): number {
+    return this._hysteresisLowThreshold;
+  }
+
+  /**
+   * Set the lower alpha threshold for hysteresis. Pixels at or below
+   * this value are snapped to 0 (fully background).
+   */
+  set hysteresisLowThreshold(threshold: number) {
+    if (typeof threshold !== 'number' || threshold < 0 || threshold > 255) {
+      console.warn(`Valid hysteresisLowThreshold not found. Using ${HYSTERESIS_LOW} as default.`);
+      threshold = HYSTERESIS_LOW;
+    }
+    if (this._hysteresisLowThreshold !== threshold) {
+      this._hysteresisLowThreshold = threshold;
+      this._backgroundProcessorPipeline.setHysteresisLowThreshold(
+        this._hysteresisLowThreshold
       ).catch(() => {
         /* noop */
       });

@@ -1,4 +1,4 @@
-import { MODEL_NAME, TFLITE_LOADER_NAME, TFLITE_SIMD_LOADER_NAME, WASM_INFERENCE_DIMENSIONS } from '../../../../constants';
+import { HYSTERESIS_ENABLED, HYSTERESIS_HIGH, HYSTERESIS_LOW, MODEL_NAME, TFLITE_LOADER_NAME, TFLITE_SIMD_LOADER_NAME, WASM_INFERENCE_DIMENSIONS } from '../../../../constants';
 import { Benchmark } from '../../../../utils/Benchmark';
 import { isChromiumImageBitmap } from '../../../../utils/support';
 import { TwilioTFLite } from '../../../../utils/TwilioTFLite';
@@ -13,6 +13,9 @@ import { PostProcessingStage } from './PostProcessingStage';
 export interface BackgroundProcessorPipelineOptions {
   assetsPath: string;
   deferInputFrameDownscale: boolean;
+  hysteresisEnabled?: boolean;
+  hysteresisHighThreshold?: number;
+  hysteresisLowThreshold?: number;
   maskBlurRadius: number;
 }
 
@@ -40,6 +43,9 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     const {
       assetsPath,
       deferInputFrameDownscale,
+      hysteresisEnabled = HYSTERESIS_ENABLED,
+      hysteresisHighThreshold = HYSTERESIS_HIGH,
+      hysteresisLowThreshold = HYSTERESIS_LOW,
       maskBlurRadius
     } = options;
 
@@ -57,7 +63,10 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       this._webgl2Canvas,
       this._outputCanvas,
       maskBlurRadius,
-      (inputFrame?: InputFrame): void => this._setBackground(inputFrame)
+      (inputFrame?: InputFrame): void => this._setBackground(inputFrame),
+      hysteresisEnabled,
+      hysteresisHighThreshold,
+      hysteresisLowThreshold
     ));
   }
 
@@ -168,6 +177,21 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
 
   async setDeferInputFrameDownscale(defer: boolean): Promise<void> {
     this._deferInputFrameDownscale = defer;
+  }
+
+  async setHysteresisEnabled(enabled: boolean): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateHysteresisEnabled(enabled);
+  }
+
+  async setHysteresisHighThreshold(threshold: number): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateHysteresisHighThreshold(threshold);
+  }
+
+  async setHysteresisLowThreshold(threshold: number): Promise<void> {
+    (this._stages[1] as PostProcessingStage)
+      .updateHysteresisLowThreshold(threshold);
   }
 
   async setMaskBlurRadius(radius: number): Promise<void> {

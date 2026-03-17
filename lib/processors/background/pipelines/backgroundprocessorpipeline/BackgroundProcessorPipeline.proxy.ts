@@ -35,6 +35,21 @@ export class BackgroundProcessorPipelineProxy {
     return pipelineWorker.setDeferInputFrameDownscale(defer);
   }
 
+  async setHysteresisEnabled(enabled: boolean): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setHysteresisEnabled(enabled);
+  }
+
+  async setHysteresisHighThreshold(threshold: number): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setHysteresisHighThreshold(threshold);
+  }
+
+  async setHysteresisLowThreshold(threshold: number): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setHysteresisLowThreshold(threshold);
+  }
+
   async setMaskBlurRadius(radius: number): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setMaskBlurRadius(radius);
