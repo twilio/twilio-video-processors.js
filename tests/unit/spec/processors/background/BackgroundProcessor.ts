@@ -124,6 +124,12 @@ describe('BackgroundProcessor', () => {
       assert(consoleWarnStub.calledWith(`Valid hysteresisHighThreshold not found. Using ${HYSTERESIS_HIGH} as default.`));
     });
 
+    it('should warn and use default for NaN', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
+      processor.hysteresisHighThreshold = NaN;
+      assert.strictEqual(processor.hysteresisHighThreshold, HYSTERESIS_HIGH);
+    });
+
     it('should warn and use default for out-of-range value', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
       processor.hysteresisHighThreshold = 300;
@@ -153,6 +159,12 @@ describe('BackgroundProcessor', () => {
       processor.hysteresisLowThreshold = -10;
       assert.strictEqual(processor.hysteresisLowThreshold, HYSTERESIS_LOW);
       assert(consoleWarnStub.calledWith(`Valid hysteresisLowThreshold not found. Using ${HYSTERESIS_LOW} as default.`));
+    });
+
+    it('should warn and use default for NaN', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
+      processor.hysteresisLowThreshold = NaN;
+      assert.strictEqual(processor.hysteresisLowThreshold, HYSTERESIS_LOW);
     });
   });
 

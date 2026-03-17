@@ -222,7 +222,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
    * this value are snapped to 255 (fully foreground).
    */
   set hysteresisHighThreshold(threshold: number) {
-    if (typeof threshold !== 'number' || threshold < 0 || threshold > 255) {
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 255) {
       console.warn(`Valid hysteresisHighThreshold not found. Using ${HYSTERESIS_HIGH} as default.`);
       threshold = HYSTERESIS_HIGH;
     }
@@ -248,7 +248,7 @@ export class BackgroundProcessor<T extends BackgroundProcessorPipeline | Backgro
    * this value are snapped to 0 (fully background).
    */
   set hysteresisLowThreshold(threshold: number) {
-    if (typeof threshold !== 'number' || threshold < 0 || threshold > 255) {
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 255) {
       console.warn(`Valid hysteresisLowThreshold not found. Using ${HYSTERESIS_LOW} as default.`);
       threshold = HYSTERESIS_LOW;
     }

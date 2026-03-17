@@ -90,10 +90,44 @@ describe('PostProcessingStage', () => {
       assert.deepStrictEqual(getAlphaValues(frame4), [255]);
     });
 
+    it('should correctly index multi-pixel masks with ambiguous values', () => {
+      const ambiguous = HYSTERESIS_LOW + 1;
+
+      // Frame 1: seed with known values per pixel
+      const frame1 = createMaskData([255, 0, 255, 0]);
+      (stage as any)._applyHysteresis(frame1);
+      assert.deepStrictEqual(getAlphaValues(frame1), [255, 0, 255, 0]);
+
+      // Frame 2: all ambiguous → each pixel inherits its own previous value
+      const frame2 = createMaskData([ambiguous, ambiguous, ambiguous, ambiguous]);
+      (stage as any)._applyHysteresis(frame2);
+      assert.deepStrictEqual(getAlphaValues(frame2), [255, 0, 255, 0]);
+    });
+
+    it('should reallocate buffer when mask resolution changes', () => {
+      const ambiguous = HYSTERESIS_LOW + 1;
+
+      const frame1 = createMaskData([255, 0]);
+      (stage as any)._applyHysteresis(frame1);
+      assert.strictEqual((stage as any)._prevMaskData.length, 2);
+
+      // Resolution change: 2 pixels → 4 pixels; ambiguous pixels left unchanged
+      const frame2 = createMaskData([ambiguous, ambiguous, ambiguous, ambiguous]);
+      (stage as any)._applyHysteresis(frame2);
+      assert.strictEqual((stage as any)._prevMaskData.length, 4);
+      assert.deepStrictEqual(getAlphaValues(frame2), [ambiguous, ambiguous, ambiguous, ambiguous]);
+
+      // Frame 3: confirm buffer was populated after reallocation
+      const frame3 = createMaskData([ambiguous, ambiguous, ambiguous, ambiguous]);
+      (stage as any)._applyHysteresis(frame3);
+      assert.deepStrictEqual(getAlphaValues(frame3), [ambiguous, ambiguous, ambiguous, ambiguous]);
+    });
+
     it('should reuse buffer instead of allocating new array each frame', () => {
       const frame1 = createMaskData([255]);
       (stage as any)._applyHysteresis(frame1);
       const bufferRef = (stage as any)._prevMaskData;
+      assert.strictEqual(bufferRef.length, frame1.data.length / 4);
 
       const frame2 = createMaskData([0]);
       (stage as any)._applyHysteresis(frame2);

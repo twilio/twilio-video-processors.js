@@ -1,4 +1,4 @@
-import { HYSTERESIS_HIGH, HYSTERESIS_LOW } from '../../../../constants';
+import { HYSTERESIS_ENABLED, HYSTERESIS_HIGH, HYSTERESIS_LOW } from '../../../../constants';
 import { Dimensions, InputFrame } from '../../../../types';
 import { Pipeline } from '../../../pipelines';
 import { PersonMaskUpscalePipeline } from '../personmaskupscalepipeline';
@@ -24,7 +24,7 @@ export class PostProcessingStage implements Pipeline.Stage {
     outputCanvas: OffscreenCanvas,
     maskBlurRadius: number,
     setBackground: (inputFrame?: InputFrame) => void,
-    hysteresisEnabled: boolean = true,
+    hysteresisEnabled: boolean = HYSTERESIS_ENABLED,
     hysteresisHigh: number = HYSTERESIS_HIGH,
     hysteresisLow: number = HYSTERESIS_LOW
   ) {
@@ -113,20 +113,22 @@ export class PostProcessingStage implements Pipeline.Stage {
 
   private _applyHysteresis(personMask: ImageData): void {
     const { data } = personMask;
-    const { _hysteresisHigh, _hysteresisLow, _prevMaskData } = this;
-    for (let i = 3; i < data.length; i += 4) {
+    const { _hysteresisHigh, _hysteresisLow } = this;
+    const pixelCount = data.length / 4;
+    const hasPrev = this._prevMaskData?.length === pixelCount;
+    if (!hasPrev) {
+      this._prevMaskData = new Uint8ClampedArray(pixelCount);
+    }
+    const prevMask = this._prevMaskData!;
+    for (let i = 3, j = 0; i < data.length; i += 4, j++) {
       if (data[i] >= _hysteresisHigh) {
         data[i] = 255;
       } else if (data[i] <= _hysteresisLow) {
         data[i] = 0;
-      } else if (_prevMaskData) {
-        data[i] = _prevMaskData[i];
+      } else if (hasPrev) {
+        data[i] = prevMask[j];
       }
-    }
-    if (!this._prevMaskData || this._prevMaskData.length !== data.length) {
-      this._prevMaskData = new Uint8ClampedArray(data);
-    } else {
-      this._prevMaskData.set(data);
+      prevMask[j] = data[i];
     }
   }
 }
