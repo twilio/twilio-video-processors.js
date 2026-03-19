@@ -1,7 +1,6 @@
 import { Dimensions } from './types';
 
 export const BLUR_FILTER_RADIUS = 15;
-export const HYSTERESIS_ENABLED = true;
 export const HYSTERESIS_HIGH = 180;
 export const HYSTERESIS_LOW = 80;
 export const MASK_BLUR_RADIUS = 8;

@@ -2,10 +2,8 @@
 ===============================
 
 ### New Features
-* Added hysteresis thresholding to reduce mask flickering between frames. New options:
-  * `hysteresisEnabled` — Toggle temporal mask smoothing (default: `true`)
-  * `hysteresisHighThreshold` — Upper alpha threshold; pixels at or above are snapped to foreground (default: `180`)
-  * `hysteresisLowThreshold` — Lower alpha threshold; pixels at or below are snapped to background (default: `80`)
+* Added hysteresis thresholding to reduce mask flickering between frames. New option:
+  * `hysteresis` — Set to `true` (default) to enable with default thresholds, `false` to disable, or `{ high, low }` for custom thresholds (defaults: high=`180`, low=`80`)
 
 3.1.0 (April 25, 2025)
 ===============================

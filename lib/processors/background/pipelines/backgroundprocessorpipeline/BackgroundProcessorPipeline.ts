@@ -1,8 +1,8 @@
-import { HYSTERESIS_ENABLED, HYSTERESIS_HIGH, HYSTERESIS_LOW, MODEL_NAME, TFLITE_LOADER_NAME, TFLITE_SIMD_LOADER_NAME, WASM_INFERENCE_DIMENSIONS } from '../../../../constants';
+import { HYSTERESIS_HIGH, HYSTERESIS_LOW, MODEL_NAME, TFLITE_LOADER_NAME, TFLITE_SIMD_LOADER_NAME, WASM_INFERENCE_DIMENSIONS } from '../../../../constants';
 import { Benchmark } from '../../../../utils/Benchmark';
 import { isChromiumImageBitmap } from '../../../../utils/support';
 import { TwilioTFLite } from '../../../../utils/TwilioTFLite';
-import { InputFrame } from '../../../../types';
+import { HysteresisConfig, InputFrame } from '../../../../types';
 import { Pipeline } from '../../../pipelines';
 import { InputFrameDowscaleStage } from './InputFrameDownscaleStage';
 import { PostProcessingStage } from './PostProcessingStage';
@@ -13,9 +13,7 @@ import { PostProcessingStage } from './PostProcessingStage';
 export interface BackgroundProcessorPipelineOptions {
   assetsPath: string;
   deferInputFrameDownscale: boolean;
-  hysteresisEnabled?: boolean;
-  hysteresisHighThreshold?: number;
-  hysteresisLowThreshold?: number;
+  hysteresis?: boolean | HysteresisConfig;
   maskBlurRadius: number;
 }
 
@@ -43,15 +41,15 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     const {
       assetsPath,
       deferInputFrameDownscale,
-      hysteresisEnabled = HYSTERESIS_ENABLED,
-      hysteresisHighThreshold = HYSTERESIS_HIGH,
-      hysteresisLowThreshold = HYSTERESIS_LOW,
+      hysteresis = true,
       maskBlurRadius
     } = options;
 
     this._assetsPath = assetsPath;
     this._deferInputFrameDownscale = deferInputFrameDownscale;
     this._onResizeWebGL2Canvas = onResizeWebGL2Canvas;
+
+    const resolvedHysteresis = BackgroundProcessorPipeline._resolveHysteresis(hysteresis);
 
     this.addStage(new InputFrameDowscaleStage(
       this._inferenceInputCanvas,
@@ -64,9 +62,7 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
       this._outputCanvas,
       maskBlurRadius,
       (inputFrame?: InputFrame): void => this._setBackground(inputFrame),
-      hysteresisEnabled,
-      hysteresisHighThreshold,
-      hysteresisLowThreshold
+      resolvedHysteresis
     ));
   }
 
@@ -124,12 +120,12 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     const needsWidthResize = _outputCanvas.width !== width;
     const needsHeightResize = _outputCanvas.height !== height;
     const didResizeWebGL2Canvas = needsWidthResize || needsHeightResize;
-    
+
     if (needsWidthResize) {
       _outputCanvas.width = width;
       _webgl2Canvas.width = width;
     }
-    
+
     if (needsHeightResize) {
       _outputCanvas.height = height;
       _webgl2Canvas.height = height;
@@ -179,19 +175,10 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
     this._deferInputFrameDownscale = defer;
   }
 
-  async setHysteresisEnabled(enabled: boolean): Promise<void> {
+  // Async for interface compatibility with BackgroundProcessorPipelineProxy
+  async setHysteresis(config: false | HysteresisConfig): Promise<void> {
     (this._stages[1] as PostProcessingStage)
-      .updateHysteresisEnabled(enabled);
-  }
-
-  async setHysteresisHighThreshold(threshold: number): Promise<void> {
-    (this._stages[1] as PostProcessingStage)
-      .updateHysteresisHighThreshold(threshold);
-  }
-
-  async setHysteresisLowThreshold(threshold: number): Promise<void> {
-    (this._stages[1] as PostProcessingStage)
-      .updateHysteresisLowThreshold(threshold);
+      .updateHysteresis(config);
   }
 
   async setMaskBlurRadius(radius: number): Promise<void> {
@@ -200,4 +187,13 @@ export abstract class BackgroundProcessorPipeline extends Pipeline {
   }
 
   protected abstract _setBackground(inputFrame?: InputFrame): void;
+
+  private static _resolveHysteresis(
+    value: boolean | HysteresisConfig
+  ): false | HysteresisConfig {
+    if (typeof value === 'boolean') {
+      return value ? { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW } : false;
+    }
+    return value;
+  }
 }

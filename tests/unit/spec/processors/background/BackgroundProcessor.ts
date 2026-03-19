@@ -10,9 +10,7 @@ class MyBackgroundProcessor extends BackgroundProcessor {
 
   constructor(options?: any) {
     const backgroundProcessorPipelineStub = sinon.createStubInstance(BackgroundProcessorPipeline) as any;
-    backgroundProcessorPipelineStub.setHysteresisEnabled.returns(new Promise<void>(resolve => resolve()));
-    backgroundProcessorPipelineStub.setHysteresisHighThreshold.returns(new Promise<void>(resolve => resolve()));
-    backgroundProcessorPipelineStub.setHysteresisLowThreshold.returns(new Promise<void>(resolve => resolve()));
+    backgroundProcessorPipelineStub.setHysteresis.returns(new Promise<void>(resolve => resolve()));
     backgroundProcessorPipelineStub.setMaskBlurRadius.returns(new Promise<void>(resolve => resolve()));
     super(backgroundProcessorPipelineStub, options);
     // @ts-ignore
@@ -36,6 +34,10 @@ describe('BackgroundProcessor', () => {
 
   after(() => {
     consoleWarnStub.restore();
+  });
+
+  beforeEach(() => {
+    consoleWarnStub.resetHistory();
   });
 
   it('should throw an error if options is not provided', () => {
@@ -73,98 +75,135 @@ describe('BackgroundProcessor', () => {
     });
   });
 
-  describe('hysteresisEnabled', () => {
-    it('should default to true', () => {
+  describe('hysteresis', () => {
+    it('should default to enabled with default thresholds', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      assert.strictEqual(processor.hysteresisEnabled, true);
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
     });
 
-    it('should set hysteresisEnabled to false via constructor', () => {
-      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresisEnabled: false });
-      assert.strictEqual(processor.hysteresisEnabled, false);
+    it('should accept true to enable with defaults', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresis: true });
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
     });
 
-    it('should update hysteresisEnabled via setter', () => {
+    it('should accept false to disable', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresis: false });
+      assert.strictEqual(processor.hysteresis, false);
+    });
+
+    it('should accept a config object with custom thresholds', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresis: { high: 200, low: 50 } });
+      assert.deepStrictEqual(processor.hysteresis, { high: 200, low: 50 });
+    });
+
+    it('should update via setter with false', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisEnabled = false;
-      assert.strictEqual(processor.hysteresisEnabled, false);
-      processor.hysteresisEnabled = true;
-      assert.strictEqual(processor.hysteresisEnabled, true);
+      processor.hysteresis = false;
+      assert.strictEqual(processor.hysteresis, false);
     });
 
-    it('should warn and keep current value for invalid input', () => {
+    it('should update via setter with config object', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisEnabled = 'invalid' as any;
-      assert.strictEqual(processor.hysteresisEnabled, true);
-      assert(consoleWarnStub.calledWith('Provided hysteresisEnabled is not a boolean.'));
+      processor.hysteresis = { high: 220, low: 30 };
+      assert.deepStrictEqual(processor.hysteresis, { high: 220, low: 30 });
     });
-  });
 
-  describe('hysteresisHighThreshold', () => {
-    it('should default to HYSTERESIS_HIGH', () => {
+    it('should update via setter with true to reset to defaults', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresis: { high: 220, low: 30 } });
+      processor.hysteresis = true;
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+    });
+
+    it('should warn and use defaults when low >= high', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      assert.strictEqual(processor.hysteresisHighThreshold, HYSTERESIS_HIGH);
+      processor.hysteresis = { high: 50, low: 100 };
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('hysteresis.low must be less than hysteresis.high. Using defaults.'));
     });
 
-    it('should set via constructor', () => {
-      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresisHighThreshold: 200 });
-      assert.strictEqual(processor.hysteresisHighThreshold, 200);
-    });
-
-    it('should update via setter', () => {
+    it('should warn and use defaults when low equals high', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisHighThreshold = 150;
-      assert.strictEqual(processor.hysteresisHighThreshold, 150);
+      processor.hysteresis = { high: 100, low: 100 };
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('hysteresis.low must be less than hysteresis.high. Using defaults.'));
     });
 
-    it('should warn and use default for invalid input', () => {
+    it('should warn and use defaults for out-of-range thresholds (above 255)', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisHighThreshold = 'bad' as any;
-      assert.strictEqual(processor.hysteresisHighThreshold, HYSTERESIS_HIGH);
-      assert(consoleWarnStub.calledWith(`Valid hysteresisHighThreshold not found. Using ${HYSTERESIS_HIGH} as default.`));
+      processor.hysteresis = { high: 300, low: 50 };
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('Hysteresis thresholds must be between 0 and 255. Using defaults.'));
     });
 
-    it('should warn and use default for NaN', () => {
+    it('should warn and use defaults for negative thresholds', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisHighThreshold = NaN;
-      assert.strictEqual(processor.hysteresisHighThreshold, HYSTERESIS_HIGH);
+      processor.hysteresis = { high: 200, low: -1 };
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('Hysteresis thresholds must be between 0 and 255. Using defaults.'));
     });
 
-    it('should warn and use default for out-of-range value', () => {
+    it('should accept boundary thresholds { high: 255, low: 0 }', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresis: { high: 255, low: 0 } });
+      assert.deepStrictEqual(processor.hysteresis, { high: 255, low: 0 });
+    });
+
+    it('should warn and use defaults for NaN thresholds', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisHighThreshold = 300;
-      assert.strictEqual(processor.hysteresisHighThreshold, HYSTERESIS_HIGH);
+      processor.hysteresis = { high: NaN, low: 50 } as any;
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('Invalid hysteresis thresholds. Using defaults.'));
     });
-  });
 
-  describe('hysteresisLowThreshold', () => {
-    it('should default to HYSTERESIS_LOW', () => {
+    it('should warn and use defaults for Infinity thresholds', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      assert.strictEqual(processor.hysteresisLowThreshold, HYSTERESIS_LOW);
+      processor.hysteresis = { high: Infinity, low: 50 } as any;
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('Invalid hysteresis thresholds. Using defaults.'));
     });
 
-    it('should set via constructor', () => {
-      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresisLowThreshold: 50 });
-      assert.strictEqual(processor.hysteresisLowThreshold, 50);
-    });
-
-    it('should update via setter', () => {
+    it('should warn and use defaults for invalid type', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisLowThreshold = 40;
-      assert.strictEqual(processor.hysteresisLowThreshold, 40);
+      processor.hysteresis = 'invalid' as any;
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('Invalid hysteresis value. Using defaults.'));
     });
 
-    it('should warn and use default for invalid input', () => {
+    it('should warn and use defaults for null', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisLowThreshold = -10;
-      assert.strictEqual(processor.hysteresisLowThreshold, HYSTERESIS_LOW);
-      assert(consoleWarnStub.calledWith(`Valid hysteresisLowThreshold not found. Using ${HYSTERESIS_LOW} as default.`));
+      processor.hysteresis = null as any;
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('Invalid hysteresis value. Using defaults.'));
     });
 
-    it('should warn and use default for NaN', () => {
+    it('should warn and use defaults for invalid type via constructor', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresis: 42 as any });
+      assert.deepStrictEqual(processor.hysteresis, { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW });
+      assert(consoleWarnStub.calledWith('Invalid hysteresis value. Using defaults.'));
+    });
+
+    it('should call pipeline when value changes', () => {
       const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
-      processor.hysteresisLowThreshold = NaN;
-      assert.strictEqual(processor.hysteresisLowThreshold, HYSTERESIS_LOW);
+      const pipeline = (processor as any)._backgroundProcessorPipeline;
+      pipeline.setHysteresis.resetHistory();
+      processor.hysteresis = false;
+      assert.strictEqual(pipeline.setHysteresis.callCount, 1);
+      assert(pipeline.setHysteresis.calledWith(false));
+    });
+
+    it('should not call pipeline when value has not changed', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo' });
+      const pipeline = (processor as any)._backgroundProcessorPipeline;
+      pipeline.setHysteresis.resetHistory();
+      processor.hysteresis = true;
+      assert.strictEqual(pipeline.setHysteresis.callCount, 0);
+    });
+
+    it('should not call pipeline when setting false twice', () => {
+      const processor = new MyBackgroundProcessor({ assetsPath: 'foo', hysteresis: false });
+      const pipeline = (processor as any)._backgroundProcessorPipeline;
+      pipeline.setHysteresis.resetHistory();
+      processor.hysteresis = false;
+      assert.strictEqual(pipeline.setHysteresis.callCount, 0);
     });
   });
 

@@ -15,9 +15,9 @@ const defaultParams = {
   capResolution: '1280x720',
   deferInputFrameDownscale: 'false',
   maskBlurRadius: '8',
-  hysteresisEnabled: 'true',
-  hysteresisHighThreshold: '180',
-  hysteresisLowThreshold: '80',
+  hysteresis: 'true',
+  hysteresisHigh: '180',
+  hysteresisLow: '80',
   stats: 'show',
   useWebWorker: 'true',
 };
@@ -63,9 +63,9 @@ const loadImage = async (name) => {
     capFramerate,
     capResolution,
     deferInputFrameDownscale,
-    hysteresisEnabled,
-    hysteresisHighThreshold,
-    hysteresisLowThreshold,
+    hysteresis,
+    hysteresisHigh,
+    hysteresisLow,
     maskBlurRadius,
     stats,
     useWebWorker,
@@ -86,12 +86,18 @@ const loadImage = async (name) => {
     width: capDimensions[0],
   };
 
+  const hasCustomThresholds = hysteresisHigh !== defaultParams.hysteresisHigh
+    || hysteresisLow !== defaultParams.hysteresisLow;
+  const hysteresisOption = JSON.parse(hysteresis) === false
+    ? false
+    : hasCustomThresholds
+      ? { high: Number(hysteresisHigh), low: Number(hysteresisLow) }
+      : true;
+
   const processorOptions = {
     assetsPath,
     deferInputFrameDownscale: JSON.parse(deferInputFrameDownscale),
-    hysteresisEnabled: JSON.parse(hysteresisEnabled),
-    hysteresisHighThreshold: Number(hysteresisHighThreshold),
-    hysteresisLowThreshold: Number(hysteresisLowThreshold),
+    hysteresis: hysteresisOption,
     maskBlurRadius: Number(maskBlurRadius),
     useWebWorker: JSON.parse(useWebWorker),
   };

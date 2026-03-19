@@ -41,6 +41,24 @@ export type BilateralFilterConfig = {
 export type InputFrame = OffscreenCanvas | HTMLCanvasElement | VideoFrame | ImageBitmap;
 
 /**
+ * Configuration for hysteresis thresholding used to reduce mask flickering
+ * between frames.
+ */
+export interface HysteresisConfig {
+  /**
+   * The upper alpha threshold. Pixels with alpha at or above this value
+   * are snapped to 255 (fully foreground).
+   */
+  high: number;
+
+  /**
+   * The lower alpha threshold. Pixels with alpha at or below this value
+   * are snapped to 0 (fully background).
+   */
+  low: number;
+}
+
+/**
  * ImageFit specifies the positioning of an image inside a viewport.
  */
 export enum ImageFit {

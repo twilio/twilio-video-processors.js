@@ -1,5 +1,5 @@
 import { ImageFit } from '../../types';
-import { HYSTERESIS_ENABLED, HYSTERESIS_HIGH, HYSTERESIS_LOW, MASK_BLUR_RADIUS } from '../../constants';
+import { MASK_BLUR_RADIUS } from '../../constants';
 import { BackgroundProcessor, BackgroundProcessorOptions } from './BackgroundProcessor';
 import { VirtualBackgroundProcessorPipeline, VirtualBackgroundProcessorPipelineProxy } from './pipelines/backgroundprocessorpipeline';
 
@@ -86,9 +86,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       backgroundImage,
       deferInputFrameDownscale = false,
       fitType = ImageFit.Fill,
-      hysteresisEnabled = HYSTERESIS_ENABLED,
-      hysteresisHighThreshold = HYSTERESIS_HIGH,
-      hysteresisLowThreshold = HYSTERESIS_LOW,
+      hysteresis = true,
       maskBlurRadius = MASK_BLUR_RADIUS,
       useWebWorker = true
     } = options;
@@ -106,9 +104,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       assetsPath,
       deferInputFrameDownscale,
       fitType,
-      hysteresisEnabled,
-      hysteresisHighThreshold,
-      hysteresisLowThreshold,
+      hysteresis,
       maskBlurRadius
     });
 

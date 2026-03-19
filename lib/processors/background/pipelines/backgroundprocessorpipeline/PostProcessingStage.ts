@@ -1,5 +1,5 @@
-import { HYSTERESIS_ENABLED, HYSTERESIS_HIGH, HYSTERESIS_LOW } from '../../../../constants';
-import { Dimensions, InputFrame } from '../../../../types';
+import { HYSTERESIS_HIGH, HYSTERESIS_LOW } from '../../../../constants';
+import { Dimensions, HysteresisConfig, InputFrame } from '../../../../types';
 import { Pipeline } from '../../../pipelines';
 import { PersonMaskUpscalePipeline } from '../personmaskupscalepipeline';
 
@@ -24,13 +24,11 @@ export class PostProcessingStage implements Pipeline.Stage {
     outputCanvas: OffscreenCanvas,
     maskBlurRadius: number,
     setBackground: (inputFrame?: InputFrame) => void,
-    hysteresisEnabled: boolean = HYSTERESIS_ENABLED,
-    hysteresisHigh: number = HYSTERESIS_HIGH,
-    hysteresisLow: number = HYSTERESIS_LOW
+    hysteresis: false | HysteresisConfig = { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW }
   ) {
-    this._hysteresisEnabled = hysteresisEnabled;
-    this._hysteresisHigh = hysteresisHigh;
-    this._hysteresisLow = hysteresisLow;
+    this._hysteresisEnabled = hysteresis !== false;
+    this._hysteresisHigh = hysteresis ? hysteresis.high : HYSTERESIS_HIGH;
+    this._hysteresisLow = hysteresis ? hysteresis.low : HYSTERESIS_LOW;
     this._inputDimensions = inputDimensions;
     this._maskBlurRadius = maskBlurRadius;
     this._outputContext = outputCanvas.getContext('2d')!;
@@ -86,19 +84,20 @@ export class PostProcessingStage implements Pipeline.Stage {
     });
   }
 
-  updateHysteresisEnabled(enabled: boolean): void {
-    this._hysteresisEnabled = enabled;
-    if (!enabled) {
+  updateHysteresis(config: false | HysteresisConfig): void {
+    if (config === false) {
+      this._hysteresisEnabled = false;
       this._prevMaskData = null;
+    } else {
+      const thresholdsChanged = this._hysteresisHigh !== config.high
+        || this._hysteresisLow !== config.low;
+      this._hysteresisEnabled = true;
+      this._hysteresisHigh = config.high;
+      this._hysteresisLow = config.low;
+      if (thresholdsChanged) {
+        this._prevMaskData = null;
+      }
     }
-  }
-
-  updateHysteresisHighThreshold(threshold: number): void {
-    this._hysteresisHigh = threshold;
-  }
-
-  updateHysteresisLowThreshold(threshold: number): void {
-    this._hysteresisLow = threshold;
   }
 
   updateMaskBlurRadius(radius: number): void {
