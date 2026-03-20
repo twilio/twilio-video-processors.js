@@ -70,6 +70,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor<Gaussia
     const {
       blurFilterRadius = BLUR_FILTER_RADIUS,
       deferInputFrameDownscale = false,
+      hysteresis = true,
       maskBlurRadius = MASK_BLUR_RADIUS,
       useWebWorker = true
     } = options;
@@ -87,6 +88,7 @@ export class GaussianBlurBackgroundProcessor extends BackgroundProcessor<Gaussia
       assetsPath,
       blurFilterRadius,
       deferInputFrameDownscale,
+      hysteresis,
       maskBlurRadius
     });
 

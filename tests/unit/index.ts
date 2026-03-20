@@ -30,6 +30,7 @@ root.document = root.document || {
 };
 
 import './spec/processors/background/BackgroundProcessor';
+import './spec/processors/background/PostProcessingStage';
 import './spec/processors/background/GaussianBlurBackgroundProcessor';
 import './spec/processors/background/VirtualBackgroundProcessor';
 import './spec/utils/Benchmark';

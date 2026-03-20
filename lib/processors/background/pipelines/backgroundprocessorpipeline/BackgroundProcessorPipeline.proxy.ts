@@ -1,5 +1,6 @@
 import { Remote, transfer } from 'comlink';
 import { Benchmark } from '../../../../utils/Benchmark';
+import { HysteresisConfig } from '../../../../types';
 import { BackgroundProcessorPipeline } from './BackgroundProcessorPipeline';
 
 /**
@@ -33,6 +34,11 @@ export class BackgroundProcessorPipelineProxy {
   async setDeferInputFrameDownscale(defer: boolean): Promise<void> {
     const pipelineWorker = await this._pipelineWorkerPromise;
     return pipelineWorker.setDeferInputFrameDownscale(defer);
+  }
+
+  async setHysteresis(config: false | HysteresisConfig): Promise<void> {
+    const pipelineWorker = await this._pipelineWorkerPromise;
+    return pipelineWorker.setHysteresis(config);
   }
 
   async setMaskBlurRadius(radius: number): Promise<void> {

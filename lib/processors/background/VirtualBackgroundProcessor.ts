@@ -86,6 +86,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       backgroundImage,
       deferInputFrameDownscale = false,
       fitType = ImageFit.Fill,
+      hysteresis = true,
       maskBlurRadius = MASK_BLUR_RADIUS,
       useWebWorker = true
     } = options;
@@ -103,6 +104,7 @@ export class VirtualBackgroundProcessor extends BackgroundProcessor<VirtualBackg
       assetsPath,
       deferInputFrameDownscale,
       fitType,
+      hysteresis,
       maskBlurRadius
     });
 

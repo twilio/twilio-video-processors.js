@@ -1,4 +1,5 @@
-import { Dimensions, InputFrame } from '../../../../types';
+import { HYSTERESIS_HIGH, HYSTERESIS_LOW } from '../../../../constants';
+import { Dimensions, HysteresisConfig, InputFrame } from '../../../../types';
 import { Pipeline } from '../../../pipelines';
 import { PersonMaskUpscalePipeline } from '../personmaskupscalepipeline';
 
@@ -6,10 +7,14 @@ import { PersonMaskUpscalePipeline } from '../personmaskupscalepipeline';
  * @private
  */
 export class PostProcessingStage implements Pipeline.Stage {
+  private _hysteresisEnabled: boolean;
+  private _hysteresisHigh: number;
+  private _hysteresisLow: number;
   private readonly _inputDimensions: Dimensions;
   private _maskBlurRadius: number;
   private readonly _outputContext: OffscreenCanvasRenderingContext2D;
   private _personMaskUpscalePipeline: PersonMaskUpscalePipeline | null = null;
+  private _prevMaskData: Uint8ClampedArray | null = null;
   private readonly _setBackground: (inputFrame?: InputFrame) => void;
   private readonly _webgl2Canvas: OffscreenCanvas;
 
@@ -18,8 +23,12 @@ export class PostProcessingStage implements Pipeline.Stage {
     webgl2Canvas: OffscreenCanvas,
     outputCanvas: OffscreenCanvas,
     maskBlurRadius: number,
-    setBackground: (inputFrame?: InputFrame) => void
+    setBackground: (inputFrame?: InputFrame) => void,
+    hysteresis: false | HysteresisConfig = { high: HYSTERESIS_HIGH, low: HYSTERESIS_LOW }
   ) {
+    this._hysteresisEnabled = hysteresis !== false;
+    this._hysteresisHigh = hysteresis ? hysteresis.high : HYSTERESIS_HIGH;
+    this._hysteresisLow = hysteresis ? hysteresis.low : HYSTERESIS_LOW;
     this._inputDimensions = inputDimensions;
     this._maskBlurRadius = maskBlurRadius;
     this._outputContext = outputCanvas.getContext('2d')!;
@@ -36,6 +45,9 @@ export class PostProcessingStage implements Pipeline.Stage {
       _setBackground,
       _webgl2Canvas
     } = this;
+    if (this._hysteresisEnabled) {
+      this._applyHysteresis(personMask);
+    }
     if (!this._personMaskUpscalePipeline) {
       this.resetPersonMaskUpscalePipeline();
     }
@@ -72,6 +84,22 @@ export class PostProcessingStage implements Pipeline.Stage {
     });
   }
 
+  updateHysteresis(config: false | HysteresisConfig): void {
+    if (config === false) {
+      this._hysteresisEnabled = false;
+      this._prevMaskData = null;
+    } else {
+      const thresholdsChanged = this._hysteresisHigh !== config.high
+        || this._hysteresisLow !== config.low;
+      this._hysteresisEnabled = true;
+      this._hysteresisHigh = config.high;
+      this._hysteresisLow = config.low;
+      if (thresholdsChanged) {
+        this._prevMaskData = null;
+      }
+    }
+  }
+
   updateMaskBlurRadius(radius: number): void {
     if (this._maskBlurRadius !== radius) {
       this._maskBlurRadius = radius;
@@ -79,6 +107,27 @@ export class PostProcessingStage implements Pipeline.Stage {
         ?.updateBilateralFilterConfig({
           sigmaSpace: radius
         });
+    }
+  }
+
+  private _applyHysteresis(personMask: ImageData): void {
+    const { data } = personMask;
+    const { _hysteresisHigh, _hysteresisLow } = this;
+    const pixelCount = data.length / 4;
+    const hasPrev = this._prevMaskData?.length === pixelCount;
+    if (!hasPrev) {
+      this._prevMaskData = new Uint8ClampedArray(pixelCount);
+    }
+    const prevMask = this._prevMaskData!;
+    for (let i = 3, j = 0; i < data.length; i += 4, j++) {
+      if (data[i] >= _hysteresisHigh) {
+        data[i] = 255;
+      } else if (data[i] <= _hysteresisLow) {
+        data[i] = 0;
+      } else if (hasPrev) {
+        data[i] = prevMask[j];
+      }
+      prevMask[j] = data[i];
     }
   }
 }

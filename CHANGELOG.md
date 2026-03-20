@@ -1,3 +1,10 @@
+3.2.0 (Unreleased)
+===============================
+
+### New Features
+* Added hysteresis thresholding to reduce mask flickering between frames. New option:
+  * `hysteresis` — Set to `true` (default) to enable with default thresholds, `false` to disable, or `{ high, low }` for custom thresholds (defaults: high=`180`, low=`80`)
+
 3.1.0 (April 25, 2025)
 ===============================
 
