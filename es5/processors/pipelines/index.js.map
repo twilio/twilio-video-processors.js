@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../lib/processors/pipelines/index.ts"],"names":[],"mappings":";;;AAAA,uCAAsC;AAA7B,oGAAA,QAAQ,OAAA;AACjB,mDAAkD;AAAzC,gHAAA,cAAc,OAAA","sourcesContent":["export { Pipeline } from './Pipeline';\nexport { WebGL2Pipeline } from './webgl2pipeline';\n"]}
