@@ -168,4 +168,5 @@ workflows:
           requires: [Release dry run]
       - ExecuteRelease:
           dryRun: false
+          context: vblocks-js
           requires: [hold]
