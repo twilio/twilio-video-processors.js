@@ -17,7 +17,7 @@
         "git config user.email \"${GIT_USER_EMAIL}\"",
         "git rm -rf --ignore-unmatch dist es5 lib/utils/version.ts",
         "npm run build",
-        "git add package.json",
+        "git add package.json package-lock.json",
         "git add -f dist es5 lib/utils/version.ts",
         "git commit -m \"${RELEASE_VERSION}\"",
         "git tag ${RELEASE_VERSION}",
@@ -46,7 +46,7 @@
         "node ./node_modules/.bin/release --bump ${RELEASE_VERSION} ${DEVELOPMENT_VERSION}",
         "git rm -rf dist es5 lib/utils/version.ts",
         "npm run clean",
-        "git add package.json",
+        "git add package.json package-lock.json",
         "git commit -m \"${DEVELOPMENT_VERSION}\"",
         "git push origin ${BRANCH} &> /dev/null && echo \"Push to origin successful\" || (echo \"Push to origin failed\" 1>&2 && exit 1)"
       ]
