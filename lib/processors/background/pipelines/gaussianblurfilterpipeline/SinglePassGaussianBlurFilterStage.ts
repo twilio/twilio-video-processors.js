@@ -3,16 +3,6 @@ import { WebGL2Pipeline } from '../../../pipelines';
 /**
  * @private
  */
-function createGaussianBlurWeights(radius: number): number[] {
-  const coeff = 1.0 / Math.sqrt(2.0 * Math.PI) / radius;
-  return '0'.repeat(radius + 1).split('').map((zero, x) => {
-    return coeff * Math.exp(-0.5 * x * x / radius / radius);
-  });
-}
-
-/**
- * @private
- */
 export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.ProcessingStage {
   constructor(
     glOut: WebGL2RenderingContext,
@@ -39,15 +29,17 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
           uniform vec2 u_texelSize;
           uniform float u_direction;
           uniform float u_radius;
-          uniform float u_gaussianBlurWeights[128];
+          // -0.5 / radius^2. Weights are evaluated per tap, so the radius has
+          // no upper bound; the Gaussian's scale factor cancels in totalWeight.
+          uniform float u_negInvTwoSigmaSq;
 
           in vec2 v_texCoord;
 
           out vec4 outColor;
 
           void main() {
-            float totalWeight = u_gaussianBlurWeights[0];
-            vec3 newColor = totalWeight * texture(u_inputTexture, v_texCoord).rgb;
+            float totalWeight = 1.0;
+            vec3 newColor = texture(u_inputTexture, v_texCoord).rgb;
 
             for (float i = 1.0; i <= u_radius; i += 1.0) {
               float x = (1.0 - u_direction) * i;
@@ -55,7 +47,7 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
 
               vec2 shift = vec2(x, y) * u_texelSize;
               vec2 coord = vec2(v_texCoord + shift);
-              float weight = u_gaussianBlurWeights[int(i)];
+              float weight = exp(i * i * u_negInvTwoSigmaSq);
               newColor += weight * texture(u_inputTexture, coord).rgb;
               totalWeight += weight;
 
@@ -100,9 +92,9 @@ export class SinglePassGaussianBlurFilterStage extends WebGL2Pipeline.Processing
         values: [radius]
       },
       {
-        name: 'u_gaussianBlurWeights',
-        type: 'float:v',
-        values: createGaussianBlurWeights(radius)
+        name: 'u_negInvTwoSigmaSq',
+        type: 'float',
+        values: [-0.5 / (radius * radius)]
       }
     ]);
   }
