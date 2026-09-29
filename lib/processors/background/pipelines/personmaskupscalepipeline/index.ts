@@ -6,7 +6,7 @@ import { SinglePassBilateralFilterStage } from './SinglePassBilateralFilterStage
  * @private
  */
 export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
-  private readonly _outputCanvas: OffscreenCanvas | HTMLCanvasElement;
+  private _outputCanvas: OffscreenCanvas | HTMLCanvasElement;
   private readonly _inputDimensions: Dimensions;
   private _isWebGL2Supported: boolean = true;
   private _maskBlurRadius: number;
@@ -24,11 +24,28 @@ export class PersonMaskUpscalePipeline extends WebGL2Pipeline {
 
       const glOut = outputCanvas.getContext('webgl2');
       if (glOut) {
-        this.initializeWebGL2Pipeline(glOut as WebGL2RenderingContext);
+        try {
+          this.initializeWebGL2Pipeline(glOut as WebGL2RenderingContext);
+        } catch (error) {
+          // Release the stages built before the failure.
+          this.cleanUp();
+          this._isWebGL2Supported = false;
+          // The WebGL2 context owns outputCanvas, so getContext('2d') on it returns null.
+          this._outputCanvas = new OffscreenCanvas(outputCanvas.width, outputCanvas.height);
+          console.warn('Downgraded to Canvas2D for person mask upscaling due to WebGL2 pipeline failure.', error);
+        }
       } else {
         this._isWebGL2Supported = false;
         console.warn('Downgraded to Canvas2D for person mask upscaling due to missing WebGL2 support.');
       }
+  }
+
+  /**
+   * The canvas holding the upscaled person mask after render(). This is the
+   * constructor's outputCanvas unless the WebGL2 pipeline failed to build.
+   */
+  get outputCanvas(): OffscreenCanvas | HTMLCanvasElement {
+    return this._outputCanvas;
   }
 
   private initializeWebGL2Pipeline(glOut: WebGL2RenderingContext): void {
