@@ -1,37 +1,25 @@
 import { Dimensions } from '../../../../types';
 import { WebGL2Pipeline } from '../../../pipelines';
 
-/**
- * @private
- */
-function createSpaceWeights(
-  radius: number,
-  sigma: number,
-  texelSize: number
-): number[] {
-  return '0'.repeat(radius).split('').map((zero, i) => {
-    const x = (i + 1) * texelSize;
-    return Math.exp(-0.5 * x * x / sigma / sigma);
-  });
-}
+// Stands in for -Infinity at sigma 0, so only taps at zero distance keep any
+// weight. Must stay float32-representable: uniform1f would turn anything larger
+// into -Infinity, and x * x * -Infinity is NaN or 0 depending on the driver.
+const SIGMA_ZERO_COEFFICIENT = -1e30;
 
 /**
  * @private
+ * Gaussian x^2 coefficient, -0.5 / sigma^2.
  */
-function createColorWeights(
-  sigma: number
-): number[] {
-  return '0'.repeat(256).split('').map((zero, i) => {
-    const x = i / 255;
-    return Math.exp(-0.5 * x * x / sigma / sigma);
-  });
+function negInvTwoSigmaSq(sigma: number): number {
+  return sigma > 0
+    ? -0.5 / (sigma * sigma)
+    : SIGMA_ZERO_COEFFICIENT;
 }
 
 /**
  * @private
  */
 export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingStage {
-  private readonly _direction: 'horizontal' | 'vertical';
   private readonly _inputDimensions: Dimensions;
 
   constructor(
@@ -63,8 +51,9 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
           uniform float u_direction;
           uniform float u_radius;
           uniform float u_step;
-          uniform float u_spaceWeights[128];
-          uniform float u_colorWeights[256];
+          // -0.5 / sigma^2, so a tap costs one exp() and no division.
+          uniform float u_negInvTwoSigmaSqColor;
+          uniform float u_negInvTwoSigmaSqTexel;
 
           in vec2 v_texCoord;
 
@@ -73,7 +62,14 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
           float calculateColorWeight(vec2 coord, vec3 centerColor) {
             vec3 coordColor = texture(u_inputFrame, coord).rgb;
             float x = distance(centerColor, coordColor);
-            return u_colorWeights[int(x * 255.0)];
+            return exp(x * x * u_negInvTwoSigmaSqColor);
+          }
+
+          float calculateSpaceWeight(float i) {
+            // x along a horizontal pass, y along a vertical one.
+            float texelStep = mix(u_texelSize.x, u_texelSize.y, u_direction);
+            float x = i * texelStep;
+            return exp(x * x * u_negInvTwoSigmaSqTexel);
           }
 
           float edgePixelsAverageAlpha(float outAlpha) {
@@ -108,7 +104,7 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
               float y = u_direction * i;
               vec2 shift = vec2(x, y) * u_texelSize;
               vec2 coord = vec2(v_texCoord + shift);
-              float spaceWeight = u_spaceWeights[int(i - 1.0)];
+              float spaceWeight = calculateSpaceWeight(i);
               float colorWeight = calculateColorWeight(coord, centerColor);
               float weight = spaceWeight * colorWeight;
               float alpha = texture(u_segmentationMask, coord).a;
@@ -153,7 +149,6 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
       }
     );
 
-    this._direction = direction;
     this._inputDimensions = inputDimensions;
     this.updateSigmaColor(0);
     this.updateSigmaSpace(0);
@@ -162,11 +157,9 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
   updateSigmaColor(sigmaColor: number): void {
     this._setUniformVars([
       {
-        name: 'u_colorWeights',
-        type: 'float:v',
-        values: createColorWeights(
-          sigmaColor
-        )
+        name: 'u_negInvTwoSigmaSqColor',
+        type: 'float',
+        values: [negInvTwoSigmaSq(sigmaColor)]
       }
     ]);
   }
@@ -196,12 +189,6 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
       1 / outputHeight
     ) * sigmaSpace;
 
-    const texelSize = 1 / (
-      this._direction === 'horizontal'
-        ? outputWidth
-        : outputHeight
-    );
-
     this._setUniformVars([
       {
         name: 'u_radius',
@@ -209,13 +196,9 @@ export class SinglePassBilateralFilterStage extends WebGL2Pipeline.ProcessingSta
         values: [sigmaSpace]
       },
       {
-        name: 'u_spaceWeights',
-        type: 'float:v',
-        values: createSpaceWeights(
-          sigmaSpace,
-          sigmaTexel,
-          texelSize
-        )
+        name: 'u_negInvTwoSigmaSqTexel',
+        type: 'float',
+        values: [negInvTwoSigmaSq(sigmaTexel)]
       },
       {
         name: 'u_step',

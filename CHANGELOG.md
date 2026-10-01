@@ -1,3 +1,11 @@
+3.2.1 (Unreleased)
+===============================
+
+### Bug Fixes
+* Fixed an issue where the processed video was black on devices whose GPUs support fewer WebGL2 fragment shader uniforms, including some Android devices.
+* The background processors now fall back to `Canvas2D` if WebGL2 rendering fails to initialize, instead of producing black video.
+* Fixed large blur radii producing more blur than intended. This affects `maskBlurRadius` values above about 25 at 720p (lower at higher resolutions), and `blurFilterRadius` values of 128 or more in browsers that don't support the canvas `filter` property. Output at these settings now looks slightly different.
+
 3.2.0 (April 22, 2026)
 ===============================
 

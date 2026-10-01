@@ -42,8 +42,7 @@ export class PostProcessingStage implements Pipeline.Stage {
   ): void {
     const {
       _outputContext,
-      _setBackground,
-      _webgl2Canvas
+      _setBackground
     } = this;
     if (this._hysteresisEnabled) {
       this._applyHysteresis(personMask);
@@ -58,7 +57,7 @@ export class PostProcessingStage implements Pipeline.Stage {
     _outputContext.save();
     _outputContext.globalCompositeOperation = 'copy';
     _outputContext.drawImage(
-      _webgl2Canvas,
+      this._personMaskUpscalePipeline!.outputCanvas,
       0,
       0
     );
