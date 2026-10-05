@@ -1,0 +1,472 @@
+name: Prepare Release
+
+# Builds a release: bumps the version, builds the library, commits the built
+# tree, and pushes a version tag onto a new release/X.Y.Z branch.
+#
+# Dispatch this FROM master; pick it in the "Run workflow" dropdown. The release
+# commit, the tag, and the -dev bump are pushed to a new release/X.Y.Z branch,
+# never to master directly (a ruleset forbids that).
+#
+# After this runs: open a PR from release/X.Y.Z into master and merge it with a
+# MERGE COMMIT. Squash or rebase would rewrite the tagged commit and orphan the
+# tag from master, breaking the reachability check in release.yml.
+#
+# This workflow does not publish. Once the PR is merged, dispatch release.yml
+# from the tag; it accepts only a final X.Y.Z tag, so a prerelease stops here.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Version to release (e.g. 3.2.1 or 3.3.0-rc.1)"
+        required: true
+      development_version:
+        description: "Next dev version to commit after the release (e.g. 3.2.2-dev). Required for a final release; optional for a prerelease."
+        required: false
+      # Guards on this read `github.event.inputs.dry_run`, not `inputs.dry_run`:
+      # the event payload is always the string "true"/"false", whereas `inputs`
+      # is a real boolean from the UI but a (truthy) string from the dispatch API.
+      dry_run:
+        description: "Build and pack only; commit nothing, tag nothing, publish nothing."
+        required: false
+        type: boolean
+        default: false
+
+# Never cancel: two runs would build from the same base and race each other's push.
+concurrency:
+  group: prepare-release-${{ github.ref }}
+  cancel-in-progress: false
+
+# No default permissions; each job below declares exactly what it needs.
+permissions: {}
+
+jobs:
+  # Installs dependencies, so it stays read-only.
+  build:
+    name: Build release tree
+    runs-on: ubuntu-latest-large
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write # for the Artifactory OIDC exchange below
+    steps:
+      # Runs before the install so a bad input fails fast. Exact versions only:
+      # `npm version` also accepts aliases (patch, minor, from-git), which would
+      # set a version different from the literal string used below as the commit
+      # message and tag name.
+      #
+      # Passed as env, referenced as "$VAR", never interpolated into a run script.
+      - name: Validate the version inputs
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          DEVELOPMENT_VERSION: ${{ inputs.development_version }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          # The dry-run guards match on 'true', so any other string releases for real.
+          case "${DRY_RUN:-false}" in
+            true|false) ;;
+            *)
+              echo "::error::dry_run must be exactly true or false."
+              exit 1
+              ;;
+          esac
+
+          SEMVER='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'
+          for INPUT_VERSION in "$RELEASE_VERSION" "${DEVELOPMENT_VERSION:-}"
+          do
+            [ -n "$INPUT_VERSION" ] || continue
+
+            # grep is line-oriented even with -x, so a multi-line input would pass on
+            # one matching line.
+            if [ "$(printf '%s' "$INPUT_VERSION" | wc -l)" -ne 0 ] \
+              || ! printf '%s' "$INPUT_VERSION" | grep -qxE "$SEMVER"; then
+              echo "::error::${INPUT_VERSION} is not an exact version (expected 3.2.1 or 3.3.0-rc.1)."
+              exit 1
+            fi
+          done
+
+          # A final X.Y.Z release must be merged into master, and that merge brings
+          # in whatever the release-branch tip holds. Without a -dev bump the tip is
+          # the built release commit, so the merge would commit the built tree onto
+          # master. Prereleases never merge to master, so they may omit it.
+          case "$RELEASE_VERSION" in
+            *-*) ;;
+            *)
+              if [ -z "${DEVELOPMENT_VERSION:-}" ]; then
+                echo "::error::development_version is required for a final release (${RELEASE_VERSION}); it keeps the release PR a clean version bump instead of merging the built tree into master."
+                exit 1
+              fi
+              ;;
+          esac
+
+          # release/X.Y.Z is based on the dispatched ref, so it must be a branch
+          # (normally master), not a tag.
+          case "$GITHUB_REF" in
+            refs/heads/*) ;;
+            *)
+              echo "::error::Dispatch this workflow from a branch, not ${GITHUB_REF}."
+              exit 1
+              ;;
+          esac
+
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Catches a transposed or stale version number. Runs before the install, so
+      # the script it calls takes no dependencies.
+      - name: Verify the release version moves forward
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          DEVELOPMENT_VERSION: ${{ inputs.development_version }}
+        run: |
+          set -euo pipefail
+
+          node ./scripts/check-version-bump.js \
+            "$(node -p "require('./package.json').version")" \
+            "$RELEASE_VERSION"
+
+          # A final release's -dev bump is merged into master, so it has to move
+          # forward too. Checked here because it is applied only after the tag
+          # has been pushed. A prerelease's -dev bump never leaves its branch.
+          case "$RELEASE_VERSION" in
+            *-*) ;;
+            *)
+              node ./scripts/check-version-bump.js "$RELEASE_VERSION" "$DEVELOPMENT_VERSION"
+              ;;
+          esac
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      # After setup-node, which would otherwise be free to rewrite ~/.npmrc.
+      - name: Artifactory OIDC Auth
+        uses: twilio/sdk-actions/artifactory-oidc@26f95a54e57993c1bf3b26bec2905f395814c23a # v1.0.0
+        with:
+          artifactory-url: ${{ vars.ARTIFACTORY_URL }}
+
+      # --ignore-scripts is strictly required
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # --ignore-scripts: this bump only rewrites package.json and package-lock.json.
+      - name: Set the release version
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          set -euo pipefail
+
+          npm version --no-git-tag-version --ignore-scripts "$RELEASE_VERSION"
+
+          # Prereleases are not published, so an undated CHANGELOG entry for one
+          # is not a release-blocking error.
+          case "$RELEASE_VERSION" in
+            *-*)
+              echo "::notice::${RELEASE_VERSION} is a prerelease; leaving CHANGELOG.md alone."
+              exit 0
+              ;;
+          esac
+
+          # CHANGELOG headings read "3.2.0 (April 22, 2026)". Requiring a 4-digit
+          # year rejects the "3.2.1 (Unreleased)" placeholder, which a bare
+          # "^${RELEASE_VERSION} (" prefix would accept.
+          ESCAPED_VERSION=$(printf '%s' "$RELEASE_VERSION" | sed 's/[.]/\\./g')
+          if ! grep -qE "^${ESCAPED_VERSION} \(.*[0-9]{4}\)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no dated ${RELEASE_VERSION} entry (still \"Unreleased\"?); date it before releasing."
+            exit 1
+          fi
+
+      # Also regenerates lib/utils/version.ts from the bumped package.json.
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      # The tagged commit is expected to carry the complete built library, so an
+      # incomplete tree has to fail here rather than reach a tag.
+      - name: Verify the release tree was built
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          set -euo pipefail
+
+          for RELEASE_FILE in \
+            package.json \
+            package-lock.json \
+            lib/utils/version.ts \
+            dist/build/twilio-video-processors.js \
+            dist/build/twilio-video-processors.min.js \
+            dist/build/twilio-gaussian-blur-background-processor-pipeline-worker.js \
+            dist/build/twilio-virtual-background-processor-pipeline-worker.js \
+            dist/docs/index.html
+          do
+            if [ ! -s "$RELEASE_FILE" ]; then
+              echo "::error::${RELEASE_FILE} is missing or empty after the build."
+              exit 1
+            fi
+          done
+
+          if [ -z "$(ls -A es5 2>/dev/null)" ]; then
+            echo "::error::es5/ is missing or empty after the build."
+            exit 1
+          fi
+
+          if ! grep -qF "'${RELEASE_VERSION}'" lib/utils/version.ts; then
+            echo "::error::lib/utils/version.ts does not carry ${RELEASE_VERSION}."
+            exit 1
+          fi
+
+      # A publish cannot be undone: this proves the tree builds and shows exactly
+      # what would ship, without writing anything anywhere.
+      - name: Dry run, pack and preview the publish
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          set -euo pipefail
+
+          echo "::notice::Version: $(node -p "require('./package.json').version")"
+          npm pack --dry-run
+          npm publish --dry-run --registry https://registry.npmjs.org --ignore-scripts --access public
+
+      - name: Upload release tree
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-tree
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 7
+          path: |
+            package.json
+            package-lock.json
+            lib/utils/version.ts
+            dist/
+            es5/
+
+  # Same matrix as CI. Installs dependencies, so it stays read-only.
+  integration-tests:
+    name: integration-tests (chrome, ${{ matrix.channel }})
+    runs-on: ubuntu-latest-large
+    timeout-minutes: 30
+    container:
+      image: twilio/twilio-video-browsers:chrome-${{ matrix.channel }}
+    permissions:
+      contents: read
+      id-token: write # for the Artifactory OIDC exchange below
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [stable, beta, unstable]
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Artifactory OIDC Auth
+        uses: twilio/sdk-actions/artifactory-oidc@26f95a54e57993c1bf3b26bec2905f395814c23a # v1.0.0
+        with:
+          artifactory-url: ${{ vars.ARTIFACTORY_URL }}
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Integration tests
+        env:
+          BROWSER: chrome
+        run: npm run test:integration
+
+  # Runs git only. Do not add an install or build step here.
+  commit-tag-push:
+    name: Commit, tag and push
+    needs: [build, integration-tests]
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    runs-on: ubuntu-latest-large
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    # Passed as env, referenced as "$VAR", never interpolated into a run script.
+    env:
+      RELEASE_VERSION: ${{ inputs.release_version }}
+      RELEASE_BRANCH: release/${{ inputs.release_version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # The checkout fetches no tags, so a local `git tag` would not notice a tag that
+      # already exists on origin.
+      - name: Verify the tag does not already exist
+        run: |
+          set -euo pipefail
+
+          # --exit-code distinguishes three outcomes we must not conflate:
+          #   0  the tag exists on origin  -> abort
+          #   2  no such tag               -> proceed
+          #   *  network/auth failure      -> abort loudly, never treat as absent
+          set +e
+          git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_VERSION}" >/dev/null
+          RC=$?
+          set -e
+
+          case "$RC" in
+            0)
+              echo "::error::tag ${RELEASE_VERSION} already exists on origin."
+              exit 1
+              ;;
+            2)
+              echo "::notice::tag ${RELEASE_VERSION} does not exist on origin."
+              ;;
+            *)
+              echo "::error::could not query origin for tag ${RELEASE_VERSION} (git ls-remote exit ${RC})."
+              exit 1
+              ;;
+          esac
+
+      # A leftover release/X.Y.Z from an aborted attempt would make the branch
+      # push below a non-fast-forward and fail confusingly; catch it up front.
+      - name: Verify the release branch does not already exist
+        run: |
+          set -euo pipefail
+
+          set +e
+          git ls-remote --exit-code --heads origin "refs/heads/${RELEASE_BRANCH}" >/dev/null
+          RC=$?
+          set -e
+
+          case "$RC" in
+            0)
+              echo "::error::branch ${RELEASE_BRANCH} already exists on origin. Delete it (and the prior release attempt) before re-running."
+              exit 1
+              ;;
+            2)
+              echo "::notice::branch ${RELEASE_BRANCH} does not exist on origin."
+              ;;
+            *)
+              echo "::error::could not query origin for branch ${RELEASE_BRANCH} (git ls-remote exit ${RC})."
+              exit 1
+              ;;
+          esac
+
+      # The download below overwrites but never deletes, so build output still
+      # tracked on the branch tip would be staged alongside this build. Normally a
+      # no-op: master sits on a -dev commit with no build tree.
+      - name: Clear any previously committed build output
+        run: |
+          set -euo pipefail
+
+          git rm -r --quiet --ignore-unmatch --cached dist es5 lib/utils/version.ts
+          rm -rf dist es5 lib/utils/version.ts
+
+      - name: Download release tree
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-tree
+
+      # The download above overwrites package.json, so check it before tagging.
+      - name: Verify the downloaded tree is the expected package
+        run: |
+          set -euo pipefail
+
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          if [ "$PACKAGE_NAME" != "@twilio/video-processors" ]; then
+            echo "::error::downloaded package.json is for ${PACKAGE_NAME}, not @twilio/video-processors."
+            exit 1
+          fi
+
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$PACKAGE_VERSION" != "$RELEASE_VERSION" ]; then
+            echo "::error::downloaded package.json is ${PACKAGE_VERSION}, not ${RELEASE_VERSION}."
+            exit 1
+          fi
+
+          node -e '
+            const scripts = require("./package.json").scripts || {};
+            for (const name of ["install", "preinstall", "postinstall", "prepare", "prepublishOnly"]) {
+              if (scripts[name]) {
+                console.error("::error::downloaded package.json has an unexpected lifecycle script: " + name);
+                process.exit(1);
+              }
+            }
+          '
+
+      # Matches the author on the existing release commits.
+      - name: Configure git identity
+        run: |
+          set -euo pipefail
+
+          git config user.name "twilio-ci"
+          git config user.email "twilio-ci@twilio.com"
+
+      # dist/, es5/ and lib/utils/version.ts are gitignored, hence -f. Committing
+      # the built output is intentional: the tagged tree carries the built library,
+      # so release.yml publishes it and its docs straight from the tag.
+      - name: Commit the release
+        run: |
+          set -euo pipefail
+
+          git add package.json package-lock.json
+          git add -f dist es5 lib/utils/version.ts
+          git commit --no-verify -m "$RELEASE_VERSION"
+          echo "::notice::Release commit: $(git rev-parse HEAD)"
+
+      # Lightweight and un-prefixed, matching the existing tags (e.g. 3.2.0).
+      - name: Tag the release
+        run: git tag "$RELEASE_VERSION"
+
+      # Push to a NEW release/X.Y.Z branch, never to master: a ruleset requires a
+      # PR there, so the release lands on master via a human-merged PR (see the
+      # header).
+      #
+      # --atomic: a rejected tag must not leave the release commit pushed alone.
+      - name: Push the release commit and tag
+        run: |
+          set -euo pipefail
+
+          git push --atomic origin "HEAD:refs/heads/${RELEASE_BRANCH}" "refs/tags/${RELEASE_VERSION}"
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        if: ${{ inputs.development_version != '' }}
+        with:
+          node-version: 22
+
+      # The inverse of the release commit: bump to the next -dev version and drop
+      # the built tree again, so merging the release branch leaves master on a
+      # clean -dev state. Pushed after the tag, so the tag keeps pointing at the
+      # built commit.
+      - name: Commit the development version
+        if: ${{ inputs.development_version != '' }}
+        env:
+          DEVELOPMENT_VERSION: ${{ inputs.development_version }}
+        run: |
+          set -euo pipefail
+
+          npm version --no-git-tag-version --ignore-scripts "$DEVELOPMENT_VERSION"
+          git rm -r --quiet --ignore-unmatch dist es5 lib/utils/version.ts
+          git add package.json package-lock.json
+          git commit --no-verify -m "$DEVELOPMENT_VERSION"
+          git push origin "HEAD:refs/heads/${RELEASE_BRANCH}"
+          echo "::notice::Development commit: $(git rev-parse HEAD)"
+
+      # Against origin, not local refs: comparing the tag this job just created to
+      # its own HEAD would be true by construction.
+      - name: Verify the tag is reachable from the release branch on origin
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags origin "refs/heads/${RELEASE_BRANCH}"
+          if ! git merge-base --is-ancestor "refs/tags/${RELEASE_VERSION}" FETCH_HEAD; then
+            echo "::error::tag ${RELEASE_VERSION} is not reachable from ${RELEASE_BRANCH} on origin; it is orphaned."
+            exit 1
+          fi
+          echo "::notice::tag ${RELEASE_VERSION} is reachable from ${RELEASE_BRANCH} on origin."
+
+      - name: Summarize next steps
+        env:
+          COMPARE_URL: ${{ github.server_url }}/${{ github.repository }}/compare/master...release/${{ inputs.release_version }}?expand=1
+        run: |
+          case "$RELEASE_VERSION" in
+            *-*)
+              echo "::notice::Prepared ${RELEASE_VERSION} on ${RELEASE_BRANCH}. Prereleases are not published or merged into master."
+              ;;
+            *)
+              echo "::notice::Prepared ${RELEASE_VERSION} on ${RELEASE_BRANCH}. Next: open a PR from ${RELEASE_BRANCH} into master and merge it with a MERGE COMMIT, then dispatch release.yml from tag ${RELEASE_VERSION} to publish. Open the PR: ${COMPARE_URL}"
+              ;;
+          esac

@@ -35,3 +35,4 @@ import './spec/processors/background/GaussianBlurBackgroundProcessor';
 import './spec/processors/background/VirtualBackgroundProcessor';
 import './spec/utils/Benchmark';
 import './spec/utils/support';
+import './spec/scripts/check-version-bump';
