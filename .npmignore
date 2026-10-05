@@ -1,4 +1,3 @@
-.circleci
 .DS_STORE
 .github
 .gitignore
@@ -7,7 +6,6 @@
 .idea
 .nyc_output
 .nycrc.json
-.release.json
 .vscode
 *.sw*
 assets

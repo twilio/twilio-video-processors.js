@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on PR branches, but never cancel a master run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  # Proves the committed lockfile installs from public npm only.
+  lockfile-hygiene:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest-large
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: twilio/sdk-actions/npm-lockfile-hygiene@26f95a54e57993c1bf3b26bec2905f395814c23a # v1.0.0
+        with:
+          package-manager: npm
+
+  check:
+    name: ${{ matrix.name }}
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest-large
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # for the Artifactory OIDC exchange below
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: lint
+            run: npm run lint
+          - name: build
+            run: npm run build
+          - name: unit-tests
+            run: npm run test:unit
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+      # After setup-node, which would otherwise be free to rewrite ~/.npmrc.
+      - name: Artifactory OIDC Auth
+        uses: twilio/sdk-actions/artifactory-oidc@26f95a54e57993c1bf3b26bec2905f395814c23a # v1.0.0
+        with:
+          artifactory-url: ${{ vars.ARTIFACTORY_URL }}
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: ${{ matrix.name }}
+        run: ${{ matrix.run }}
+
+  integration-tests:
+    name: integration-tests (chrome, ${{ matrix.channel }})
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest-large
+    timeout-minutes: 30
+    # Ships Chrome and Node. Karma launches Chrome headless, so the image's own
+    # entrypoint (which starts Xvfb, and which container jobs skip) isn't needed.
+    container:
+      image: twilio/twilio-video-browsers:chrome-${{ matrix.channel }}
+    permissions:
+      contents: read
+      id-token: write # for the Artifactory OIDC exchange below
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [stable, beta, unstable]
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Artifactory OIDC Auth
+        uses: twilio/sdk-actions/artifactory-oidc@26f95a54e57993c1bf3b26bec2905f395814c23a # v1.0.0
+        with:
+          artifactory-url: ${{ vars.ARTIFACTORY_URL }}
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Integration tests
+        env:
+          BROWSER: chrome
+        run: npm run test:integration
