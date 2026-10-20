@@ -1,4 +1,4 @@
-/*! twilio-video-processors.js 3.2.0
+/*! twilio-video-processors.js 3.2.1
 
 The following license applies to all parts of this software except as
 documented below.
@@ -1333,7 +1333,7 @@ var PostProcessingStage = /** @class */ (function () {
         this._setBackground = setBackground;
     }
     PostProcessingStage.prototype.render = function (inputFrame, personMask) {
-        var _a = this, _outputContext = _a._outputContext, _setBackground = _a._setBackground, _webgl2Canvas = _a._webgl2Canvas;
+        var _a = this, _outputContext = _a._outputContext, _setBackground = _a._setBackground;
         if (this._hysteresisEnabled) {
             this._applyHysteresis(personMask);
         }
@@ -1343,7 +1343,7 @@ var PostProcessingStage = /** @class */ (function () {
         this._personMaskUpscalePipeline.render(inputFrame, personMask);
         _outputContext.save();
         _outputContext.globalCompositeOperation = 'copy';
-        _outputContext.drawImage(_webgl2Canvas, 0, 0);
+        _outputContext.drawImage(this._personMaskUpscalePipeline.outputCanvas, 0, 0);
         _outputContext.globalCompositeOperation = 'destination-over';
         _setBackground(inputFrame);
         _outputContext.restore();
@@ -1690,15 +1690,6 @@ var pipelines_1 = require("../../../pipelines");
 /**
  * @private
  */
-function createGaussianBlurWeights(radius) {
-    var coeff = 1.0 / Math.sqrt(2.0 * Math.PI) / radius;
-    return '0'.repeat(radius + 1).split('').map(function (zero, x) {
-        return coeff * Math.exp(-0.5 * x * x / radius / radius);
-    });
-}
-/**
- * @private
- */
 var SinglePassGaussianBlurFilterStage = /** @class */ (function (_super) {
     __extends(SinglePassGaussianBlurFilterStage, _super);
     function SinglePassGaussianBlurFilterStage(glOut, direction, outputType, inputTextureUnit, outputTextureUnit) {
@@ -1709,7 +1700,7 @@ var SinglePassGaussianBlurFilterStage = /** @class */ (function (_super) {
             textureName: 'u_inputTexture',
             textureUnit: inputTextureUnit
         }, {
-            fragmentShaderSource: "#version 300 es\n          precision highp float;\n\n          uniform sampler2D u_inputTexture;\n          uniform vec2 u_texelSize;\n          uniform float u_direction;\n          uniform float u_radius;\n          uniform float u_gaussianBlurWeights[128];\n\n          in vec2 v_texCoord;\n\n          out vec4 outColor;\n\n          void main() {\n            float totalWeight = u_gaussianBlurWeights[0];\n            vec3 newColor = totalWeight * texture(u_inputTexture, v_texCoord).rgb;\n\n            for (float i = 1.0; i <= u_radius; i += 1.0) {\n              float x = (1.0 - u_direction) * i;\n              float y = u_direction * i;\n\n              vec2 shift = vec2(x, y) * u_texelSize;\n              vec2 coord = vec2(v_texCoord + shift);\n              float weight = u_gaussianBlurWeights[int(i)];\n              newColor += weight * texture(u_inputTexture, coord).rgb;\n              totalWeight += weight;\n\n              shift = vec2(-x, -y) * u_texelSize;\n              coord = vec2(v_texCoord + shift);\n              newColor += weight * texture(u_inputTexture, coord).rgb;\n              totalWeight += weight;\n            }\n\n            newColor /= totalWeight;\n            outColor = vec4(newColor, 1.0);\n          }\n        ",
+            fragmentShaderSource: "#version 300 es\n          precision highp float;\n\n          uniform sampler2D u_inputTexture;\n          uniform vec2 u_texelSize;\n          uniform float u_direction;\n          uniform float u_radius;\n          // -0.5 / radius^2. Weights are evaluated per tap, so the radius has\n          // no upper bound; the Gaussian's scale factor cancels in totalWeight.\n          uniform float u_negInvTwoSigmaSq;\n\n          in vec2 v_texCoord;\n\n          out vec4 outColor;\n\n          void main() {\n            float totalWeight = 1.0;\n            vec3 newColor = texture(u_inputTexture, v_texCoord).rgb;\n\n            for (float i = 1.0; i <= u_radius; i += 1.0) {\n              float x = (1.0 - u_direction) * i;\n              float y = u_direction * i;\n\n              vec2 shift = vec2(x, y) * u_texelSize;\n              vec2 coord = vec2(v_texCoord + shift);\n              float weight = exp(i * i * u_negInvTwoSigmaSq);\n              newColor += weight * texture(u_inputTexture, coord).rgb;\n              totalWeight += weight;\n\n              shift = vec2(-x, -y) * u_texelSize;\n              coord = vec2(v_texCoord + shift);\n              newColor += weight * texture(u_inputTexture, coord).rgb;\n              totalWeight += weight;\n            }\n\n            newColor /= totalWeight;\n            outColor = vec4(newColor, 1.0);\n          }\n        ",
             glOut: glOut,
             height: height,
             textureUnit: outputTextureUnit,
@@ -1739,9 +1730,9 @@ var SinglePassGaussianBlurFilterStage = /** @class */ (function (_super) {
                 values: [radius]
             },
             {
-                name: 'u_gaussianBlurWeights',
-                type: 'float:v',
-                values: createGaussianBlurWeights(radius)
+                name: 'u_negInvTwoSigmaSq',
+                type: 'float',
+                values: [-0.5 / (radius * radius)]
             }
         ]);
     };
@@ -1844,23 +1835,18 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SinglePassBilateralFilterStage = void 0;
 var pipelines_1 = require("../../../pipelines");
+// Stands in for -Infinity at sigma 0, so only taps at zero distance keep any
+// weight. Must stay float32-representable: uniform1f would turn anything larger
+// into -Infinity, and x * x * -Infinity is NaN or 0 depending on the driver.
+var SIGMA_ZERO_COEFFICIENT = -1e30;
 /**
  * @private
+ * Gaussian x^2 coefficient, -0.5 / sigma^2.
  */
-function createSpaceWeights(radius, sigma, texelSize) {
-    return '0'.repeat(radius).split('').map(function (zero, i) {
-        var x = (i + 1) * texelSize;
-        return Math.exp(-0.5 * x * x / sigma / sigma);
-    });
-}
-/**
- * @private
- */
-function createColorWeights(sigma) {
-    return '0'.repeat(256).split('').map(function (zero, i) {
-        var x = i / 255;
-        return Math.exp(-0.5 * x * x / sigma / sigma);
-    });
+function negInvTwoSigmaSq(sigma) {
+    return sigma > 0
+        ? -0.5 / (sigma * sigma)
+        : SIGMA_ZERO_COEFFICIENT;
 }
 /**
  * @private
@@ -1875,7 +1861,7 @@ var SinglePassBilateralFilterStage = /** @class */ (function (_super) {
             textureName: 'u_segmentationMask',
             textureUnit: inputTextureUnit
         }, {
-            fragmentShaderSource: "#version 300 es\n          precision highp float;\n\n          uniform sampler2D u_inputFrame;\n          uniform sampler2D u_segmentationMask;\n          uniform vec2 u_texelSize;\n          uniform float u_direction;\n          uniform float u_radius;\n          uniform float u_step;\n          uniform float u_spaceWeights[128];\n          uniform float u_colorWeights[256];\n\n          in vec2 v_texCoord;\n\n          out vec4 outColor;\n\n          float calculateColorWeight(vec2 coord, vec3 centerColor) {\n            vec3 coordColor = texture(u_inputFrame, coord).rgb;\n            float x = distance(centerColor, coordColor);\n            return u_colorWeights[int(x * 255.0)];\n          }\n\n          float edgePixelsAverageAlpha(float outAlpha) {\n            float totalAlpha = outAlpha;\n            float totalPixels = 1.0;\n\n            for (float i = -u_radius; u_radius > 0.0 && i <= u_radius; i += u_radius) {\n              for (float j = -u_radius; j <= u_radius; j += u_radius * (j == 0.0 ? 2.0 : 1.0)) {\n                vec2 shift = vec2(i, j) * u_texelSize;\n                vec2 coord = vec2(v_texCoord + shift);\n                totalAlpha += texture(u_segmentationMask, coord).a;\n                totalPixels++;\n              }\n            }\n\n            return totalAlpha / totalPixels;\n          }\n\n          void main() {\n            vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;\n            float outAlpha = texture(u_segmentationMask, v_texCoord).a;\n            float averageAlpha = edgePixelsAverageAlpha(outAlpha);\n            float totalWeight = 1.0;\n\n            if (averageAlpha == 0.0 || averageAlpha == 1.0) {\n              outColor = vec4(averageAlpha * centerColor, averageAlpha);\n              return;\n            }\n\n            for (float i = 1.0; i <= u_radius; i += u_step) {\n              float x = (1.0 - u_direction) * i;\n              float y = u_direction * i;\n              vec2 shift = vec2(x, y) * u_texelSize;\n              vec2 coord = vec2(v_texCoord + shift);\n              float spaceWeight = u_spaceWeights[int(i - 1.0)];\n              float colorWeight = calculateColorWeight(coord, centerColor);\n              float weight = spaceWeight * colorWeight;\n              float alpha = texture(u_segmentationMask, coord).a;\n              totalWeight += weight;\n              outAlpha += weight * alpha;\n\n              shift = vec2(-x, -y) * u_texelSize;\n              coord = vec2(v_texCoord + shift);\n              colorWeight = calculateColorWeight(coord, centerColor);\n              weight = spaceWeight * colorWeight;\n              alpha = texture(u_segmentationMask, coord).a;\n              totalWeight += weight;\n              outAlpha += weight * alpha;\n            }\n\n            outAlpha /= totalWeight;\n            outColor = vec4(outAlpha * centerColor, outAlpha);\n          }\n        ",
+            fragmentShaderSource: "#version 300 es\n          precision highp float;\n\n          uniform sampler2D u_inputFrame;\n          uniform sampler2D u_segmentationMask;\n          uniform vec2 u_texelSize;\n          uniform float u_direction;\n          uniform float u_radius;\n          uniform float u_step;\n          // -0.5 / sigma^2, so a tap costs one exp() and no division.\n          uniform float u_negInvTwoSigmaSqColor;\n          uniform float u_negInvTwoSigmaSqTexel;\n\n          in vec2 v_texCoord;\n\n          out vec4 outColor;\n\n          float calculateColorWeight(vec2 coord, vec3 centerColor) {\n            vec3 coordColor = texture(u_inputFrame, coord).rgb;\n            float x = distance(centerColor, coordColor);\n            return exp(x * x * u_negInvTwoSigmaSqColor);\n          }\n\n          float calculateSpaceWeight(float i) {\n            // x along a horizontal pass, y along a vertical one.\n            float texelStep = mix(u_texelSize.x, u_texelSize.y, u_direction);\n            float x = i * texelStep;\n            return exp(x * x * u_negInvTwoSigmaSqTexel);\n          }\n\n          float edgePixelsAverageAlpha(float outAlpha) {\n            float totalAlpha = outAlpha;\n            float totalPixels = 1.0;\n\n            for (float i = -u_radius; u_radius > 0.0 && i <= u_radius; i += u_radius) {\n              for (float j = -u_radius; j <= u_radius; j += u_radius * (j == 0.0 ? 2.0 : 1.0)) {\n                vec2 shift = vec2(i, j) * u_texelSize;\n                vec2 coord = vec2(v_texCoord + shift);\n                totalAlpha += texture(u_segmentationMask, coord).a;\n                totalPixels++;\n              }\n            }\n\n            return totalAlpha / totalPixels;\n          }\n\n          void main() {\n            vec3 centerColor = texture(u_inputFrame, v_texCoord).rgb;\n            float outAlpha = texture(u_segmentationMask, v_texCoord).a;\n            float averageAlpha = edgePixelsAverageAlpha(outAlpha);\n            float totalWeight = 1.0;\n\n            if (averageAlpha == 0.0 || averageAlpha == 1.0) {\n              outColor = vec4(averageAlpha * centerColor, averageAlpha);\n              return;\n            }\n\n            for (float i = 1.0; i <= u_radius; i += u_step) {\n              float x = (1.0 - u_direction) * i;\n              float y = u_direction * i;\n              vec2 shift = vec2(x, y) * u_texelSize;\n              vec2 coord = vec2(v_texCoord + shift);\n              float spaceWeight = calculateSpaceWeight(i);\n              float colorWeight = calculateColorWeight(coord, centerColor);\n              float weight = spaceWeight * colorWeight;\n              float alpha = texture(u_segmentationMask, coord).a;\n              totalWeight += weight;\n              outAlpha += weight * alpha;\n\n              shift = vec2(-x, -y) * u_texelSize;\n              coord = vec2(v_texCoord + shift);\n              colorWeight = calculateColorWeight(coord, centerColor);\n              weight = spaceWeight * colorWeight;\n              alpha = texture(u_segmentationMask, coord).a;\n              totalWeight += weight;\n              outAlpha += weight * alpha;\n            }\n\n            outAlpha /= totalWeight;\n            outColor = vec4(outAlpha * centerColor, outAlpha);\n          }\n        ",
             glOut: glOut,
             height: height,
             textureUnit: outputTextureUnit,
@@ -1899,7 +1885,6 @@ var SinglePassBilateralFilterStage = /** @class */ (function (_super) {
                 }
             ]
         }) || this;
-        _this._direction = direction;
         _this._inputDimensions = inputDimensions;
         _this.updateSigmaColor(0);
         _this.updateSigmaSpace(0);
@@ -1908,9 +1893,9 @@ var SinglePassBilateralFilterStage = /** @class */ (function (_super) {
     SinglePassBilateralFilterStage.prototype.updateSigmaColor = function (sigmaColor) {
         this._setUniformVars([
             {
-                name: 'u_colorWeights',
-                type: 'float:v',
-                values: createColorWeights(sigmaColor)
+                name: 'u_negInvTwoSigmaSqColor',
+                type: 'float',
+                values: [negInvTwoSigmaSq(sigmaColor)]
             }
         ]);
     };
@@ -1920,9 +1905,6 @@ var SinglePassBilateralFilterStage = /** @class */ (function (_super) {
         sigmaSpace *= Math.max(outputWidth / inputWidth, outputHeight / inputHeight);
         var step = Math.floor(0.5 * sigmaSpace / Math.log(sigmaSpace));
         var sigmaTexel = Math.max(1 / outputWidth, 1 / outputHeight) * sigmaSpace;
-        var texelSize = 1 / (this._direction === 'horizontal'
-            ? outputWidth
-            : outputHeight);
         this._setUniformVars([
             {
                 name: 'u_radius',
@@ -1930,9 +1912,9 @@ var SinglePassBilateralFilterStage = /** @class */ (function (_super) {
                 values: [sigmaSpace]
             },
             {
-                name: 'u_spaceWeights',
-                type: 'float:v',
-                values: createSpaceWeights(sigmaSpace, sigmaTexel, texelSize)
+                name: 'u_negInvTwoSigmaSqTexel',
+                type: 'float',
+                values: [negInvTwoSigmaSq(sigmaTexel)]
             },
             {
                 name: 'u_step',
@@ -1979,7 +1961,17 @@ var PersonMaskUpscalePipeline = /** @class */ (function (_super) {
         _this._maskBlurRadius = maskBlurRadius;
         var glOut = outputCanvas.getContext('webgl2');
         if (glOut) {
-            _this.initializeWebGL2Pipeline(glOut);
+            try {
+                _this.initializeWebGL2Pipeline(glOut);
+            }
+            catch (error) {
+                // Release the stages built before the failure.
+                _this.cleanUp();
+                _this._isWebGL2Supported = false;
+                // The WebGL2 context owns outputCanvas, so getContext('2d') on it returns null.
+                _this._outputCanvas = new OffscreenCanvas(outputCanvas.width, outputCanvas.height);
+                console.warn('Downgraded to Canvas2D for person mask upscaling due to WebGL2 pipeline failure.', error);
+            }
         }
         else {
             _this._isWebGL2Supported = false;
@@ -1987,6 +1979,17 @@ var PersonMaskUpscalePipeline = /** @class */ (function (_super) {
         }
         return _this;
     }
+    Object.defineProperty(PersonMaskUpscalePipeline.prototype, "outputCanvas", {
+        /**
+         * The canvas holding the upscaled person mask after render(). This is the
+         * constructor's outputCanvas unless the WebGL2 pipeline failed to build.
+         */
+        get: function () {
+            return this._outputCanvas;
+        },
+        enumerable: false,
+        configurable: true
+    });
     PersonMaskUpscalePipeline.prototype.initializeWebGL2Pipeline = function (glOut) {
         var outputDimensions = {
             height: this._outputCanvas.height,
@@ -2862,7 +2865,7 @@ exports.version = void 0;
 /**
  * The current version of the library.
  */
-exports.version = '3.2.0';
+exports.version = '3.2.1';
 
 },{}],32:[function(require,module,exports){
 (function (global, factory) {

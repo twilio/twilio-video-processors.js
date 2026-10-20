@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Virtual Background Demo</title>
+    <link rel="icon" type="image/png" href="favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row thin-gutters align">
+        <div class="col-sm-4" id="instructions">
+        </div>
+        <div class="col-sm-4">
+          <div class="card video-container">
+            <div class="card-block">
+              <video id="video-input" autoplay></video>
+              <pre id="stats"></pre>
+              <div id="backgrounds">
+                <div id="none" class="img-btn" style="background-image: url('none.png');"></div>
+                <div id="blur" class="img-btn" style="background-image: url('blur.png');"></div>
+                <div id="living_room" class="img-btn" style="background-image: url('backgrounds/living_room.jpg');"></div>
+                <div id="office" class="img-btn" style="background-image: url('backgrounds/office.jpg');"></div>
+                <div id="vacation" class="img-btn" style="background-image: url('backgrounds/vacation.jpg');"></div>
+                <div id="flag" class="img-btn" style="background-image: url('backgrounds/flag.jpg');"></div>
+                <div id="mountain_lake" class="img-btn" style="background-image: url('backgrounds/mountain_lake.jpg');"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="errorModalLabel">Error</h5>
+          </div>
+          <div class="modal-body">
+            ...
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://sdk.twilio.com/js/video/releases/2.29.0/twilio-video.min.js"></script>
+    <script src="twilio-video-processors.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@2/dist/zero-md.min.js"></script>
+    <script>
+      (async () => {
+        const response = await fetch('/README.md');
+        const text = await response.text();
+        const $instructions = document.getElementById('instructions');
+        const $zeroMd = document.createElement('zero-md');
+        $zeroMd.setAttribute('no-shadow', '');
+        const $script = document.createElement('script');
+        $script.type = 'text/markdown';
+        $script.appendChild(document.createTextNode(text));
+        $zeroMd.appendChild($script);
+        $instructions.append($zeroMd);
+      })();
+    </script>
+    <script src="index.js"></script>
+  </body>
+</html>
