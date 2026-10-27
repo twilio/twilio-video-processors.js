@@ -123,3 +123,19 @@ Please check out the following pages for best practice:
 
 * [VirtualBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/VirtualBackgroundProcessor.html)
 * [GaussianBlurBackgroundProcessor](https://twilio.github.io/twilio-video-processors.js/classes/GaussianBlurBackgroundProcessor.html)
+
+## Community Contributions and Support
+
+This repository is publicly available and maintained by Twilio under a limited external contribution model.
+
+Due to limited maintenance capacity, external pull requests are not currently accepted.
+
+GitHub Issues may be used to report reproducible bugs or provide feature feedback about this library. Issues are reviewed on a best-effort basis, with no SLA or guaranteed response.
+
+GitHub Issues are not an official Twilio support channel. For production issues, general usage questions, or account-specific assistance, please contact [Twilio Support](https://help.twilio.com/). If you have a Twilio account manager, you may also escalate through them.
+
+Do not share [Personally Identifiable Information (PII)](https://www.twilio.com/docs/glossary/what-is-personally-identifiable-information-pii) or sensitive account information, including access tokens, API keys, and credentials, in issues, logs, or screenshots.
+
+Report security vulnerabilities privately through [Twilio's Vulnerability Disclosure Program](https://www.twilio.com/en-us/security/vulnerability-disclosure-program), rather than public GitHub Issues.
+
+See [CONTRIBUTING.md](https://github.com/twilio/twilio-video-processors.js/blob/master/CONTRIBUTING.md) for reporting guidance.
